@@ -1,279 +1,325 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { forkJoin, finalize } from 'rxjs';
 
+import {
+  AdministrationApiService,
+  AdministrationOverview,
+  AdministrationRole,
+  AdministrationUser,
+} from '../../data-access/administration-api';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 
-type SectionId =
-  | 'users'
-  | 'enrolment'
-  | 'roles'
-  | 'sessions'
-  | 'locations'
-  | 'health'
-  | 'integrations'
-  | 'policies'
-  | 'audit';
-
-type PermissionKey = 'clinical' | 'agenda' | 'prescribe' | 'billing' | 'admin';
-type Outcome = 'Todos' | 'Permitido' | 'Denegado' | 'Desafío';
+type SectionId = 'users' | 'roles' | 'security';
+type PrivilegedAction = 'membership' | 'sessions' | null;
 
 interface AdminSection {
   readonly id: SectionId;
   readonly label: string;
-  readonly meta: string;
   readonly description: string;
   readonly icon: AppIconName;
 }
 
-interface UserAccount {
-  readonly id: string;
-  readonly initials: string;
-  readonly name: string;
-  readonly email: string;
-  readonly role: string;
-  readonly scope: string;
-  readonly security: string;
-  readonly lastAccess: string;
-  readonly state: 'Activa' | 'Suspendida';
-}
-
-interface Invitation {
-  readonly id: string;
-  readonly recipient: string;
-  readonly role: string;
-  readonly scope: string;
-  readonly expires: string;
-  readonly state: 'Pendiente' | 'Expira pronto';
-}
-
-interface RoleProfile {
-  readonly id: string;
-  readonly name: string;
-  readonly members: number;
-  readonly kind: string;
-  readonly permissions: Record<PermissionKey, boolean>;
-}
-
-interface ActiveSession {
-  readonly id: string;
-  readonly actor: string;
-  readonly device: string;
-  readonly location: string;
-  readonly activity: string;
-  readonly risk: 'Normal' | 'Revisar';
-}
-
-interface Resource {
-  readonly id: string;
-  readonly name: string;
-  readonly site: string;
-  readonly use: string;
-  readonly state: 'Disponible' | 'Mantenimiento';
-}
-
-interface Integration {
-  readonly id: string;
-  readonly initials: string;
-  readonly name: string;
-  readonly purpose: string;
-  readonly scope: string;
-  readonly state: 'Conectada' | 'Prueba' | 'Desconectada';
-  readonly checked: string;
-}
-
-interface AuditEvent {
-  readonly id: string;
-  readonly time: string;
-  readonly actor: string;
-  readonly actorDetail: string;
-  readonly action: string;
-  readonly patient: string;
-  readonly resource: string;
-  readonly traceId: string;
-  readonly outcome: Exclude<Outcome, 'Todos'>;
-  readonly reason: string;
-}
-
 @Component({
   selector: 'app-administration',
-  imports: [MatButtonModule, AppIcon, ScrollReveal],
+  imports: [MatButtonModule, MatCheckboxModule, MatProgressSpinnerModule, AppIcon, ScrollReveal],
   templateUrl: './administration.html',
   styleUrls: ['./administration.scss', './administration-content.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Administration {
   protected readonly sections: readonly AdminSection[] = [
-    { id: 'users', label: 'Usuarios', meta: '24 cuentas', description: 'Identidad, alcance y estado de las cuentas de trabajo.', icon: 'team' },
-    { id: 'enrolment', label: 'Altas y bajas', meta: '3 pendientes', description: 'Ciclo de vida con caducidad, aprobaciones y revocación completa.', icon: 'waitlist' },
-    { id: 'roles', label: 'Roles y permisos', meta: '6 perfiles', description: 'Acceso mínimo por función, sede y necesidad asistencial.', icon: 'shield' },
-    { id: 'sessions', label: 'Sesiones y MFA', meta: '2 señales', description: 'Factores resistentes a phishing y sesiones bajo supervisión.', icon: 'lock' },
-    { id: 'locations', label: 'Sedes y recursos', meta: '7 salas', description: 'Ámbitos físicos, agendas y recursos clínicos reservables.', icon: 'location' },
-    { id: 'health', label: 'Salud del sistema', meta: 'Operativo', description: 'Servicios, colas y degradaciones sin exponer contenido clínico.', icon: 'chart' },
-    { id: 'integrations', label: 'Integraciones', meta: '5 conectores', description: 'Credenciales, alcance de datos y verificación de conectividad.', icon: 'settings' },
-    { id: 'policies', label: 'Políticas', meta: '12 vigentes', description: 'Guardas obligatorias, revisiones y excepciones trazables.', icon: 'check' },
-    { id: 'audit', label: 'Auditoría', meta: '128 eventos', description: 'Búsqueda concreta por actor, paciente, recurso, traza y resultado.', icon: 'eye' },
+    {
+      id: 'users',
+      label: 'Usuarios',
+      description: 'Identidades de trabajo, estado y asignación de roles dentro del contexto actual.',
+      icon: 'team',
+    },
+    {
+      id: 'roles',
+      label: 'Roles y permisos',
+      description: 'Matriz de privilegio mínimo efectiva para el centro seleccionado.',
+      icon: 'shield',
+    },
+    {
+      id: 'security',
+      label: 'Seguridad de acceso',
+      description: 'MFA obligatorio y revocación de sesiones sujeta a reautenticación reciente.',
+      icon: 'lock',
+    },
   ];
 
+  private readonly administrationApi = inject(AdministrationApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
   protected readonly activeSection = signal<SectionId>('users');
+  protected readonly userQuery = signal('');
+  protected readonly loading = signal(true);
+  protected readonly refreshing = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly actionMessage = signal('Datos protegidos: no se muestran secretos ni sesiones activas individuales.');
+  protected readonly overview = signal<AdministrationOverview | null>(null);
+  protected readonly users = signal<readonly AdministrationUser[]>([]);
+  protected readonly roles = signal<readonly AdministrationRole[]>([]);
+  protected readonly selectedUserId = signal<string | null>(null);
+  protected readonly draftRoleIds = signal<readonly string[]>([]);
+  protected readonly requestedActiveState = signal<boolean | null>(null);
+  protected readonly reason = signal('');
+  protected readonly pendingAction = signal<PrivilegedAction>(null);
+
   protected readonly activeSectionDetails = computed(
     () => this.sections.find((section) => section.id === this.activeSection()) ?? this.sections[0],
   );
-  protected readonly showContext = signal(false);
-  protected readonly liveMessage = signal('Centro de control preparado con datos de demostración.');
-  protected readonly userQuery = signal('');
-
-  protected readonly users = signal<UserAccount[]>([
-    { id: 'USR-001', initials: 'LV', name: 'Dra. Lara Vega · DEMO', email: 'l••••@demo.nexasalud.test', role: 'Administración clínica', scope: 'Mirador · todas las sedes', security: 'Passkey + MFA', lastAccess: 'Hoy · 09:26', state: 'Activa' },
-    { id: 'USR-014', initials: 'NO', name: 'Nicolás Ortega · DEMO', email: 'n••••@demo.nexasalud.test', role: 'Recepción', scope: 'Mirador · Centro', security: 'MFA', lastAccess: 'Hoy · 08:51', state: 'Activa' },
-    { id: 'USR-019', initials: 'IA', name: 'Irene Abril · DEMO', email: 'i••••@demo.nexasalud.test', role: 'Facturación', scope: 'Mirador · Centro y Norte', security: 'Passkey + MFA', lastAccess: 'Ayer · 17:42', state: 'Activa' },
-    { id: 'USR-022', initials: 'RP', name: 'Raúl Pardo · DEMO', email: 'r••••@demo.nexasalud.test', role: 'Soporte técnico', scope: 'Sin acceso clínico', security: 'MFA', lastAccess: '16 jul · 12:08', state: 'Suspendida' },
-  ]);
-
   protected readonly filteredUsers = computed(() => {
     const query = this.userQuery().trim().toLocaleLowerCase('es');
-    if (!query) return this.users();
+    if (!query) {
+      return this.users();
+    }
+
     return this.users().filter((user) =>
-      [user.id, user.name, user.role, user.scope].some((field) => field.toLocaleLowerCase('es').includes(query)),
+      [user.displayName, user.emailHint ?? '', ...user.roles.map((role) => role.name)]
+        .some((value) => value.toLocaleLowerCase('es').includes(query)),
     );
   });
-
-  protected readonly invitations = signal<Invitation[]>([
-    { id: 'INV-8K2', recipient: 'm••••@demo.nexasalud.test', role: 'Profesional médico', scope: 'Mirador · Norte', expires: '48 h', state: 'Pendiente' },
-    { id: 'INV-4D7', recipient: 'c••••@demo.nexasalud.test', role: 'Enfermería', scope: 'Mirador · Centro', expires: '6 h', state: 'Expira pronto' },
-    { id: 'INV-9M1', recipient: 'a••••@demo.nexasalud.test', role: 'Recepción', scope: 'Mirador · Centro', expires: '72 h', state: 'Pendiente' },
-  ]);
-
-  protected readonly permissionColumns: readonly { key: PermissionKey; label: string }[] = [
-    { key: 'clinical', label: 'Historia' },
-    { key: 'agenda', label: 'Agenda' },
-    { key: 'prescribe', label: 'Prescribir' },
-    { key: 'billing', label: 'Facturación' },
-    { key: 'admin', label: 'Administración' },
-  ];
-
-  protected readonly roles = signal<RoleProfile[]>([
-    { id: 'ROLE-MED', name: 'Profesional médico', members: 7, kind: 'Clínico', permissions: { clinical: true, agenda: true, prescribe: true, billing: false, admin: false } },
-    { id: 'ROLE-NUR', name: 'Enfermería', members: 5, kind: 'Clínico', permissions: { clinical: true, agenda: true, prescribe: false, billing: false, admin: false } },
-    { id: 'ROLE-REC', name: 'Recepción', members: 4, kind: 'Gestión', permissions: { clinical: false, agenda: true, prescribe: false, billing: true, admin: false } },
-    { id: 'ROLE-ADM', name: 'Administración clínica', members: 2, kind: 'Privilegiado', permissions: { clinical: true, agenda: true, prescribe: false, billing: true, admin: true } },
-  ]);
-
-  protected readonly sessions = signal<ActiveSession[]>([
-    { id: 'SES-A81', actor: 'Dra. Lara Vega · DEMO', device: 'Safari · macOS', location: 'Madrid · red corporativa', activity: 'Esta sesión · ahora', risk: 'Normal' },
-    { id: 'SES-K17', actor: 'Nicolás Ortega · DEMO', device: 'Chrome · Windows', location: 'Madrid · red corporativa', activity: 'Hace 12 min', risk: 'Normal' },
-    { id: 'SES-Q42', actor: 'Irene Abril · DEMO', device: 'Safari · iPhone', location: 'Madrid · red móvil', activity: 'Hace 41 min', risk: 'Revisar' },
-  ]);
-
-  protected readonly resources = signal<Resource[]>([
-    { id: 'RES-C01', name: 'Consulta Roble', site: 'Mirador · Centro', use: 'Consulta general · 30 min', state: 'Disponible' },
-    { id: 'RES-C03', name: 'Sala Olivo', site: 'Mirador · Centro', use: 'Procedimientos · 60 min', state: 'Disponible' },
-    { id: 'RES-N02', name: 'Consulta Luz', site: 'Mirador · Norte', use: 'Primera valoración · 45 min', state: 'Disponible' },
-    { id: 'RES-N04', name: 'Ecógrafo portátil', site: 'Mirador · Norte', use: 'Recurso compartido', state: 'Mantenimiento' },
-  ]);
-
-  protected readonly integrations = signal<Integration[]>([
-    { id: 'INT-IDP', initials: 'ID', name: 'Proveedor de identidad', purpose: 'Inicio de sesión, MFA y passkeys', scope: 'Identidad mínima', state: 'Conectada', checked: '09:24' },
-    { id: 'INT-RX', initials: 'RX', name: 'Receta electrónica', purpose: 'Prescripción homologada', scope: 'Acto y profesional', state: 'Prueba', checked: '08:45' },
-    { id: 'INT-LAB', initials: 'LB', name: 'Gateway laboratorio', purpose: 'Resultados estructurados', scope: 'FHIR mínimo', state: 'Conectada', checked: '09:21' },
-    { id: 'INT-CAL', initials: 'CA', name: 'Calendario externo', purpose: 'Bloques de disponibilidad', scope: 'Sin datos clínicos', state: 'Desconectada', checked: '—' },
-    { id: 'INT-WH', initials: 'WH', name: 'Webhooks firmados', purpose: 'Eventos administrativos', scope: 'Metadatos permitidos', state: 'Conectada', checked: '09:18' },
-  ]);
-
-  protected readonly auditActor = signal('');
-  protected readonly auditPatient = signal('');
-  protected readonly auditResource = signal('');
-  protected readonly auditTrace = signal('');
-  protected readonly auditOutcome = signal<Outcome>('Todos');
-
-  protected readonly auditEvents: readonly AuditEvent[] = [
-    { id: 'EVT-0091', time: '09:26:14', actor: 'lara.vega', actorDetail: 'Administración clínica', action: 'Actualizó el alcance de un rol', patient: 'DEMO-P-0284', resource: 'ROLE-REC', traceId: 'trc-83fa91', outcome: 'Permitido', reason: 'Reautenticación y doble aprobación válidas' },
-    { id: 'EVT-0088', time: '09:22:03', actor: 'soporte.demo', actorDetail: 'Soporte técnico', action: 'Intentó abrir una ficha clínica', patient: 'DEMO-P-0412', resource: 'CLINICAL-RECORD', traceId: 'trc-77bc04', outcome: 'Denegado', reason: 'Sin relación asistencial ni permiso clínico' },
-    { id: 'EVT-0082', time: '09:18:51', actor: 'irene.abril', actorDetail: 'Facturación', action: 'Consultó estado administrativo', patient: 'DEMO-P-0197', resource: 'INVOICE-2026-0182', traceId: 'trc-61df28', outcome: 'Permitido', reason: 'Campos clínicos excluidos por política' },
-    { id: 'EVT-0079', time: '09:14:20', actor: 'nicolas.ortega', actorDetail: 'Recepción', action: 'Solicitó exportación de agenda', patient: 'DEMO-P-0284', resource: 'AGENDA-CENTRO', traceId: 'trc-4ab902', outcome: 'Desafío', reason: 'Reautenticación reforzada requerida' },
-    { id: 'EVT-0074', time: '09:08:44', actor: 'sistema.cola', actorDetail: 'Servicio interno', action: 'Entregó recordatorio administrativo', patient: 'DEMO-P-0550', resource: 'QUEUE-NOTIFICATIONS', traceId: 'trc-198ed0', outcome: 'Permitido', reason: 'Consentimiento y canal autorizados' },
-  ];
-
-  protected readonly filteredAuditEvents = computed(() => {
-    const actor = this.auditActor().trim().toLocaleLowerCase('es');
-    const patient = this.auditPatient().trim().toLocaleLowerCase('es');
-    const resource = this.auditResource().trim().toLocaleLowerCase('es');
-    const trace = this.auditTrace().trim().toLocaleLowerCase('es');
-    const outcome = this.auditOutcome();
-    return this.auditEvents.filter((event) =>
-      (!actor || `${event.actor} ${event.actorDetail}`.toLocaleLowerCase('es').includes(actor)) &&
-      (!patient || event.patient.toLocaleLowerCase('es').includes(patient)) &&
-      (!resource || event.resource.toLocaleLowerCase('es').includes(resource)) &&
-      (!trace || event.traceId.toLocaleLowerCase('es').includes(trace)) &&
-      (outcome === 'Todos' || event.outcome === outcome),
+  protected readonly selectedUser = computed(
+    () => this.users().find((user) => user.userId === this.selectedUserId()) ?? null,
+  );
+  protected readonly canSubmit = computed(() => {
+    const selected = this.selectedUser();
+    return Boolean(
+      selected
+      && this.pendingAction()
+      && this.reason().trim().length >= 8
+      && !this.submitting(),
     );
   });
+  protected readonly hasMembershipChange = computed(() => {
+    const selected = this.selectedUser();
+    if (!selected) {
+      return false;
+    }
+
+    const activeChanged = this.requestedActiveState() !== null
+      && this.requestedActiveState() !== selected.active;
+    const selectedRoles = new Set(selected.roles.map((role) => role.id));
+    const draftedRoles = new Set(this.draftRoleIds());
+    const rolesChanged = selectedRoles.size !== draftedRoles.size
+      || [...selectedRoles].some((roleId) => !draftedRoles.has(roleId));
+
+    return activeChanged || rolesChanged;
+  });
+
+  constructor() {
+    this.load();
+  }
 
   protected selectSection(section: SectionId): void {
     this.activeSection.set(section);
-    const label = this.sections.find((item) => item.id === section)?.label ?? 'Administración';
-    this.liveMessage.set(`Sección ${label} abierta.`);
   }
 
-  protected togglePrivacyContext(): void {
-    this.showContext.update((visible) => !visible);
-    this.liveMessage.set(this.showContext() ? 'Contexto sintético visible.' : 'Referencias de paciente enmascaradas.');
-  }
-
-  protected toggleUser(userId: string): void {
-    this.users.update((users) => users.map((user) => user.id === userId ? { ...user, state: user.state === 'Activa' ? 'Suspendida' : 'Activa' } : user));
-    const user = this.users().find((item) => item.id === userId);
-    this.liveMessage.set(`Cuenta ${userId}: estado local cambiado a ${user?.state.toLocaleLowerCase('es')}.`);
-  }
-
-  protected createDemoInvitation(): void {
-    if (this.invitations().some((invitation) => invitation.id === 'INV-DEMO')) {
-      this.liveMessage.set('La invitación de demostración ya está en la lista.');
+  protected refresh(): void {
+    if (this.refreshing() || this.submitting()) {
       return;
     }
-    this.invitations.update((invitations) => [{ id: 'INV-DEMO', recipient: 'n••••@demo.nexasalud.test', role: 'Rol por confirmar', scope: 'Sin acceso hasta aprobar', expires: '72 h', state: 'Pendiente' }, ...invitations]);
-    this.liveMessage.set('Invitación sintética creada localmente; no se ha enviado ningún mensaje.');
+    this.load(true);
   }
 
-  protected removeInvitation(invitationId: string): void {
-    this.invitations.update((invitations) => invitations.filter((invitation) => invitation.id !== invitationId));
-    this.liveMessage.set(`Invitación ${invitationId} retirada de la vista local.`);
+  protected selectUser(user: AdministrationUser): void {
+    this.selectedUserId.set(user.userId);
+    this.draftRoleIds.set(user.roles.map((role) => role.id));
+    this.requestedActiveState.set(null);
+    this.reason.set('');
+    this.pendingAction.set(null);
+    this.actionMessage.set(`Preparado el cambio protegido de ${user.displayName}.`);
   }
 
-  protected togglePermission(roleId: string, permission: PermissionKey): void {
-    this.roles.update((roles) => roles.map((role) => role.id === roleId ? { ...role, permissions: { ...role.permissions, [permission]: !role.permissions[permission] } } : role));
-    this.liveMessage.set(`Permiso ${permission} actualizado en borrador para ${roleId}; requiere aprobación antes de aplicarse.`);
+  protected prepareStatusChange(user: AdministrationUser, active: boolean): void {
+    this.selectUser(user);
+    this.requestedActiveState.set(active);
+    this.pendingAction.set('membership');
+    this.actionMessage.set(
+      `${active ? 'Reactivar' : 'Suspender'} requiere un motivo y una MFA completada en los últimos 15 minutos.`,
+    );
   }
 
-  protected revokeSession(sessionId: string): void {
-    this.sessions.update((sessions) => sessions.filter((session) => session.id !== sessionId));
-    this.liveMessage.set(`Sesión ${sessionId} revocada únicamente en esta simulación.`);
+  protected prepareSessionRevocation(user: AdministrationUser): void {
+    this.selectUser(user);
+    this.pendingAction.set('sessions');
+    this.actionMessage.set('La revocación cierra las sesiones en el siguiente control de servidor. Requiere MFA reciente.');
   }
 
-  protected toggleResource(resourceId: string): void {
-    this.resources.update((resources) => resources.map((resource) => resource.id === resourceId ? { ...resource, state: resource.state === 'Disponible' ? 'Mantenimiento' : 'Disponible' } : resource));
-    this.liveMessage.set(`Disponibilidad local de ${resourceId} actualizada.`);
+  protected toggleDraftRole(roleId: string, checked: boolean): void {
+    this.draftRoleIds.update((roleIds) => {
+      const next = new Set(roleIds);
+      if (checked) {
+        next.add(roleId);
+      } else {
+        next.delete(roleId);
+      }
+      return [...next];
+    });
+    this.pendingAction.set('membership');
   }
 
-  protected testIntegration(integrationId: string): void {
-    this.integrations.update((integrations) => integrations.map((integration) => integration.id === integrationId ? { ...integration, checked: 'ahora' } : integration));
-    this.liveMessage.set(`Prueba local de ${integrationId} completada; no se enviaron datos.`);
+  protected cancelAction(): void {
+    const selected = this.selectedUser();
+    this.reason.set('');
+    this.requestedActiveState.set(null);
+    this.pendingAction.set(null);
+    if (selected) {
+      this.draftRoleIds.set(selected.roles.map((role) => role.id));
+    }
+    this.actionMessage.set('Cambio protegido cancelado.');
   }
 
-  protected announce(message: string): void {
-    this.liveMessage.set(message);
+  protected submitAction(): void {
+    const selected = this.selectedUser();
+    const action = this.pendingAction();
+    const reason = this.reason().trim();
+    if (!selected || !action || reason.length < 8 || this.submitting()) {
+      return;
+    }
+
+    this.submitting.set(true);
+    this.errorMessage.set(null);
+
+    if (action === 'sessions') {
+      this.administrationApi
+        .revokeSessions(selected.userId, reason)
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          finalize(() => this.submitting.set(false)),
+        )
+        .subscribe({
+          next: (result) => {
+            this.users.update((users) => users.map((user) =>
+              user.userId === selected.userId ? { ...user, sessionsRevokedAt: result.effectiveAt } : user,
+            ));
+            this.completeAction(`Sesiones de ${selected.displayName} revocadas por el servidor.`);
+          },
+          error: () => this.reportActionFailure(),
+        });
+      return;
+    }
+
+    this.administrationApi
+      .updateMembership(selected.userId, {
+        ...(this.requestedActiveState() !== null ? { active: this.requestedActiveState() ?? undefined } : {}),
+        roleIds: this.draftRoleIds(),
+        reason,
+      })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.submitting.set(false)),
+      )
+      .subscribe({
+        next: (updatedUser) => {
+          this.users.update((users) => users.map((user) =>
+            user.userId === updatedUser.userId ? updatedUser : user,
+          ));
+          this.completeAction(`Acceso de ${updatedUser.displayName} actualizado y auditado.`);
+        },
+        error: () => this.reportActionFailure(),
+      });
   }
 
-  protected maskedPatient(patient: string): string {
-    return this.showContext() ? patient : `P-••${patient.slice(-2)}`;
+  protected initials(name: string): string {
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.slice(0, 1).toLocaleUpperCase('es'))
+      .join('');
   }
 
-  protected resetAuditFilters(): void {
-    this.auditActor.set('');
-    this.auditPatient.set('');
-    this.auditResource.set('');
-    this.auditTrace.set('');
-    this.auditOutcome.set('Todos');
-    this.liveMessage.set('Filtros de auditoría restablecidos.');
+  protected formatTimestamp(value: string | null): string {
+    if (!value) {
+      return 'Sin acceso registrado';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'Fecha no disponible';
+    }
+
+    return new Intl.DateTimeFormat('es-ES', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date);
+  }
+
+  protected hasRole(roleId: string): boolean {
+    return this.draftRoleIds().includes(roleId);
+  }
+
+  protected permissionLabel(permission: string): string {
+    const labels: Readonly<Record<string, string>> = {
+      'admin.users.read': 'Consultar usuarios',
+      'admin.users.write': 'Gestionar usuarios',
+      'admin.security.write': 'Revocar sesiones',
+      'appointments.read': 'Consultar agenda',
+      'appointments.write': 'Gestionar agenda',
+      'patients.read': 'Consultar pacientes',
+      'patients.write': 'Gestionar pacientes',
+      'prescriptions.read': 'Consultar prescripción',
+      'prescriptions.write': 'Emitir prescripción',
+      'billing.read': 'Consultar facturación',
+      'billing.write': 'Gestionar facturación',
+      'audit.read': 'Consultar auditoría',
+    };
+    return labels[permission] ?? permission;
+  }
+
+  private load(isRefresh = false): void {
+    if (isRefresh) {
+      this.refreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
+    this.errorMessage.set(null);
+
+    forkJoin({
+      overview: this.administrationApi.overview(),
+      users: this.administrationApi.users(),
+      roles: this.administrationApi.roles(),
+    })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.refreshing.set(false);
+        }),
+      )
+      .subscribe({
+        next: ({ overview, users, roles }) => {
+          this.overview.set(overview);
+          this.users.set(users);
+          this.roles.set(roles);
+          const selected = this.selectedUserId();
+          if (selected && !users.some((user) => user.userId === selected)) {
+            this.cancelAction();
+            this.selectedUserId.set(null);
+          }
+        },
+        error: () => {
+          this.errorMessage.set('No se pudo cargar la administración. Comprueba la sesión, el contexto y tus permisos.');
+        },
+      });
+  }
+
+  private completeAction(message: string): void {
+    this.reason.set('');
+    this.requestedActiveState.set(null);
+    this.pendingAction.set(null);
+    this.actionMessage.set(message);
+  }
+
+  private reportActionFailure(): void {
+    this.actionMessage.set('El servidor no aplicó el cambio. Revisa la MFA reciente, el permiso y el motivo.');
   }
 }

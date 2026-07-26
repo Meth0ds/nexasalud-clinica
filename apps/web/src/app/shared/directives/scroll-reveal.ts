@@ -15,6 +15,11 @@ export class ScrollReveal {
         return;
       }
 
+      if (!('IntersectionObserver' in globalThis)) {
+        node.classList.add('is-revealed');
+        return;
+      }
+
       const observer = new IntersectionObserver(
         (entries) => {
           if (entries.some((entry) => entry.isIntersecting)) {

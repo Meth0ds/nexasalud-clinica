@@ -98,7 +98,7 @@ final class AdministrationController extends Controller
 
         $membership = DB::transaction(function () use ($actor, $data, $user): Membership {
             $membership = Membership::query()->where('user_id', $user)->lockForUpdate()->firstOrFail();
-            abort_if($membership->user_id === $actor->getKey() && ($data['active'] ?? true) === false, Response::HTTP_CONFLICT);
+            abort_if($membership->user_id === $actor->getKey(), Response::HTTP_CONFLICT);
 
             if (array_key_exists('active', $data)) {
                 $membership->is_active = (bool) $data['active'];

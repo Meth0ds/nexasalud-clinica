@@ -28,7 +28,7 @@ interface AdminSection {
   selector: 'app-administration',
   imports: [MatButtonModule, MatCheckboxModule, MatProgressSpinnerModule, AppIcon, ScrollReveal],
   templateUrl: './administration.html',
-  styleUrls: ['./administration.scss', './administration-content.scss'],
+  styleUrls: ['./administration.scss', './administration-content.scss', './administration-operations.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Administration {

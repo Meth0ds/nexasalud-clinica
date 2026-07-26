@@ -11,6 +11,16 @@ class PrescriptionResource extends JsonResource
     public function toArray(Request $request): array
     {
         $patient = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);
+        $matchingAllergies = collect();
+
+        if ($this->relationLoaded('patient') && $this->patient?->relationLoaded('allergies') && $this->relationLoaded('items')) {
+            $medicationCodes = $this->items->pluck('medication_code')->filter();
+            $matchingAllergies = $this->patient->allergies
+                ->where('clinical_status', 'active')
+                ->filter(fn ($allergy): bool => $medicationCodes->contains($allergy->substance_code))
+                ->values();
+        }
+
         return [
             'id' => $this->getKey(),
             'version' => $this->lock_version,
@@ -26,15 +36,12 @@ class PrescriptionResource extends JsonResource
             'sentAt' => $this->sent_at?->toIso8601String(),
             'createdAt' => $this->created_at?->toIso8601String(),
             'safetyAlerts' => $this->when(
-                $this->relationLoaded('patient') && $this->patient?->relationLoaded('allergies'),
-                fn () => $this->patient->allergies
-                    ->where('clinical_status', 'active')
-                    ->map(fn ($allergy): array => [
-                        'code' => $allergy->substance_code,
-                        'label' => $allergy->substance_display,
-                        'criticality' => $allergy->criticality,
-                    ])
-                    ->values(),
+                $this->relationLoaded('patient') && $this->patient?->relationLoaded('allergies') && $this->relationLoaded('items'),
+                fn () => $matchingAllergies->map(fn ($allergy): array => [
+                    'code' => $allergy->substance_code,
+                    'label' => $allergy->substance_display,
+                    'criticality' => $allergy->criticality,
+                ])->values(),
             ),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->getKey(),

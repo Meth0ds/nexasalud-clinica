@@ -17,7 +17,9 @@ export class PatientsService {
   }
 
   get(id: string): Observable<Patient> {
-    return this.api.get<Patient>(`/api/v1/patients/${encodeURIComponent(id)}`);
+    return this.api
+      .get<{ readonly data: Patient }>(`/api/v1/patients/${encodeURIComponent(id)}`)
+      .pipe(map((response) => response.data));
   }
 
   create(input: {
@@ -29,8 +31,10 @@ export class PatientsService {
     readonly phone?: string;
     readonly preferredLanguage: 'es';
   }): Observable<Patient> {
-    return this.api.post<Patient, typeof input>('/api/v1/patients', input, {
-      idempotencyKey: globalThis.crypto.randomUUID(),
-    });
+    return this.api
+      .post<{ readonly data: Patient }, typeof input>('/api/v1/patients', input, {
+        idempotencyKey: globalThis.crypto.randomUUID(),
+      })
+      .pipe(map((response) => response.data));
   }
 }

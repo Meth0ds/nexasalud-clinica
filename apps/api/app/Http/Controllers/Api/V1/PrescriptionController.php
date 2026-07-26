@@ -126,7 +126,8 @@ final class PrescriptionController extends Controller
 
         if ($next === PrescriptionStatus::Signed) {
             $this->requireRecentMfa($request);
-            abort_if($warnings !== [] && empty($data['reason']), Response::HTTP_CONFLICT);
+            $reason = trim((string) ($data['reason'] ?? ''));
+            abort_if($warnings !== [] && mb_strlen($reason) < 8, Response::HTTP_CONFLICT);
         }
 
         $transitioned = $prescription->transitionTo($next, $this->actor($request), $data['reason'] ?? null);

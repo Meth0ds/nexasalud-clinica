@@ -1,114 +1,63 @@
 <div class="nexa-page prescriptions-page">
   <header class="nexa-page__heading" appScrollReveal>
-    <div>
-      <p class="nexa-eyebrow">Seguridad farmacoterapéutica</p>
-      <h1>Prescripciones</h1>
-      <p class="nexa-page__subtitle">Prepara, revisa, firma y transmite medicación con trazabilidad de extremo a extremo.</p>
-    </div>
-    <div class="nexa-page__actions">
-      <button mat-stroked-button class="nexa-btn-secondary"><app-icon name="search" [size]="17" /> Catálogo CIMA</button>
-      <button mat-flat-button class="nexa-btn-primary" (click)="openBuilder()"><app-icon name="plus" [size]="17" /> Nueva prescripción</button>
-    </div>
+    <div><p class="nexa-eyebrow">Seguridad farmacoterapéutica</p><h1>Prescripciones</h1><p class="nexa-page__subtitle">Borrador, revisión y firma clínica con comprobación de alergias, MFA reciente y trazabilidad en servidor.</p></div>
+    <div class="nexa-page__actions"><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="loading()" (click)="openBuilder()"><app-icon name="plus" [size]="17" /> Nueva prescripción</button></div>
   </header>
 
-  <section class="nexa-grid nexa-grid--4 prescription-metrics" appScrollReveal>
-    <article class="nexa-card"><span class="metric-icon"><app-icon name="spark" /></span><div><small>Pendientes de firma</small><strong>01</strong><p>Requiere MFA</p></div></article>
-    <article class="nexa-card"><span class="metric-icon metric-icon--green"><app-icon name="check" /></span><div><small>Enviadas este mes</small><strong>84</strong><p>100% confirmadas</p></div></article>
-    <article class="nexa-card"><span class="metric-icon metric-icon--blue"><app-icon name="shield" /></span><div><small>Alertas resueltas</small><strong>06</strong><p>Interacciones y alergias</p></div></article>
-    <article class="nexa-card"><span class="metric-icon metric-icon--coral"><app-icon name="clock" /></span><div><small>Renovaciones</small><strong>04</strong><p>Próximos 7 días</p></div></article>
-  </section>
+  @if (loading()) {
+    <section class="prescriptions-loading nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Cargando prescripciones autorizadas…</span></section>
+  } @else if (errorMessage(); as error) {
+    <section class="prescriptions-error nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>Prescripción no disponible</strong><p>{{ error }}</p></div></section>
+  } @else {
+    <section class="nexa-grid nexa-grid--4 prescription-metrics" appScrollReveal>
+      <article class="nexa-card"><span class="metric-icon"><app-icon name="clock" /></span><div><small>Pendientes de firma</small><strong>{{ counts().pendingReview }}</strong><p>MFA reciente requerida</p></div></article>
+      <article class="nexa-card"><span class="metric-icon metric-icon--green"><app-icon name="check" /></span><div><small>Firmadas</small><strong>{{ counts().signed }}</strong><p>Listas para transmisión</p></div></article>
+      <article class="nexa-card"><span class="metric-icon metric-icon--blue"><app-icon name="shield" /></span><div><small>Alertas clínicas</small><strong>{{ counts().safetyAlerts }}</strong><p>Revisión obligatoria</p></div></article>
+      <article class="nexa-card"><span class="metric-icon metric-icon--coral"><app-icon name="spark" /></span><div><small>Enviadas</small><strong>{{ counts().sent }}</strong><p>Proveedor configurado</p></div></article>
+    </section>
 
-  <section class="nexa-card nexa-section" appScrollReveal [revealDelay]="90">
-    <div class="nexa-card__header">
-      <div><h2>Actividad reciente</h2><p>Solo prescripciones del centro y ámbito autorizados</p></div>
-      <label class="nexa-search"><app-icon name="search" [size]="16" /><input type="search" placeholder="Buscar paciente o referencia" /></label>
-    </div>
-    <div class="nexa-table-wrap">
-      <table class="nexa-table">
-        <thead><tr><th>Paciente</th><th>Referencia</th><th>Contenido</th><th>Prescriptor</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody>
-          @for (row of prescriptions(); track row.id) {
-            <tr>
-              <td><div class="nexa-person"><span class="nexa-avatar">{{ row.initials }}</span><span><strong>{{ row.patient }}</strong><small>{{ row.created }}</small></span></div></td>
-              <td><span class="nexa-mono">{{ row.id }}</span></td>
-              <td>{{ row.medications }}</td>
-              <td>{{ row.prescriber }}</td>
-              <td><span class="nexa-chip nexa-chip--{{ row.tone }}">{{ row.status }}</span></td>
-              <td><div class="row-actions">
-                <button mat-button (click)="downloadPdf(row)"><app-icon name="download" [size]="15" /> PDF</button>
-                @if (row.status === 'Firmada') { <button mat-flat-button class="send-button" (click)="send(row)">Enviar</button> }
-                @if (row.status === 'Pendiente de firma') { <button mat-button (click)="openBuilder()">Revisar</button> }
-              </div></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <section class="nexa-card nexa-section" appScrollReveal [revealDelay]="90">
+      <div class="nexa-card__header"><div><h2>Actividad reciente</h2><p>Solo prescripciones autorizadas para el tenant activo.</p></div><label class="nexa-search"><app-icon name="search" [size]="16" /><span class="sr-only">Buscar prescripciones</span><input type="search" placeholder="paciente, medicamento o referencia" [value]="query()" (input)="query.set($any($event.target).value)" /></label></div>
+      <div class="nexa-table-wrap"><table class="nexa-table"><thead><tr><th>Paciente</th><th>Referencia</th><th>Contenido</th><th>Prescriptor</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+        @for (prescription of filteredPrescriptions(); track prescription.id) {
+          <tr><td><div class="nexa-person"><span class="nexa-avatar">{{ prescription.patientInitials }}</span><span><strong>{{ prescription.patientDisplayName }}</strong><small>{{ formatDate(prescription.createdAt) }}</small></span></div></td><td><span class="nexa-mono">{{ prescription.id }}</span></td><td><strong>{{ prescription.items.length }} {{ prescription.items.length === 1 ? 'medicamento' : 'medicamentos' }}</strong>@if (prescription.safetyAlerts.length) { <small class="safety-alert"><app-icon name="shield" [size]="13" /> {{ prescription.safetyAlerts.length }} alerta(s) clínica(s)</small> }</td><td>{{ prescription.prescriberName ?? 'No disponible' }}</td><td><span class="nexa-chip nexa-chip--{{ statusTone(prescription.status) }}">{{ statusLabel(prescription.status) }}</span></td><td><div class="row-actions"><button mat-button type="button" [disabled]="pdfId() === prescription.id || (prescription.status !== 'signed' && prescription.status !== 'sent')" (click)="downloadPdf(prescription)"><app-icon name="download" [size]="15" /> {{ pdfId() === prescription.id ? 'PDF…' : 'PDF' }}</button>@if (prescription.status === 'draft') { <button mat-stroked-button type="button" [disabled]="transitioningId() === prescription.id" (click)="requestReview(prescription)">Revisar</button> } @if (prescription.status === 'pending_review') { <button mat-flat-button class="send-button" type="button" [disabled]="transitioningId() === prescription.id" (click)="sign(prescription)">Firmar con MFA</button> } @if (prescription.status === 'signed') { <span class="connector-note">Transmisión externa pendiente de proveedor</span> }</div></td></tr>
+        } @empty { <tr><td colspan="6" class="empty-cell">No hay prescripciones que coincidan con la búsqueda.</td></tr> }
+      </tbody></table></div>
+    </section>
 
-  <section class="safety-strip nexa-section" appScrollReveal>
-    <div><app-icon name="shield" [size]="20" /><span><strong>Verificación clínica antes de firmar</strong><small>Alergias, duplicidades e interacciones se contrastan con el tratamiento activo.</small></span></div>
-    <div><app-icon name="lock" [size]="20" /><span><strong>Firma reforzada</strong><small>Las credenciales y el certificado nunca se almacenan en el navegador.</small></span></div>
-    <div><app-icon name="eye" [size]="20" /><span><strong>Trazabilidad completa</strong><small>Creación, cambios, firma, envío, descarga y anulación quedan auditados.</small></span></div>
-  </section>
+    <section class="safety-strip nexa-section" appScrollReveal><div><app-icon name="shield" [size]="20" /><span><strong>Comprobación de alergias</strong><small>Las advertencias se devuelven desde la historia autorizada; una firma con alerta exige motivo en el servidor.</small></span></div><div><app-icon name="lock" [size]="20" /><span><strong>Firma reforzada</strong><small>La transición a firma exige MFA reciente y permiso específico; no se confía en controles del navegador.</small></span></div><div><app-icon name="eye" [size]="20" /><span><strong>PDF privado</strong><small>El documento se genera cifrado en reposo, se comprueba su integridad y se descarga con no-store.</small></span></div></section>
+  }
 </div>
 
 @if (builderOpen()) {
   <div class="builder-backdrop" (click)="closeBuilder()" (keydown.escape)="closeBuilder()" tabindex="-1"></div>
   <aside class="prescription-builder" role="dialog" aria-modal="true" aria-labelledby="builder-title">
-    <header>
-      <div><p class="nexa-eyebrow">Borrador protegido</p><h2 id="builder-title">Nueva prescripción</h2></div>
-      <button mat-icon-button aria-label="Cerrar" (click)="closeBuilder()"><app-icon name="close" /></button>
-    </header>
+    <header><div><p class="nexa-eyebrow">Borrador protegido</p><h2 id="builder-title">Nueva prescripción</h2></div><button mat-icon-button aria-label="Cerrar" type="button" [disabled]="saving()" (click)="closeBuilder()"><app-icon name="close" /></button></header>
+    <div class="builder-scroll"><section class="builder-section"><h3><span>1</span> Paciente e indicación</h3><form [formGroup]="headerForm" class="nexa-field-grid"><mat-form-field appearance="outline"><mat-label>Paciente</mat-label><mat-select formControlName="patientId"><mat-option value="">Selecciona un paciente</mat-option>@for (patient of patients(); track patient.id) { <mat-option [value]="patient.id">{{ patient.displayName }} · {{ patient.ageRange }}</mat-option> }</mat-select><mat-error>Selecciona un paciente</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Indicación clínica</mat-label><textarea matInput rows="2" formControlName="clinicalIndication" maxlength="1000"></textarea><mat-error>Indica el motivo terapéutico</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Vigencia (opcional)</mat-label><input matInput type="date" formControlName="validUntil" /></mat-form-field></form></section>
+      <section class="builder-section"><h3><span>2</span> Medicación</h3>@for (line of draftLines(); track $index) { <article class="medication-line"><span class="medication-line__icon"><app-icon name="spark" [size]="18" /></span><div><strong>{{ line.display }}</strong><small>{{ line.doseAmount }} {{ line.doseUnitCode }} · {{ line.routeCode }}</small><p>{{ line.frequencyCode }} · {{ line.durationValue ?? 'sin duración' }} {{ line.durationUnit ?? '' }}</p></div><button mat-icon-button type="button" aria-label="Quitar medicamento" [disabled]="saving()" (click)="removeMedication($index)"><app-icon name="close" [size]="16" /></button></article> }
+        <form [formGroup]="medicationForm" class="medication-form" (ngSubmit)="addMedication()"><mat-form-field appearance="outline" class="medication-search"><mat-label>Sistema de código</mat-label><input matInput formControlName="codeSystem" /><mat-hint>Utiliza un catálogo autorizado, por ejemplo CIMA.</mat-hint></mat-form-field><mat-form-field appearance="outline"><mat-label>Código</mat-label><input matInput formControlName="code" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Medicamento</mat-label><input matInput formControlName="display" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Dosis</mat-label><input matInput type="number" min="0.01" formControlName="doseAmount" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Unidad</mat-label><input matInput formControlName="doseUnitCode" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Vía</mat-label><input matInput formControlName="routeCode" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Frecuencia</mat-label><input matInput formControlName="frequencyCode" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Duración</mat-label><input matInput type="number" min="1" formControlName="durationValue" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Unidad de duración</mat-label><input matInput formControlName="durationUnit" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Cantidad</mat-label><input matInput type="number" min="0.01" formControlName="quantity" /></mat-form-field><mat-form-field appearance="outline"><mat-label>Unidad de cantidad</mat-label><input matInput formControlName="quantityUnitCode" /></mat-form-field><mat-form-field appearance="outline" class="medication-notes"><mat-label>Indicaciones para el paciente</mat-label><textarea matInput rows="2" formControlName="instructions"></textarea></mat-form-field><button mat-stroked-button class="nexa-btn-secondary add-line" type="submit" [disabled]="saving()"><app-icon name="plus" [size]="16" /> Añadir medicamento</button></form>
+      </section></div>
+    <footer><span><app-icon name="shield" [size]="15" /> Se validarán {{ draftLines().length }} líneas en el servidor.</span><button mat-stroked-button type="button" [disabled]="saving()" (click)="closeBuilder()">Cancelar</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="saving()" (click)="saveDraft()">{{ saving() ? 'Guardando…' : 'Crear borrador' }}</button></footer>
+  </aside>
+}
 
-    @if (!signing()) {
-      <div class="builder-scroll">
-        <section class="builder-section">
-          <h3><span>1</span> Paciente e indicación</h3>
-          <form [formGroup]="headerForm" class="nexa-field-grid">
-            <mat-form-field appearance="outline"><mat-label>Paciente</mat-label><input matInput formControlName="patient" placeholder="Buscar paciente" autocomplete="off" /><mat-error>Selecciona un paciente</mat-error></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Indicación clínica</mat-label><input matInput formControlName="indication" maxlength="500" /><mat-error>Indica el motivo terapéutico</mat-error></mat-form-field>
-            <mat-checkbox formControlName="confidentialDispensing">Dispensación confidencial diferenciada</mat-checkbox>
-          </form>
-          @if (headerForm.controls.patient.value) {
-            <div class="patient-safety"><span class="patient-safety__alert"><app-icon name="shield" [size]="18" /></span><span><strong>1 alergia registrada</strong><small>Penicilinas · reacción moderada. Verifica antes de continuar.</small></span><button mat-button>Ver tratamiento activo</button></div>
-          }
-        </section>
-
-        <section class="builder-section">
-          <h3><span>2</span> Medicación</h3>
-          @for (line of draftLines(); track line.id) {
-            <article class="medication-line">
-              <span class="medication-line__icon"><app-icon name="spark" [size]="18" /></span>
-              <div><strong>{{ line.name }}</strong><small>{{ line.presentation }} · {{ line.dose }}</small><p>{{ line.frequency }} · {{ line.duration }} @if (line.instructions) { · {{ line.instructions }} }</p></div>
-              <span class="nexa-chip nexa-chip--success">Sin alertas</span>
-              <button mat-icon-button aria-label="Quitar medicamento" (click)="removeMedication(line.id)"><app-icon name="close" [size]="16" /></button>
-            </article>
-          }
-
-          <form [formGroup]="medicationForm" class="medication-form" (ngSubmit)="addMedication()">
-            <mat-form-field appearance="outline" class="medication-search"><mat-label>Medicamento</mat-label><input matInput formControlName="medication" placeholder="Nombre o código nacional" autocomplete="off" /><mat-hint>Catálogo oficial AEMPS/CIMA</mat-hint><mat-error>Selecciona un medicamento</mat-error></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Presentación</mat-label><mat-select formControlName="presentation"><mat-option value="Comprimidos">Comprimidos</mat-option><mat-option value="Cápsulas">Cápsulas</mat-option><mat-option value="Solución oral">Solución oral</mat-option><mat-option value="Tópica">Tópica</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Dosis</mat-label><input matInput formControlName="dose" placeholder="p. ej. 500 mg" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Vía</mat-label><mat-select formControlName="route"><mat-option value="Oral">Oral</mat-option><mat-option value="Tópica">Tópica</mat-option><mat-option value="Inhalatoria">Inhalatoria</mat-option><mat-option value="Subcutánea">Subcutánea</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Frecuencia</mat-label><mat-select formControlName="frequency"><mat-option value="Cada 8 horas">Cada 8 horas</mat-option><mat-option value="Cada 12 horas">Cada 12 horas</mat-option><mat-option value="Cada 24 horas">Cada 24 horas</mat-option><mat-option value="Según necesidad">Según necesidad</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Duración</mat-label><mat-select formControlName="duration"><mat-option value="3 días">3 días</mat-option><mat-option value="7 días">7 días</mat-option><mat-option value="14 días">14 días</mat-option><mat-option value="30 días">30 días</mat-option><mat-option value="Tratamiento crónico">Tratamiento crónico</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline" class="medication-notes"><mat-label>Indicaciones para el paciente</mat-label><textarea matInput rows="2" formControlName="instructions"></textarea></mat-form-field>
-            <button mat-stroked-button class="nexa-btn-secondary add-line" type="submit"><app-icon name="plus" [size]="16" /> Añadir medicamento</button>
-          </form>
-        </section>
-      </div>
-      <footer><span><app-icon name="shield" [size]="15" /> Se comprobarán {{ draftLines().length }} líneas antes de firmar</span><button mat-stroked-button (click)="closeBuilder()">Guardar borrador</button><button mat-flat-button class="nexa-btn-primary" (click)="prepareSignature()">Revisar y firmar</button></footer>
-    } @else {
-      <div class="signature-step">
-        <span class="signature-step__icon"><app-icon name="lock" [size]="29" /></span>
-        <p class="nexa-eyebrow">Confirmación reforzada</p>
-        <h2>Firma clínica</h2>
-        <p>Confirma que has revisado paciente, alergias, tratamiento activo, dosis e instrucciones. Esta acción quedará vinculada a tu identidad profesional.</p>
-        <div class="signature-summary"><div><small>Paciente</small><strong>{{ headerForm.controls.patient.value }}</strong></div><div><small>Medicamentos</small><strong>{{ draftLines().length }}</strong></div><div><small>Prescriptor</small><strong>Dra. Elena Soler</strong></div></div>
-        <div class="mfa-check"><app-icon name="shield" [size]="20" /><span><strong>Identidad verificada</strong><small>Llave de acceso · nivel de garantía alto</small></span><span class="nexa-chip nexa-chip--success">MFA</span></div>
-        <div class="signature-actions"><button mat-stroked-button class="nexa-btn-secondary" (click)="signing.set(false)">Volver a revisar</button><button mat-flat-button class="nexa-btn-primary" (click)="confirmSignature()">Firmar prescripción</button></div>
-      </div>
-    }
+@if (signingPrescription(); as prescription) {
+  <div class="builder-backdrop" (click)="closeSignature()" (keydown.escape)="closeSignature()" tabindex="-1"></div>
+  <aside class="prescription-builder signature-dialog" role="dialog" aria-modal="true" aria-labelledby="signature-title">
+    <header><div><p class="nexa-eyebrow">Firma clínica reforzada</p><h2 id="signature-title">Confirmar firma</h2></div><button mat-icon-button aria-label="Cerrar" type="button" [disabled]="transitioningId() === prescription.id" (click)="closeSignature()"><app-icon name="close" /></button></header>
+    <div class="signature-step">
+      <span class="signature-step__icon"><app-icon name="shield" [size]="31" /></span>
+      <p class="nexa-eyebrow">Acción clínica de alto impacto</p>
+      <h2>Vas a firmar esta prescripción</h2>
+      <p>La aplicación no puede confirmar la MFA por sí sola: el servidor exigirá una MFA válida de menos de 15 minutos, el permiso de firma y la versión actual del documento.</p>
+      <div class="signature-summary"><div><small>Paciente</small><strong>{{ prescription.patientDisplayName }}</strong></div><div><small>Contenido</small><strong>{{ prescription.items.length }} medicamento(s)</strong></div><div><small>Referencia</small><strong>{{ prescription.id }}</strong></div></div>
+      @if (prescription.safetyAlerts.length > 0) {
+        <div class="patient-safety signature-warning" role="alert"><span class="patient-safety__alert"><app-icon name="shield" [size]="18" /></span><span><strong>Advertencia de alergia coincidente</strong><small>{{ prescription.safetyAlerts.length }} alerta(s) coinciden con la medicación. Debes documentar el motivo clínico de la firma; el servidor también lo exigirá.</small></span></div>
+        <form [formGroup]="signatureForm" class="signature-reason"><mat-form-field appearance="outline"><mat-label>Motivo clínico de la excepción</mat-label><textarea matInput rows="3" formControlName="reason" maxlength="500"></textarea><mat-hint>Mínimo 8 caracteres; se incorpora al registro de trazabilidad.</mat-hint><mat-error>Indica un motivo clínico de al menos 8 caracteres.</mat-error></mat-form-field></form>
+      } @else {
+        <div class="mfa-check"><app-icon name="check" [size]="18" /><span><strong>Sin alerta de alergia coincidente</strong><small>La validación final de interacciones y la MFA se ejecuta siempre en el servidor.</small></span></div>
+      }
+      <div class="signature-actions"><button mat-stroked-button type="button" [disabled]="transitioningId() === prescription.id" (click)="closeSignature()">Cancelar</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="transitioningId() === prescription.id" (click)="confirmSignature()"><app-icon name="lock" [size]="16" /> {{ transitioningId() === prescription.id ? 'Verificando…' : 'Firmar con MFA' }}</button></div>
+    </div>
   </aside>
 }

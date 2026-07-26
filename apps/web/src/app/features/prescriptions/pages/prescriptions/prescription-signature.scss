@@ -1,0 +1,22 @@
+.signature-step { display: grid; overflow-y: auto; flex: 1; place-items: center; align-content: center; padding: 45px; text-align: center; }
+.signature-step__icon { display: grid; width: 68px; height: 68px; margin-bottom: 22px; place-items: center; border-radius: 22px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
+.signature-step h2 { font-size: 2.3rem; }
+.signature-step > p:not(.nexa-eyebrow) { max-width: 540px; margin: 12px auto 22px; color: var(--nexa-ink-soft); font-size: 0.72rem; line-height: 1.6; }
+.signature-summary { display: grid; width: 100%; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--nexa-border); border-radius: 13px; }
+.signature-summary div { padding: 14px; }
+.signature-summary div + div { border-left: 1px solid var(--nexa-border); }
+.signature-summary small,
+.signature-summary strong { display: block; }
+.signature-summary small { color: var(--nexa-ink-soft); font-size: 0.52rem; text-transform: uppercase; }
+.signature-summary strong { margin-top: 4px; font-size: 0.66rem; }
+.mfa-check { display: flex; align-items: center; width: 100%; gap: 10px; margin-top: 14px; padding: 13px; border: 1px solid var(--nexa-border); border-radius: 12px; color: var(--nexa-success); background: var(--nexa-success-soft); text-align: left; }
+.mfa-check > span:nth-child(2) { flex: 1; color: var(--nexa-ink); }
+.mfa-check strong,
+.mfa-check small { display: block; }
+.mfa-check strong { font-size: 0.64rem; }
+.mfa-check small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.53rem; }
+.signature-actions { display: flex; width: 100%; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+.signature-dialog { width: min(690px, 95vw); }
+.signature-warning { width: 100%; margin-top: 14px; text-align: left; }
+.signature-reason { width: 100%; margin-top: 14px; text-align: left; }
+.signature-reason mat-form-field { width: 100%; }

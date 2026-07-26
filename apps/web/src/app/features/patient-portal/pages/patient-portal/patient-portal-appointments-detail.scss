@@ -1,0 +1,127 @@
+.appointment-detail h2 {
+  margin: 8px 0 2px;
+  font-size: 1.35rem;
+}
+.appointment-detail > p {
+  margin: 0 0 9px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.63rem;
+}
+.appointment-detail > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.57rem;
+}
+.appointment-detail > div span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--nexa-primary);
+  font-weight: 700;
+}
+.appointment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 7px;
+}
+.appointment-actions button {
+  font-size: 0.61rem;
+}
+.cancel-confirmation {
+  display: flex;
+  align-items: center;
+  grid-column: 1 / -1;
+  gap: 11px;
+  margin: 1px -3px -2px;
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--nexa-danger) 25%, var(--nexa-border));
+  border-radius: 13px;
+  background: var(--nexa-danger-soft);
+}
+.cancel-confirmation > div {
+  flex: 1;
+}
+.cancel-confirmation strong {
+  font-size: 0.64rem;
+}
+.cancel-confirmation p {
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.54rem;
+}
+.cancel-confirmation button:last-child {
+  color: #fff;
+  background: var(--nexa-danger);
+}
+.past-appointments {
+  overflow: hidden;
+  border: 1px solid var(--nexa-border);
+  border-radius: 18px;
+  background: var(--nexa-surface);
+}
+.past-appointments article {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  padding: 16px 19px;
+}
+.past-appointments article + article {
+  border-top: 1px solid var(--nexa-border);
+}
+.past-appointments article > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--nexa-success);
+  background: var(--nexa-success-soft);
+}
+.past-appointments small,
+.past-appointments strong,
+.past-appointments p {
+  display: block;
+  margin: 0;
+}
+.past-appointments small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.past-appointments strong {
+  margin-top: 2px;
+  font-size: 0.66rem;
+}
+.past-appointments p {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+}
+.appointment-policy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px;
+  padding: 15px 17px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 14px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+}
+.appointment-policy > div {
+  min-width: 0;
+  flex: 1;
+  color: var(--nexa-ink);
+}
+.appointment-policy strong {
+  font-size: 0.62rem;
+}
+.appointment-policy p {
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.54rem;
+}

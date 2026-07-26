@@ -1,0 +1,172 @@
+.portal-workspace {
+  min-width: 0;
+}
+.portal-topbar {
+  position: sticky;
+  z-index: 45;
+  top: 0;
+  display: flex;
+  align-items: center;
+  min-height: 78px;
+  gap: 15px;
+  padding: 12px clamp(18px, 3vw, 42px);
+  border-bottom: 1px solid var(--nexa-border);
+  background: color-mix(in srgb, var(--nexa-canvas) 86%, transparent);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+.portal-menu {
+  display: none;
+  width: 41px;
+  height: 41px;
+  place-items: center;
+  border: 1px solid var(--nexa-border);
+  border-radius: 12px;
+  color: var(--nexa-ink);
+  background: var(--nexa-surface);
+}
+.topbar-context {
+  min-width: 0;
+  flex: 1;
+}
+.topbar-context small,
+.topbar-context strong {
+  display: block;
+}
+.topbar-context small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.56rem;
+  font-weight: 720;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.topbar-context strong {
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.02rem;
+  font-weight: 570;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.demo-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 29px;
+  gap: 7px;
+  margin-right: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 999px;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface);
+  font-size: 0.57rem;
+  font-weight: 700;
+}
+.demo-pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nexa-accent);
+}
+.topbar-action,
+.profile-button {
+  position: relative;
+  display: grid;
+  min-width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--nexa-border);
+  border-radius: 12px;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface);
+  cursor: pointer;
+}
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border: 2px solid var(--nexa-surface);
+  border-radius: 50%;
+  background: var(--nexa-accent);
+}
+.profile-button {
+  display: flex;
+  padding: 3px 7px 3px 4px;
+}
+.profile-button > span {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--nexa-primary-strong);
+  background: var(--nexa-primary-soft);
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.portal-main {
+  min-height: calc(100dvh - 128px);
+}
+.portal-view {
+  width: min(100%, 1450px);
+  margin: 0 auto;
+  padding: clamp(25px, 3.4vw, 48px);
+}
+.portal-view h1,
+.portal-view h2,
+.portal-view h3 {
+  margin: 0;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-weight: 540;
+  letter-spacing: -0.025em;
+}
+.portal-view h1 {
+  font-size: clamp(2.1rem, 4vw, 3.65rem);
+  line-height: 1;
+}
+.portal-view h2 {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+.view-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 27px;
+}
+.view-heading > div > p:last-child {
+  max-width: 700px;
+  margin: 9px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.view-heading .nexa-btn-primary,
+.view-heading .nexa-btn-secondary {
+  flex: 0 0 auto;
+}
+.demo-data-label,
+.security-grade {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 999px;
+  color: var(--nexa-primary);
+  background: var(--nexa-surface);
+  font-size: 0.6rem;
+  font-weight: 760;
+  white-space: nowrap;
+}

@@ -1,0 +1,111 @@
+.document-vault,
+.invoice-ledger {
+  overflow: hidden;
+  border: 1px solid var(--nexa-border);
+  border-radius: 19px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow-soft);
+}
+.document-vault > header,
+.invoice-ledger > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 19px 21px;
+  border-bottom: 1px solid var(--nexa-border);
+}
+.document-vault > header > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.document-vault > header > div > span {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.document-vault header p,
+.invoice-ledger header p {
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+}
+.vault-search {
+  display: flex;
+  align-items: center;
+  min-width: min(270px, 100%);
+  min-height: 40px;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 11px;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface-muted);
+}
+.vault-search:focus-within {
+  border-color: var(--nexa-primary);
+  box-shadow: var(--nexa-focus);
+}
+.vault-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  color: var(--nexa-ink);
+  background: transparent;
+  font-size: 0.59rem;
+}
+.document-list article,
+.invoice-ledger > article {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  gap: 13px;
+  padding: 15px 20px;
+}
+.document-list article + article,
+.invoice-ledger > article + article {
+  border-top: 1px solid var(--nexa-border);
+}
+.document-list article > span:first-child,
+.invoice-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.document-list strong,
+.document-list small {
+  display: block;
+}
+.document-list strong {
+  font-size: 0.66rem;
+}
+.document-list small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.53rem;
+}
+.document-list button {
+  color: var(--nexa-primary);
+}
+.document-vault > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid var(--nexa-border);
+  background: var(--nexa-surface-muted);
+}
+.document-vault > footer span {
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+}

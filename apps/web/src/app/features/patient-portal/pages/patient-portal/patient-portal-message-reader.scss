@@ -1,0 +1,102 @@
+.message-reader {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.message-reader > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--nexa-border);
+}
+.message-reader > header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.message-reader > header p,
+.message-reader > header strong,
+.message-reader > header small {
+  display: block;
+  margin: 0;
+}
+.message-reader > header strong {
+  font-size: 0.63rem;
+}
+.message-reader > header small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.message-reader > header > button {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  color: var(--nexa-ink-soft);
+  background: transparent;
+}
+.message-reader > div {
+  flex: 1;
+  padding: clamp(24px, 4vw, 43px);
+}
+.message-reader > div h2 {
+  margin: 13px 0 15px;
+  font-size: 1.65rem;
+}
+.message-reader > div > p {
+  max-width: 760px;
+  color: var(--nexa-ink);
+  font-size: 0.72rem;
+  line-height: 1.75;
+}
+.reader-attachment {
+  display: flex;
+  align-items: center;
+  max-width: 570px;
+  gap: 11px;
+  margin-top: 25px;
+  padding: 13px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 13px;
+  background: var(--nexa-surface-muted);
+}
+.reader-attachment > span {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.reader-attachment p {
+  flex: 1;
+  margin: 0;
+}
+.reader-attachment strong,
+.reader-attachment small {
+  display: block;
+}
+.reader-attachment strong {
+  font-size: 0.6rem;
+}
+.reader-attachment small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+}
+.message-reader > footer {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--nexa-border);
+}
+.message-reader > footer span {
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+}

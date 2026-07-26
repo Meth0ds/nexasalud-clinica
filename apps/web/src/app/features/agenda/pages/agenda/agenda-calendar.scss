@@ -1,0 +1,22 @@
+.calendar-card { min-width: 0; overflow-x: auto; }
+.calendar-header { position: sticky; z-index: 7; top: 0; display: grid; min-width: 650px; grid-template-columns: 70px repeat(3, 1fr); border-bottom: 1px solid var(--nexa-border); background: var(--nexa-surface); }
+.timezone { display: grid; place-items: center; color: var(--nexa-ink-soft); font-size: 0.54rem; }
+.practitioner-head { display: flex; align-items: center; gap: 9px; min-height: 68px; padding: 10px 14px; border-left: 1px solid var(--nexa-border); }
+.practitioner-head .nexa-avatar { width: 34px; height: 34px; border-radius: 10px; }
+.practitioner-head > span:nth-child(2) { min-width: 0; flex: 1; }
+.practitioner-head strong,
+.practitioner-head small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.practitioner-head strong { font-size: 0.65rem; }
+.practitioner-head small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.52rem; }
+.practitioner-head > i { width: 6px; height: 6px; border-radius: 50%; background: #6bc58a; }
+.calendar-body { display: grid; min-width: 650px; height: 900px; grid-template-columns: 70px 1fr; }
+.time-column { position: relative; border-right: 1px solid var(--nexa-border); }
+.time-column time { display: block; height: 75px; padding: 7px 11px 0 0; color: var(--nexa-ink-soft); font-size: 0.54rem; text-align: right; }
+.schedule-grid { position: relative; display: grid; height: 900px; grid-template-columns: repeat(3, 1fr); background: repeating-linear-gradient(to right, transparent 0, transparent calc(33.333% - 1px), var(--nexa-border) calc(33.333% - 1px), var(--nexa-border) 33.333%); }
+.hour-line { position: absolute; right: 0; left: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--nexa-border); }
+.hour-line span,
+.hour-line i { height: 37px; border-bottom: 1px dashed color-mix(in srgb, var(--nexa-border) 65%, transparent); }
+.current-time { position: absolute; z-index: 5; right: 0; left: -52px; display: flex; align-items: center; color: var(--nexa-danger); pointer-events: none; }
+.current-time span { width: 48px; padding-right: 5px; background: var(--nexa-surface); font-size: 0.5rem; font-weight: 760; text-align: right; }
+.current-time i { height: 1px; flex: 1; background: var(--nexa-danger); }
+.current-time i::before { display: block; width: 6px; height: 6px; margin-top: -2px; border-radius: 50%; background: var(--nexa-danger); content: ''; }

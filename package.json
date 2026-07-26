@@ -1,0 +1,31 @@
+{
+  "name": "nexasalud",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma segura de gestión de citas médicas",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "pnpm": ">=11.0.0 <12"
+  },
+  "scripts": {
+    "dev": "pnpm run infra:up && pnpm run dev:web",
+    "dev:web": "pnpm --filter @nexasalud/web dev",
+    "dev:api": "docker compose --env-file infra/.env -f infra/compose.yaml up -d --build --wait api gateway",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:ci": "pnpm -r --if-present test:ci",
+    "test:api": "docker compose --env-file infra/.env -f infra/compose.yaml exec -T api php artisan test",
+    "lint:api": "docker compose --env-file infra/.env -f infra/compose.yaml exec -T api vendor/bin/pint --test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "infra:up": "docker compose --env-file infra/.env -f infra/compose.yaml up -d --wait",
+    "infra:down": "docker compose --env-file infra/.env -f infra/compose.yaml down",
+    "infra:logs": "docker compose --env-file infra/.env -f infra/compose.yaml logs -f --tail=100"
+  },
+  "devDependencies": {
+    "prettier": "3.9.5",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,134 @@
+<mat-sidenav-container class="nexa-shell">
+  <mat-sidenav
+    #drawer
+    class="nexa-sidebar nexa-no-print"
+    [mode]="compact() ? 'over' : 'side'"
+    [opened]="!compact()"
+    [fixedInViewport]="compact()"
+  >
+    <div class="nexa-brand">
+      <span class="nexa-brand__mark" aria-hidden="true">
+        <i></i><i></i>
+      </span>
+      <span>
+        <strong>NexaSalud</strong>
+        <small>Espacio clínico</small>
+      </span>
+      @if (compact()) {
+        <button mat-icon-button aria-label="Cerrar navegación" (click)="drawer.close()">
+          <app-icon name="close" />
+        </button>
+      }
+    </div>
+
+    <button class="clinic-switch" type="button" [matMenuTriggerFor]="clinicMenu">
+      <span class="clinic-switch__symbol">CM</span>
+      <span>
+        <small>Centro activo</small>
+        <strong>{{ session.tenant()?.clinicName ?? 'Clínica Mirador' }}</strong>
+      </span>
+      <app-icon name="chevron" [size]="15" />
+    </button>
+    <mat-menu #clinicMenu="matMenu">
+      <button mat-menu-item>Clínica Mirador · Centro</button>
+      <button mat-menu-item>Clínica Mirador · Norte</button>
+      <button mat-menu-item>Gestionar centros</button>
+    </mat-menu>
+
+    <nav class="nexa-nav" aria-label="Navegación principal">
+      <p class="nexa-nav__label">Asistencia</p>
+      @for (item of principalNavigation; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/inicio' }"
+          (click)="closeOnMobile(drawer)"
+        >
+          <app-icon [name]="item.icon" [size]="19" />
+          <span>{{ item.label }}</span>
+          @if (item.badge) { <small>{{ item.badge }}</small> }
+        </a>
+      }
+
+      <p class="nexa-nav__label">Operaciones</p>
+      @for (item of operationsNavigation; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="is-active" (click)="closeOnMobile(drawer)">
+          <app-icon [name]="item.icon" [size]="19" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <p class="nexa-nav__label">Sistema</p>
+      @for (item of systemNavigation; track item.route) {
+        @if (!item.permission || session.hasPermission(item.permission)) {
+          <a [routerLink]="item.route" routerLinkActive="is-active" (click)="closeOnMobile(drawer)">
+            <app-icon [name]="item.icon" [size]="19" />
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      }
+    </nav>
+
+    <div class="security-status">
+      <span class="security-status__icon"><app-icon name="shield" [size]="18" /></span>
+      <span>
+        <strong>Sesión protegida</strong>
+        <small>MFA · cifrado activo</small>
+      </span>
+      <i title="Conexión segura"></i>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <header class="nexa-topbar nexa-no-print">
+      <div class="nexa-topbar__start">
+        @if (compact()) {
+          <button mat-icon-button aria-label="Abrir navegación" (click)="drawer.toggle()">
+            <app-icon name="menu" />
+          </button>
+        }
+        <button class="command-search" type="button" aria-label="Abrir búsqueda global">
+          <app-icon name="search" [size]="18" />
+          <span>Buscar paciente, cita o acción…</span>
+          <kbd>⌘ K</kbd>
+        </button>
+      </div>
+
+      <div class="nexa-topbar__actions">
+        <span class="nexa-today">{{ today | date: "EEEE, d 'de' MMMM" : undefined : 'es-ES' }}</span>
+        <button
+          mat-icon-button
+          class="nexa-icon-button"
+          [matTooltip]="preferences.effectiveTheme() === 'dark' ? 'Usar modo claro' : 'Usar modo oscuro'"
+          (click)="preferences.toggleTheme()"
+        >
+          <app-icon [name]="preferences.effectiveTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" />
+        </button>
+        <button mat-icon-button class="nexa-icon-button notification-button" aria-label="Notificaciones">
+          <app-icon name="bell" [size]="18" />
+          <i aria-label="3 notificaciones nuevas"></i>
+        </button>
+        <button class="profile-button" type="button" [matMenuTriggerFor]="profileMenu">
+          <span class="nexa-avatar">{{ userInitials() }}</span>
+          <span class="profile-button__copy">
+            <strong>{{ session.user()?.displayName ?? 'Dra. Elena Soler' }}</strong>
+            <small>{{ session.user()?.professionalTitle ?? 'Medicina familiar' }}</small>
+          </span>
+          <app-icon name="chevron" [size]="14" />
+        </button>
+        <mat-menu #profileMenu="matMenu" xPosition="before">
+          <button mat-menu-item [routerLink]="['/configuracion']">
+            <app-icon name="settings" [size]="17" />&nbsp; Preferencias
+          </button>
+          <button mat-menu-item (click)="session.logout()">
+            <app-icon name="logout" [size]="17" />&nbsp; Cerrar sesión
+          </button>
+        </mat-menu>
+      </div>
+    </header>
+
+    <main class="nexa-main" id="contenido-principal">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

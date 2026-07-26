@@ -1,0 +1,108 @@
+<header class="dialog-header">
+  <span class="dialog-header__icon"><app-icon name="calendar" [size]="21" /></span>
+  <div>
+    <p class="nexa-eyebrow">Agenda segura</p>
+    <h2 mat-dialog-title>{{ title }}</h2>
+  </div>
+  <button mat-icon-button mat-dialog-close aria-label="Cerrar"><app-icon name="close" /></button>
+</header>
+
+<mat-dialog-content>
+  @if (data.mode === 'reschedule') {
+    <div class="reschedule-note" role="status">
+      <app-icon name="clock" [size]="18" />
+      <span>Se conservará un historial del cambio. Si lo autorizas, el paciente recibirá la nueva hora.</span>
+    </div>
+  }
+
+  <form [formGroup]="form" id="appointment-form" (ngSubmit)="submit()">
+    <div class="nexa-field-grid">
+      <mat-form-field appearance="outline" class="field-wide">
+        <mat-label>Paciente</mat-label>
+        <mat-select formControlName="patientId">
+          @for (patient of data.patients; track patient.id) {
+            <mat-option [value]="patient.id">{{ patient.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Solo se muestran pacientes del centro activo</mat-hint>
+        @if (form.controls.patientId.hasError('required')) { <mat-error>Selecciona un paciente</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Profesional</mat-label>
+        <mat-select formControlName="practitionerId">
+          @for (practitioner of data.practitioners; track practitioner.id) {
+            <mat-option [value]="practitioner.id">{{ practitioner.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de cita</mat-label>
+        <mat-select formControlName="appointmentTypeId">
+          @for (type of data.appointmentTypes; track type.id) {
+            <mat-option [value]="type.id">{{ type.label }} · {{ type.durationMinutes }} min</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha</mat-label>
+        <input matInput type="date" formControlName="date" />
+      </mat-form-field>
+
+      <div class="time-pair">
+        <mat-form-field appearance="outline">
+          <mat-label>Hora</mat-label>
+          <input matInput type="time" formControlName="start" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Duración</mat-label>
+          <mat-select formControlName="duration">
+            <mat-option [value]="15">15 min</mat-option>
+            <mat-option [value]="20">20 min</mat-option>
+            <mat-option [value]="30">30 min</mat-option>
+            <mat-option [value]="45">45 min</mat-option>
+            <mat-option [value]="60">60 min</mat-option>
+            <mat-option [value]="90">90 min</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Modalidad</mat-label>
+        <mat-select formControlName="appointmentMode">
+          <mat-option value="in-person">Presencial</mat-option>
+          <mat-option value="video">Videoconsulta</mat-option>
+          <mat-option value="phone">Telefónica</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Sala o recurso</mat-label>
+        <mat-select formControlName="roomId">
+          @for (room of data.rooms; track room.id) {
+            <mat-option [value]="room.id">{{ room.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="field-wide">
+        <mat-label>Motivo o nota operativa</mat-label>
+        <textarea matInput rows="3" formControlName="reason" maxlength="500"></textarea>
+        <mat-hint>Evita información clínica innecesaria en la agenda</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <mat-checkbox formControlName="notifyPatient">
+      Enviar confirmación o cambio por el canal consentido
+    </mat-checkbox>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button class="nexa-btn-primary" type="submit" form="appointment-form">
+    <app-icon name="check" [size]="17" /> {{ data.mode === 'reschedule' ? 'Confirmar cambio' : 'Guardar cita' }}
+  </button>
+</mat-dialog-actions>

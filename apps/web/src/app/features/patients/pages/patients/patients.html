@@ -1,0 +1,64 @@
+<div class="nexa-page patients-page">
+  <header class="nexa-page__heading" appScrollReveal>
+    <div><p class="nexa-eyebrow">Personas y continuidad</p><h1>Pacientes</h1><p class="nexa-page__subtitle">Directorio asistencial con privacidad contextual y acceso por necesidad clínica.</p></div>
+    <div class="nexa-page__actions"><button mat-stroked-button class="nexa-btn-secondary"><app-icon name="download" [size]="17" /> Exportación autorizada</button><button mat-flat-button class="nexa-btn-primary" (click)="createOpen.set(true)"><app-icon name="plus" [size]="17" /> Nuevo paciente</button></div>
+  </header>
+
+  <section class="patient-toolbar nexa-card nexa-card--flat" appScrollReveal>
+    <label class="nexa-search"><app-icon name="search" [size]="17" /><input type="search" placeholder="Buscar por nombre, profesional o cobertura" [value]="search()" (input)="search.set($any($event.target).value)" /></label>
+    <div class="patient-filters"><button type="button" class="is-active">Todos <span>{{ patients().length }}</span></button><button type="button">Con cita hoy <span>4</span></button><button type="button">Seguimiento <span>7</span></button><button type="button">Consentimientos <span>2</span></button></div>
+    <button mat-stroked-button class="nexa-btn-secondary"><app-icon name="filter" [size]="16" /> Más filtros</button>
+  </section>
+
+  <section class="patients-layout nexa-section" [class.has-detail]="selected()">
+    <div class="patient-list nexa-card" appScrollReveal>
+      <div class="nexa-table-wrap">
+        <table class="nexa-table">
+          <thead><tr><th>Paciente</th><th>Contacto</th><th>Cobertura</th><th>Última visita</th><th>Próxima cita</th><th>Consentimiento</th></tr></thead>
+          <tbody>
+            @for (patient of filteredPatients(); track patient.id) {
+              <tr tabindex="0" [class.is-selected]="selectedId() === patient.id" (click)="selectedId.set(patient.id)" (keydown.enter)="selectedId.set(patient.id)">
+                <td><div class="nexa-person"><span class="nexa-avatar">{{ patient.initials }}</span><span><strong>{{ patient.name }}</strong><small>{{ patient.age || 'Edad pendiente' }} · NS-{{ patient.id.slice(-4).toUpperCase() }}</small></span>@if (patient.alerts.length) { <i title="Atención requerida"></i> }</div></td>
+                <td>{{ patient.phone }}</td><td>{{ patient.coverage }}</td><td>{{ patient.lastVisit }}</td><td><strong class="next-visit">{{ patient.nextVisit }}</strong></td>
+                <td><span class="nexa-chip" [class.nexa-chip--success]="patient.consent === 'Al día'" [class.nexa-chip--warning]="patient.consent === 'Revisar'" [class.nexa-chip--danger]="patient.consent === 'Pendiente'">{{ patient.consent }}</span></td>
+              </tr>
+            } @empty { <tr><td colspan="6"><div class="nexa-empty"><div><h2>Sin resultados</h2><p>Prueba con otro término de búsqueda.</p></div></div></td></tr> }
+          </tbody>
+        </table>
+      </div>
+      <footer><span>Mostrando {{ filteredPatients().length }} de {{ total() }} pacientes</span><div><button mat-button disabled>Anterior</button><button mat-button>Siguiente</button></div></footer>
+    </div>
+
+    @if (selected(); as patient) {
+      <aside class="patient-detail nexa-card" appScrollReveal [revealDelay]="80">
+        <header><button mat-icon-button aria-label="Cerrar detalle" (click)="selectedId.set(null)"><app-icon name="close" [size]="17" /></button></header>
+        <div class="patient-detail__identity"><span class="patient-detail__avatar">{{ patient.initials }}</span><h2>{{ patient.name }}</h2><p>{{ patient.age }} · NS-{{ patient.id.slice(-4).toUpperCase() }}</p><span class="nexa-chip nexa-chip--success">Paciente activo</span></div>
+        @if (patient.alerts.length) { <div class="detail-alert"><app-icon name="shield" [size]="17" /><span><strong>Información relevante</strong><small>{{ patient.alerts.join(' · ') }}</small></span></div> }
+        <dl><div><dt>Teléfono</dt><dd>{{ patient.phone }}</dd></div><div><dt>Cobertura</dt><dd>{{ patient.coverage }}</dd></div><div><dt>Profesional referente</dt><dd>{{ patient.practitioner }}</dd></div><div><dt>Próxima cita</dt><dd>{{ patient.nextVisit }}</dd></div></dl>
+        <div class="detail-actions"><button mat-flat-button class="nexa-btn-primary" routerLink="/historia-clinica">Abrir historia clínica</button><button mat-stroked-button class="nexa-btn-secondary" routerLink="/agenda" [queryParams]="{ paciente: patient.id, nueva: 1 }"><app-icon name="calendar" [size]="16" /> Nueva cita</button><button mat-stroked-button class="nexa-btn-secondary" routerLink="/prescripciones" [queryParams]="{ paciente: patient.id, nueva: 1 }"><app-icon name="spark" [size]="16" /> Prescribir</button></div>
+        <div class="detail-links"><button mat-button>Documentos y PDF</button><button mat-button>Facturación</button><button mat-button>Consentimientos</button></div>
+        <p class="detail-audit"><app-icon name="eye" [size]="13" /> Consulta registrada · alcance asistencial</p>
+      </aside>
+    }
+  </section>
+</div>
+
+@if (createOpen()) {
+  <div class="create-backdrop"></div>
+  <aside class="create-patient" role="dialog" aria-modal="true" aria-labelledby="create-patient-title">
+    <header><div><p class="nexa-eyebrow">Alta segura</p><h2 id="create-patient-title">Nuevo paciente</h2></div><button mat-icon-button aria-label="Cerrar" (click)="createOpen.set(false)"><app-icon name="close" /></button></header>
+    <p class="create-intro">Recoge únicamente los datos necesarios para identificar y atender a la persona.</p>
+    <form [formGroup]="createForm" (ngSubmit)="savePatient()">
+      <div class="nexa-field-grid">
+        <mat-form-field appearance="outline" class="wide"><mat-label>Nombre y apellidos</mat-label><input matInput formControlName="name" autocomplete="off" /><mat-error>Campo obligatorio</mat-error></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" formControlName="birthDate" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Identificador sanitario o documento</mat-label><input matInput formControlName="identifier" autocomplete="off" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="phone" autocomplete="off" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Correo electrónico</mat-label><input matInput type="email" formControlName="email" autocomplete="off" /></mat-form-field>
+        <mat-checkbox class="wide" formControlName="privacyNotice">Se ha informado a la persona sobre el tratamiento de sus datos y canales de comunicación.</mat-checkbox>
+      </div>
+      <div class="create-security"><app-icon name="shield" [size]="18" /><span><strong>Detección de duplicados</strong><small>Antes de guardar se comprobará de forma segura si ya existe una ficha.</small></span></div>
+      <footer><button mat-button type="button" (click)="createOpen.set(false)">Cancelar</button><button mat-flat-button class="nexa-btn-primary" type="submit">Crear ficha</button></footer>
+    </form>
+  </aside>
+}

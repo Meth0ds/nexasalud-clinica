@@ -1,0 +1,29 @@
+.settings-shell { min-height: 690px; }
+.settings-content { width: min(100%, 1050px); min-height: 600px; padding: 28px; }
+.settings-content > header { display: flex; align-items: center; gap: 13px; margin-bottom: 26px; }
+.settings-content > header > span { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 14px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
+.settings-content h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.6rem; font-weight: 560; }
+.settings-content > header p { margin: 4px 0 0; color: var(--nexa-ink-soft); font-size: 0.61rem; }
+.setting-form { max-width: 850px; }
+.setting-form .wide { grid-column: 1 / -1; }
+.setting-block { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--nexa-border); }
+.setting-block > div:first-child h3,
+.appearance-section h3,
+.active-sessions h3 { margin: 0; font-size: 0.7rem; }
+.setting-block > div:first-child p { margin: 3px 0 13px; color: var(--nexa-ink-soft); font-size: 0.55rem; }
+.hours-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.hours-grid div { display: grid; gap: 5px; padding: 10px; border: 1px solid var(--nexa-border); border-radius: 10px; background: var(--nexa-surface-muted); text-align: center; }
+.hours-grid strong { font-size: 0.5rem; }
+.hours-grid span { padding: 4px; border-radius: 6px; background: var(--nexa-surface); font-size: 0.49rem; }
+.hours-grid i { color: var(--nexa-ink-soft); font-size: 0.46rem; font-style: normal; }
+.hours-grid small { margin: auto 0; color: var(--nexa-ink-soft); font-size: 0.48rem; }
+.setting-block > button { margin-top: 8px; font-size: 0.53rem; }
+.resource-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.resource-cards article { display: grid; align-items: center; grid-template-columns: 38px 1fr auto; gap: 9px; padding: 11px; border: 1px solid var(--nexa-border); border-radius: 11px; }
+.resource-cards article > span { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-soft); font-size: 0.52rem; font-weight: 800; }
+.resource-cards strong,
+.resource-cards small { display: block; }
+.resource-cards strong { font-size: 0.57rem; }
+.resource-cards small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.47rem; }
+.resource-cards button { font-size: 0.5rem; }
+.add-resource { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 58px; border: 1px dashed var(--nexa-border-strong); border-radius: 11px; color: var(--nexa-primary); background: transparent; cursor: pointer; font-size: 0.54rem; }

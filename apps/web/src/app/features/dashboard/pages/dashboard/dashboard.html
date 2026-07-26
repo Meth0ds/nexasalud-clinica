@@ -1,0 +1,137 @@
+<div class="nexa-page dashboard-page">
+  <header class="nexa-page__heading" appScrollReveal>
+    <div>
+      <p class="nexa-eyebrow">Domingo · 19 de julio</p>
+      <h1>Buenos días, Elena.</h1>
+      <p class="nexa-page__subtitle">
+        Tu jornada está preparada. Hay dos asuntos que conviene revisar antes de la siguiente consulta.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <button mat-stroked-button class="nexa-btn-secondary" routerLink="/lista-espera">
+        <app-icon name="waitlist" [size]="17" /> Lista de espera
+      </button>
+      <button mat-flat-button class="nexa-btn-primary" routerLink="/agenda" [queryParams]="{ nueva: 1 }">
+        <app-icon name="plus" [size]="17" /> Nueva cita
+      </button>
+    </div>
+  </header>
+
+  <section class="nexa-grid nexa-grid--4 metrics" aria-label="Resumen diario">
+    @for (metric of metrics; track metric.label; let index = $index) {
+      <article class="nexa-card metric-card metric-card--{{ metric.tone }}" appScrollReveal [revealDelay]="index * 70">
+        <div class="metric-card__icon"><app-icon [name]="metric.icon" [size]="20" /></div>
+        <div>
+          <p>{{ metric.label }}</p>
+          <strong>{{ metric.value }}</strong>
+          <small>{{ metric.note }}</small>
+        </div>
+        <span>{{ metric.trend }}</span>
+      </article>
+    }
+  </section>
+
+  <section class="dashboard-layout nexa-section">
+    <article class="nexa-card day-card" appScrollReveal>
+      <div class="nexa-card__header">
+        <div>
+          <h2>Tu cinta clínica</h2>
+          <p>Próximos encuentros y contexto asistencial</p>
+        </div>
+        <div class="nexa-inline-actions">
+          <span class="live-indicator"><i></i> En directo</span>
+          <button mat-button routerLink="/agenda">Abrir agenda <app-icon name="arrow" [size]="15" /></button>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline__rail" aria-hidden="true"><span></span></div>
+        @for (appointment of appointments; track appointment.id) {
+          <button
+            class="appointment-row"
+            [class.is-selected]="selectedAppointment() === appointment.id"
+            type="button"
+            (click)="selectAppointment(appointment.id)"
+          >
+            <span class="appointment-row__time">
+              <strong>{{ appointment.time }}</strong><small>{{ appointment.duration }}</small>
+            </span>
+            <span class="appointment-row__dot" [class.is-current]="appointment.status === 'En curso'"></span>
+            <span class="nexa-avatar" [class.nexa-avatar--coral]="appointment.status === 'Por confirmar'">{{ appointment.initials }}</span>
+            <span class="appointment-row__person">
+              <strong>{{ appointment.patient }}</strong>
+              <small>{{ appointment.type }}</small>
+              @if (appointment.flags.length) {
+                <span class="clinical-flag"><app-icon name="shield" [size]="12" /> {{ appointment.flags[0] }}</span>
+              }
+            </span>
+            <span class="appointment-row__place">
+              <app-icon [name]="appointment.place === 'Videoconsulta' ? 'video' : 'location'" [size]="14" />
+              {{ appointment.place }}
+            </span>
+            <span class="nexa-chip nexa-chip--{{ appointment.statusTone }}">{{ appointment.status }}</span>
+            <app-icon name="chevron" [size]="16" />
+          </button>
+
+          @if (selectedAppointment() === appointment.id) {
+            <div class="appointment-peek">
+              <div>
+                <small>Motivo protegido</small>
+                <strong>{{ appointment.type }}</strong>
+              </div>
+              <div>
+                <small>Última visita</small>
+                <strong>Hace 6 semanas</strong>
+              </div>
+              <div class="appointment-peek__actions">
+                <button mat-button routerLink="/historia-clinica">Abrir ficha</button>
+                <button mat-stroked-button class="nexa-btn-secondary" routerLink="/agenda" [queryParams]="{ cita: appointment.id, accion: 'reprogramar' }">Cambiar cita</button>
+                <button mat-flat-button class="nexa-btn-primary" routerLink="/historia-clinica" [queryParams]="{ cita: appointment.id }">Iniciar consulta</button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </article>
+
+    <aside class="dashboard-side">
+      <article class="nexa-card pulse-card" appScrollReveal [revealDelay]="100">
+        <div class="pulse-card__top">
+          <div><p class="nexa-eyebrow">Pulso de hoy</p><h2>La clínica respira bien</h2></div>
+          <span class="pulse-score">92</span>
+        </div>
+        <div class="pulse-chart" aria-label="Ocupación por hora">
+          @for (bar of [42, 58, 76, 92, 84, 69, 78, 63, 48]; track $index) {
+            <i [style.height.%]="bar" [class.is-peak]="bar > 88"></i>
+          }
+        </div>
+        <div class="pulse-axis"><span>08 h</span><span>12 h</span><span>16 h</span><span>20 h</span></div>
+        <p class="pulse-note"><app-icon name="spark" [size]="15" /> Pico previsto a las 11:30. La Sala Olivo quedará libre a las 12:15.</p>
+      </article>
+
+      <article class="nexa-card attention-card" appScrollReveal [revealDelay]="160">
+        <div class="nexa-card__header">
+          <div><h2>Requiere atención</h2><p>Priorizado por impacto</p></div>
+          <span class="nexa-chip nexa-chip--warning">2 asuntos</span>
+        </div>
+        <div class="attention-list">
+          <a routerLink="/prescripciones">
+            <span class="attention-list__icon"><app-icon name="spark" [size]="18" /></span>
+            <span><strong>1 prescripción por firmar</strong><small>Preparada hoy a las 08:42</small></span>
+            <app-icon name="chevron" [size]="15" />
+          </a>
+          <a routerLink="/comunicaciones">
+            <span class="attention-list__icon attention-list__icon--coral"><app-icon name="bell" [size]="18" /></span>
+            <span><strong>Consentimiento pendiente</strong><small>Videoconsulta de las 10:15</small></span>
+            <app-icon name="chevron" [size]="15" />
+          </a>
+        </div>
+      </article>
+
+      <article class="nexa-card privacy-card" appScrollReveal [revealDelay]="220">
+        <app-icon name="shield" [size]="21" />
+        <div><strong>Privacidad contextual activa</strong><small>Los datos sensibles se ocultan automáticamente al abandonar esta pantalla.</small></div>
+      </article>
+    </aside>
+  </section>
+</div>

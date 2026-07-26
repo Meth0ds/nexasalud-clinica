@@ -1,0 +1,162 @@
+.booking-preferences {
+  display: grid;
+  align-items: end;
+  grid-template-columns: minmax(300px, 1.2fr) minmax(250px, 0.8fr);
+  gap: 18px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--nexa-border);
+}
+.booking-preferences fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.booking-preferences legend {
+  margin-bottom: 8px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.59rem;
+  font-weight: 720;
+}
+.booking-preferences mat-form-field {
+  width: 100%;
+}
+.segmented-choice {
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 13px;
+  background: var(--nexa-surface-muted);
+}
+.segmented-choice button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 39px;
+  flex: 1;
+  gap: 7px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--nexa-ink-soft);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.61rem;
+  font-weight: 680;
+}
+.segmented-choice button.is-selected {
+  color: var(--nexa-primary);
+  background: var(--nexa-surface);
+  box-shadow: 0 3px 10px rgba(25, 62, 57, 0.07);
+}
+.date-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+.date-strip button {
+  display: flex;
+  align-items: center;
+  min-height: 113px;
+  padding: 10px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 14px;
+  color: var(--nexa-ink);
+  background: var(--nexa-surface);
+  cursor: pointer;
+  flex-direction: column;
+}
+.date-strip button small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+  font-weight: 720;
+}
+.date-strip button strong {
+  margin: 3px 0 -3px;
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.72rem;
+  font-weight: 540;
+}
+.date-strip button span {
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+}
+.date-strip button i {
+  margin-top: 8px;
+  color: var(--nexa-primary);
+  font-size: 0.5rem;
+  font-style: normal;
+}
+.date-strip button.is-selected {
+  color: #fff;
+  border-color: var(--nexa-primary);
+  background: var(--nexa-primary);
+  box-shadow: 0 9px 24px color-mix(in srgb, var(--nexa-primary) 22%, transparent);
+}
+.date-strip button.is-selected small,
+.date-strip button.is-selected span,
+.date-strip button.is-selected i {
+  color: #dff5ef;
+}
+.slot-layout {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 25px;
+  margin-top: 28px;
+}
+.slot-label {
+  margin: 0 0 10px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.59rem;
+  font-weight: 720;
+}
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.slot-grid button {
+  min-height: 43px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 11px;
+  color: var(--nexa-primary);
+  background: var(--nexa-surface);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+.slot-grid button:hover,
+.slot-grid button.is-selected {
+  color: #fff;
+  border-color: var(--nexa-primary);
+  background: var(--nexa-primary);
+}
+.slot-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.56rem;
+}
+.slot-context {
+  display: grid;
+  grid-template-columns: 39px 1fr;
+  gap: 11px;
+  padding: 17px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 15px;
+  background: var(--nexa-primary-pale);
+}
+.slot-context > span {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}

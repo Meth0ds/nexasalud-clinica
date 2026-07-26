@@ -1,0 +1,251 @@
+<div class="admin-page nexa-page">
+  <header class="nexa-page__heading" appScrollReveal>
+    <div>
+      <p class="nexa-eyebrow">Gobierno clínico</p>
+      <h1>Centro de control</h1>
+      <p class="nexa-page__subtitle">
+        Personas, acceso y operación en un único espacio de trabajo, con privilegio mínimo y trazabilidad desde el diseño.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <span class="demo-badge"><i></i> Entorno sintético</span>
+      <button
+        mat-stroked-button
+        class="nexa-btn-secondary"
+        type="button"
+        [attr.aria-pressed]="showContext()"
+        (click)="togglePrivacyContext()"
+      >
+        <app-icon [name]="showContext() ? 'eye' : 'lock'" [size]="17" />
+        {{ showContext() ? 'Ocultar contexto' : 'Mostrar contexto' }}
+      </button>
+    </div>
+  </header>
+
+  <section class="posture-strip nexa-card nexa-card--flat" aria-label="Postura de seguridad" appScrollReveal [revealDelay]="60">
+    <div class="posture-score" aria-label="Puntuación de postura 96 sobre 100"><span>96</span><small>/100</small></div>
+    <div class="posture-copy"><strong>Postura reforzada</strong><small>Sin hallazgos críticos · revisión automática hace 2 min</small></div>
+    <div class="posture-proof"><app-icon name="shield" [size]="18" /><span><strong>100% MFA</strong><small>24 de 24 cuentas</small></span></div>
+    <div class="posture-proof"><app-icon name="check" [size]="18" /><span><strong>0 accesos huérfanos</strong><small>Revisión diaria</small></span></div>
+    <div class="posture-proof"><app-icon name="lock" [size]="18" /><span><strong>Cadena íntegra</strong><small>2,1 M eventos</small></span></div>
+  </section>
+
+  <div class="control-shell nexa-section">
+    <aside class="control-nav nexa-card nexa-card--flat" appScrollReveal>
+      <div class="control-nav__head"><span>Ámbitos de control</span><small>9 módulos</small></div>
+      <nav aria-label="Secciones de administración">
+        @for (section of sections; track section.id) {
+          <button
+            type="button"
+            [class.is-active]="activeSection() === section.id"
+            [attr.aria-current]="activeSection() === section.id ? 'page' : null"
+            (click)="selectSection(section.id)"
+          >
+            <span class="nav-icon"><app-icon [name]="section.icon" [size]="18" /></span>
+            <span><strong>{{ section.label }}</strong><small>{{ section.meta }}</small></span>
+            <app-icon class="nav-arrow" name="chevron" [size]="14" />
+          </button>
+        }
+      </nav>
+      <div class="control-nav__foot"><app-icon name="shield" [size]="17" /><span><strong>Acciones protegidas</strong><small>Los cambios reales exigirán reautenticación.</small></span></div>
+    </aside>
+
+    <main class="control-stage" tabindex="-1">
+      <header class="stage-heading" appScrollReveal>
+        <div>
+          <p class="stage-index">CONTROL / {{ activeSectionDetails().label }}</p>
+          <h2>{{ activeSectionDetails().label }}</h2>
+          <p>{{ activeSectionDetails().description }}</p>
+        </div>
+        <span class="stage-state"><i></i> Datos locales</span>
+      </header>
+
+      @switch (activeSection()) {
+        @case ('users') {
+          <section class="metric-line" aria-label="Resumen de cuentas" appScrollReveal>
+            <article><small>Cuentas activas</small><strong>23</strong><span>96% del equipo</span></article>
+            <article><small>Acceso privilegiado</small><strong>02</strong><span>Revisión mensual</span></article>
+            <article><small>Revisión pendiente</small><strong>01</strong><span class="attention">Antes del 22 jul</span></article>
+          </section>
+          <section class="nexa-card stage-card" appScrollReveal [revealDelay]="80">
+            <div class="nexa-card__header compact-head">
+              <div><h2>Directorio de acceso</h2><p>Identidades de demostración; no hay datos reales.</p></div>
+              <div class="stage-tools">
+                <label class="nexa-search"><app-icon name="search" [size]="16" /><span class="sr-only">Buscar cuenta</span><input type="search" placeholder="ID, nombre, rol o sede" [value]="userQuery()" (input)="userQuery.set($any($event.target).value)" /></label>
+                <button mat-flat-button class="nexa-btn-primary" type="button" (click)="selectSection('enrolment')"><app-icon name="plus" [size]="16" /> Alta segura</button>
+              </div>
+            </div>
+            <div class="nexa-table-wrap">
+              <table class="nexa-table account-table">
+                <thead><tr><th>Cuenta</th><th>Función y alcance</th><th>Seguridad</th><th>Último acceso</th><th>Estado</th><th><span class="sr-only">Acción</span></th></tr></thead>
+                <tbody>
+                  @for (user of filteredUsers(); track user.id) {
+                    <tr>
+                      <td><div class="nexa-person"><span class="nexa-avatar">{{ user.initials }}</span><span><strong>{{ user.name }}</strong><small>{{ user.id }} · {{ user.email }}</small></span></div></td>
+                      <td><strong class="cell-title">{{ user.role }}</strong><small class="cell-detail">{{ user.scope }}</small></td>
+                      <td><span class="security-label"><app-icon name="shield" [size]="14" /> {{ user.security }}</span></td>
+                      <td>{{ user.lastAccess }}</td>
+                      <td><span class="nexa-chip nexa-chip--{{ user.state === 'Activa' ? 'success' : 'warning' }}">{{ user.state }}</span></td>
+                      <td><button mat-button type="button" (click)="toggleUser(user.id)">{{ user.state === 'Activa' ? 'Suspender' : 'Reactivar' }}</button></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="6" class="empty-cell">No hay cuentas que coincidan con la búsqueda.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        @case ('enrolment') {
+          <section class="split-layout">
+            <article class="nexa-card stage-card" appScrollReveal>
+              <div class="nexa-card__header compact-head"><div><h2>Invitaciones controladas</h2><p>Enlaces de un solo uso, caducidad corta y alcance previo.</p></div><button mat-flat-button class="nexa-btn-primary" type="button" (click)="createDemoInvitation()"><app-icon name="plus" [size]="16" /> Preparar invitación</button></div>
+              <div class="stack-list">
+                @for (invitation of invitations(); track invitation.id) {
+                  <article class="stack-row">
+                    <span class="row-mark"><app-icon name="waitlist" [size]="18" /></span>
+                    <span class="row-main"><strong>{{ invitation.recipient }}</strong><small>{{ invitation.role }} · {{ invitation.scope }}</small></span>
+                    <span><small>Caduca en</small><strong>{{ invitation.expires }}</strong></span>
+                    <span class="nexa-chip nexa-chip--{{ invitation.state === 'Expira pronto' ? 'warning' : 'info' }}">{{ invitation.state }}</span>
+                    <button mat-button type="button" (click)="removeInvitation(invitation.id)">Retirar</button>
+                  </article>
+                } @empty { <div class="empty-cell">No quedan invitaciones pendientes.</div> }
+              </div>
+            </article>
+            <aside class="nexa-card lifecycle-card" appScrollReveal [revealDelay]="90">
+              <p class="nexa-eyebrow">Ciclo de vida</p><h2>Alta con garantías</h2>
+              <ol class="control-steps">
+                <li><span>1</span><div><strong>Identidad verificada</strong><small>Dominio, responsable y función.</small></div></li>
+                <li><span>2</span><div><strong>Alcance mínimo</strong><small>Rol, sede y fecha de revisión.</small></div></li>
+                <li><span>3</span><div><strong>MFA antes de acceder</strong><small>Passkey preferente y recuperación custodiada.</small></div></li>
+                <li><span>4</span><div><strong>Baja completa</strong><small>Sesiones, claves y delegaciones revocadas.</small></div></li>
+              </ol>
+              <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="announce('Checklist de baja preparado en modo local.')">Abrir checklist de baja</button>
+            </aside>
+          </section>
+        }
+
+        @case ('roles') {
+          <section class="nexa-card stage-card" appScrollReveal>
+            <div class="nexa-card__header compact-head"><div><h2>Matriz de privilegio mínimo</h2><p>Los cambios quedan en borrador hasta recibir doble aprobación.</p></div><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="announce('Nuevo rol preparado como borrador local.')"><app-icon name="plus" [size]="16" /> Nuevo rol</button></div>
+            <div class="role-matrix" role="table" aria-label="Permisos por rol">
+              <div class="matrix-head" role="row"><span role="columnheader">Rol</span>@for (column of permissionColumns; track column.key) { <span role="columnheader">{{ column.label }}</span> }</div>
+              @for (role of roles(); track role.id) {
+                <div class="matrix-row" role="row">
+                  <span class="role-name" role="cell"><strong>{{ role.name }}</strong><small>{{ role.members }} personas · {{ role.kind }}</small></span>
+                  @for (column of permissionColumns; track column.key) {
+                    <span role="cell"><button class="permission-toggle" type="button" [class.is-on]="role.permissions[column.key]" [attr.aria-pressed]="role.permissions[column.key]" [attr.aria-label]="column.label + ' para ' + role.name" (click)="togglePermission(role.id, column.key)"><app-icon [name]="role.permissions[column.key] ? 'check' : 'close'" [size]="14" /></button></span>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+          <section class="guardrail nexa-card nexa-card--flat" appScrollReveal [revealDelay]="90"><app-icon name="shield" [size]="22" /><div><strong>Guardarraíl clínico</strong><p>“Administración” nunca concede prescripción por sí sola. El acceso clínico requiere profesión válida, relación asistencial y contexto activo.</p></div><button mat-button type="button" (click)="announce('Simulación de conflictos completada: no se encontraron incompatibilidades críticas.')">Simular conflictos</button></section>
+        }
+
+        @case ('sessions') {
+          <section class="split-layout sessions-layout">
+            <article class="nexa-card stage-card" appScrollReveal>
+              <div class="nexa-card__header"><div><h2>Sesiones supervisadas</h2><p>Dispositivo, red, actividad y señal de riesgo.</p></div><span class="nexa-chip nexa-chip--success">{{ sessions().length }} activas</span></div>
+              <div class="stack-list">
+                @for (session of sessions(); track session.id) {
+                  <article class="stack-row session-row">
+                    <span class="row-mark"><app-icon [name]="session.risk === 'Revisar' ? 'eye' : 'shield'" [size]="18" /></span>
+                    <span class="row-main"><strong>{{ session.actor }}</strong><small>{{ session.device }} · {{ session.location }}</small></span>
+                    <span><small>{{ session.activity }}</small><strong class="risk-{{ session.risk === 'Revisar' ? 'warn' : 'ok' }}">{{ session.risk }}</strong></span>
+                    <button mat-stroked-button type="button" (click)="revokeSession(session.id)">Revocar</button>
+                  </article>
+                } @empty { <div class="empty-cell">No quedan sesiones en esta simulación.</div> }
+              </div>
+            </article>
+            <aside class="nexa-card mfa-card" appScrollReveal [revealDelay]="90">
+              <div class="mfa-ring"><span>100%</span><small>cobertura</small></div><h2>MFA obligatorio</h2><p>La autenticación resistente a phishing es el método preferente para funciones privilegiadas.</p>
+              <ul><li><app-icon name="check" [size]="14" /> 18 passkeys registradas</li><li><app-icon name="check" [size]="14" /> 24 cuentas con segundo factor</li><li><app-icon name="lock" [size]="14" /> 2 recuperaciones custodiadas</li></ul>
+              <button mat-button type="button" (click)="announce('Informe MFA generado localmente.')">Revisar cobertura</button>
+            </aside>
+          </section>
+        }
+
+        @case ('locations') {
+          <section class="resource-layout">
+            <div class="resource-grid">
+              @for (resource of resources(); track resource.id) {
+                <article class="nexa-card resource-card" appScrollReveal [revealDelay]="$index * 45">
+                  <div><span class="resource-icon"><app-icon name="location" [size]="20" /></span><span class="nexa-chip nexa-chip--{{ resource.state === 'Disponible' ? 'success' : 'warning' }}">{{ resource.state }}</span></div>
+                  <small class="nexa-mono">{{ resource.id }}</small><h2>{{ resource.name }}</h2><p>{{ resource.site }}<br />{{ resource.use }}</p>
+                  <button mat-stroked-button type="button" (click)="toggleResource(resource.id)">{{ resource.state === 'Disponible' ? 'Marcar mantenimiento' : 'Restablecer recurso' }}</button>
+                </article>
+              }
+            </div>
+            <aside class="nexa-card occupancy-card" appScrollReveal [revealDelay]="120"><p class="nexa-eyebrow">Capacidad hoy</p><h2>Uso por sede</h2>@for (site of [{n:'Mirador · Centro',v:82,d:'4 salas · 31 citas'},{n:'Mirador · Norte',v:64,d:'3 salas · 18 citas'}]; track site.n) { <div class="occupancy"><span><strong>{{ site.n }}</strong><small>{{ site.d }}</small></span><b>{{ site.v }}%</b><p><i [style.width.%]="site.v"></i></p></div> }<button mat-button type="button" (click)="announce('Reglas de disponibilidad abiertas en modo de lectura.')">Reglas de disponibilidad</button></aside>
+          </section>
+        }
+
+        @case ('health') {
+          <section class="health-board nexa-card" appScrollReveal>
+            <div class="health-hero"><span class="health-pulse"><i></i></span><div><p class="nexa-eyebrow">Operación normal</p><h2>Todos los servicios esenciales responden</h2><small>Ventana observada: últimos 15 minutos · contenido clínico excluido</small></div><strong>99,98%</strong></div>
+            <div class="service-grid">
+              @for (service of [{n:'API asistencial',lat:'118 ms',s:'Operativo'},{n:'Identidad y MFA',lat:'84 ms',s:'Operativo'},{n:'Documentos privados',lat:'142 ms',s:'Operativo'},{n:'Auditoría append-only',lat:'61 ms',s:'Operativo'}]; track service.n) { <article><i></i><span><strong>{{ service.n }}</strong><small>{{ service.lat }} p95</small></span><b>{{ service.s }}</b></article> }
+            </div>
+          </section>
+          <section class="nexa-card queue-card" appScrollReveal [revealDelay]="90"><div class="nexa-card__header"><div><h2>Colas y trabajos</h2><p>Carga, reintentos y elemento más antiguo.</p></div><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="announce('Comprobación local de colas completada.')"><app-icon name="spark" [size]="16" /> Comprobar ahora</button></div><div class="queue-grid">@for (queue of [{n:'Recordatorios',load:12,age:'18 s',retry:'0'},{n:'Documentos',load:3,age:'7 s',retry:'0'},{n:'Integraciones',load:8,age:'42 s',retry:'2'},{n:'Auditoría',load:0,age:'—',retry:'0'}]; track queue.n) { <article><span><strong>{{ queue.n }}</strong><small>{{ queue.load }} en espera · {{ queue.retry }} reintentos</small></span><b>{{ queue.age }}</b><p><i [style.width.%]="queue.load * 4"></i></p></article> }</div></section>
+        }
+
+        @case ('integrations') {
+          <section class="integration-grid">
+            @for (integration of integrations(); track integration.id) {
+              <article class="nexa-card integration-card" appScrollReveal [revealDelay]="$index * 45">
+                <span class="integration-mark">{{ integration.initials }}</span><div class="integration-main"><small class="nexa-mono">{{ integration.id }}</small><h2>{{ integration.name }}</h2><p>{{ integration.purpose }}</p></div>
+                <span class="nexa-chip nexa-chip--{{ integration.state === 'Conectada' ? 'success' : integration.state === 'Prueba' ? 'warning' : 'info' }}">{{ integration.state }}</span>
+                <dl><div><dt>Alcance</dt><dd>{{ integration.scope }}</dd></div><div><dt>Comprobación</dt><dd>{{ integration.checked }}</dd></div></dl>
+                <button mat-stroked-button type="button" (click)="testIntegration(integration.id)">Probar sin datos</button>
+              </article>
+            }
+          </section>
+          <section class="guardrail nexa-card nexa-card--flat" appScrollReveal [revealDelay]="120"><app-icon name="lock" [size]="21" /><div><strong>Credenciales fuera de la interfaz</strong><p>Esta pantalla solo muestra estados y ámbitos. Los secretos no se renderizan, no se copian y se rotarán mediante un almacén dedicado.</p></div></section>
+        }
+
+        @case ('policies') {
+          <section class="split-layout policies-layout">
+            <article class="nexa-card stage-card" appScrollReveal>
+              <div class="nexa-card__header"><div><h2>Políticas aplicadas</h2><p>Baseline obligatorio y próxima fecha de revisión.</p></div><span class="nexa-chip nexa-chip--success">12 vigentes</span></div>
+              <div class="policy-list">
+                @for (policy of [{id:'POL-AUTH-03',n:'MFA y autenticación resistente',d:'Todas las cuentas · obligatoria',r:'30 sep 2026',tone:'success'},{id:'POL-ACCESS-07',n:'Relación asistencial activa',d:'Historia clínica · obligatoria',r:'15 ago 2026',tone:'success'},{id:'POL-EXPORT-02',n:'Exportación con doble aprobación',d:'Datos y documentos · obligatoria',r:'01 ago 2026',tone:'warning'},{id:'POL-SESSION-04',n:'Sesión de 15 min por inactividad',d:'Funciones clínicas · aplicada',r:'30 sep 2026',tone:'success'}]; track policy.id) {
+                  <article><span class="row-mark"><app-icon name="shield" [size]="17" /></span><span class="row-main"><strong>{{ policy.n }}</strong><small>{{ policy.id }} · {{ policy.d }}</small></span><span><small>Revisión</small><strong>{{ policy.r }}</strong></span><span class="nexa-chip nexa-chip--{{ policy.tone }}">Vigente</span><button mat-button type="button" (click)="announce('Política ' + policy.id + ' abierta en modo local.')">Revisar</button></article>
+                }
+              </div>
+            </article>
+            <aside class="nexa-card exception-card" appScrollReveal [revealDelay]="90"><p class="nexa-eyebrow">Excepciones</p><strong class="exception-number">00</strong><h2>Sin bypass activos</h2><p>Toda excepción requiere motivo, responsable, caducidad y aprobación de seguridad.</p><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="announce('Flujo de excepción preparado; no se ha creado ninguna excepción.')">Solicitar excepción</button></aside>
+          </section>
+        }
+
+        @case ('audit') {
+          <section class="audit-filters nexa-card nexa-card--flat" aria-label="Filtros de auditoría" appScrollReveal>
+            <label><span>Actor</span><input type="search" placeholder="usuario o función" [value]="auditActor()" (input)="auditActor.set($any($event.target).value)" /></label>
+            <label><span>Paciente</span><input type="search" placeholder="DEMO-P-0000" [value]="auditPatient()" (input)="auditPatient.set($any($event.target).value)" /></label>
+            <label><span>Recurso</span><input type="search" placeholder="rol, agenda, documento" [value]="auditResource()" (input)="auditResource.set($any($event.target).value)" /></label>
+            <label><span>Trace ID</span><input class="nexa-mono" type="search" placeholder="trc-000000" [value]="auditTrace()" (input)="auditTrace.set($any($event.target).value)" /></label>
+            <label><span>Resultado</span><select [value]="auditOutcome()" (change)="auditOutcome.set($any($event.target).value)"><option>Todos</option><option>Permitido</option><option>Denegado</option><option>Desafío</option></select></label>
+            <button mat-button type="button" (click)="resetAuditFilters()">Limpiar</button>
+          </section>
+          <section class="nexa-card stage-card audit-card" appScrollReveal [revealDelay]="80">
+            <div class="nexa-card__header"><div><h2>Eventos concretos</h2><p>19 jul 2026 · Europe/Madrid · referencias sintéticas</p></div><span class="audit-count">{{ filteredAuditEvents().length }} resultados</span></div>
+            <div class="audit-stream">
+              @for (event of filteredAuditEvents(); track event.id) {
+                <article>
+                  <div class="audit-time"><strong>{{ event.time }}</strong><small>{{ event.id }}</small></div>
+                  <span class="audit-node" [class.is-danger]="event.outcome === 'Denegado'" [class.is-warning]="event.outcome === 'Desafío'"><i></i></span>
+                  <div class="audit-main"><strong>{{ event.action }}</strong><p><b>{{ event.actor }}</b> · {{ event.actorDetail }}</p><div><span>Paciente <code>{{ maskedPatient(event.patient) }}</code></span><span>Recurso <code>{{ event.resource }}</code></span><span>Trace <code>{{ event.traceId }}</code></span></div><small>{{ event.reason }}</small></div>
+                  <span class="nexa-chip nexa-chip--{{ event.outcome === 'Permitido' ? 'success' : event.outcome === 'Denegado' ? 'danger' : 'warning' }}">{{ event.outcome }}</span>
+                </article>
+              } @empty { <div class="empty-cell">No hay eventos que coincidan con todos los filtros.</div> }
+            </div>
+          </section>
+        }
+      }
+    </main>
+  </div>
+
+  <p class="local-notice" role="status" aria-live="polite"><app-icon name="shield" [size]="14" /> {{ liveMessage() }}</p>
+</div>

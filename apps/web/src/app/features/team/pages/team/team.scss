@@ -1,0 +1,36 @@
+.team-tabs { display: flex; gap: 4px; padding: 7px; }
+.team-tabs button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 10px; color: var(--nexa-ink-soft); background: transparent; cursor: pointer; font-size: 0.61rem; }
+.team-tabs button.is-active { color: var(--nexa-primary); background: var(--nexa-primary-soft); font-weight: 720; }
+.team-tabs span { margin-left: 5px; }
+.team-summary article { padding: 17px; }
+.team-summary small,
+.team-summary strong,
+.team-summary p { display: block; margin: 0; }
+.team-summary small { color: var(--nexa-ink-soft); font-size: 0.54rem; text-transform: uppercase; }
+.team-summary strong { margin: 3px 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.5rem; }
+.team-summary p { color: var(--nexa-ink-soft); font-size: 0.51rem; }
+.security-level { display: inline-flex; align-items: center; gap: 5px; color: var(--nexa-success); font-size: 0.56rem; }
+.shift-layout,
+.permissions-layout { display: grid; align-items: start; grid-template-columns: minmax(650px, 1fr) 280px; gap: 16px; }
+.shift-grid { display: grid; min-width: 700px; grid-template-columns: 120px repeat(7, 1fr); overflow-x: auto; }
+.shift-grid > strong { padding: 11px 7px; border-bottom: 1px solid var(--nexa-border); border-left: 1px solid var(--nexa-border); background: var(--nexa-surface-muted); font-size: 0.55rem; text-align: center; }
+.shift-person { display: flex; align-items: center; padding: 9px; border-top: 1px solid var(--nexa-border); font-size: 0.56rem; font-weight: 690; }
+.shift-cell { min-height: 65px; padding: 9px; border-top: 1px solid var(--nexa-border); border-left: 1px solid var(--nexa-border); background: var(--nexa-primary-pale); }
+.shift-cell i { display: block; height: 5px; border-radius: 5px; background: var(--nexa-primary); }
+.shift-cell small { display: block; margin-top: 8px; color: var(--nexa-ink-soft); font-size: 0.46rem; }
+.shift-cell.is-off { background: var(--nexa-surface-muted); }
+.shift-cell.is-off i { background: var(--nexa-border-strong); }
+.absence-card > div:not(.nexa-card__header) { display: grid; align-items: center; grid-template-columns: 38px 1fr auto; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--nexa-border); }
+.absence-card strong,
+.absence-card small { display: block; }
+.absence-card strong { font-size: 0.57rem; }
+.absence-card small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.48rem; }
+.absence-card > button { width: calc(100% - 26px); margin: 13px; }
+.permission-principles { padding: 20px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
+.permission-principles h2 { margin-top: 15px; }
+.permission-principles p,
+.permission-principles li { color: var(--nexa-ink-soft); font-size: 0.57rem; line-height: 1.55; }
+.permission-principles ul { padding-left: 17px; }
+.permission-principles button { color: var(--nexa-primary); font-size: 0.56rem; }
+@media (max-width: 1050px) { .shift-layout,
+.permissions-layout { grid-template-columns: 1fr; } }

@@ -1,0 +1,153 @@
+@media (max-width: 720px) {
+  .portal-view {
+    padding: 24px 16px 90px;
+  }
+  .portal-topbar {
+    min-height: 68px;
+    padding: 10px 14px;
+  }
+  .demo-pill,
+  .topbar-action:first-of-type {
+    display: none;
+  }
+  .view-heading,
+  .patient-welcome {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .view-heading .nexa-btn-primary,
+  .view-heading .nexa-btn-secondary,
+  .patient-welcome .nexa-btn-primary {
+    width: 100%;
+  }
+  .patient-welcome h1 {
+    font-size: 2.65rem;
+  }
+  .care-journey {
+    grid-template-columns: 86px 1fr;
+    gap: 15px;
+    padding: 17px;
+    border-radius: 19px;
+  }
+  .care-journey__date {
+    min-height: 130px;
+  }
+  .care-journey__date small {
+    font-size: 0.48rem;
+  }
+  .care-journey__date strong {
+    font-size: 3.1rem;
+  }
+  .care-journey__main h2 {
+    font-size: 1.35rem;
+  }
+  .journey-actions > * {
+    flex: 1;
+  }
+  .care-route {
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 5px;
+  }
+  .care-route > div {
+    flex: 0 0 64px;
+  }
+  .care-route > i {
+    flex: 0 0 18px;
+  }
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .preparation-item {
+    grid-template-columns: 36px 1fr;
+  }
+  .preparation-item > :last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .health-summary header {
+    flex-direction: column;
+  }
+  .health-summary__rail {
+    grid-template-columns: 1fr;
+  }
+  .health-summary__rail > i {
+    width: 100%;
+    height: 1px;
+  }
+  .home-aside {
+    grid-template-columns: 1fr;
+  }
+  .privacy-note {
+    grid-column: auto;
+  }
+  .booking-progress {
+    padding: 16px;
+  }
+  .booking-progress li {
+    justify-content: center;
+  }
+  .booking-progress li small {
+    display: none;
+  }
+  .booking-progress li:not(:last-child)::after {
+    right: -25%;
+    left: 66%;
+  }
+  .booking-body {
+    min-height: 540px;
+    padding: 24px 16px;
+  }
+  .care-options {
+    grid-template-columns: 1fr;
+  }
+  .booking-preferences,
+  .waitlist-fields,
+  .compose-fields {
+    grid-template-columns: 1fr;
+  }
+  .date-strip {
+    overflow-x: auto;
+    grid-template-columns: repeat(5, 92px);
+    padding-bottom: 4px;
+  }
+  .slot-layout {
+    grid-template-columns: 1fr;
+  }
+  .slot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .confirmation-ticket {
+    grid-template-columns: 1fr;
+  }
+  .ticket-date {
+    min-height: 135px;
+  }
+  .booking-actions {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+  }
+  .booking-actions > span {
+    width: 100%;
+    flex: 0 0 100%;
+    order: -1;
+  }
+  .booking-actions > button {
+    flex: 1;
+  }
+  .patient-appointment {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 13px;
+    padding: 16px;
+  }
+  .appointment-date {
+    padding-right: 10px;
+  }
+  .appointment-date strong {
+    font-size: 1.8rem;
+  }
+  .appointment-actions {
+    justify-content: stretch;
+  }
+}

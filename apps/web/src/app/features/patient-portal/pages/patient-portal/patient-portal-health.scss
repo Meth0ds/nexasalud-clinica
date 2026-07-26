@@ -1,0 +1,145 @@
+.medication-layout {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 18px;
+}
+.medication-list {
+  display: grid;
+  gap: 12px;
+}
+.medication-list > article {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 52px minmax(0, 1fr) 210px;
+  gap: 17px;
+  padding: 20px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 18px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow-soft);
+}
+.medication-marker {
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 5px solid var(--nexa-primary-soft);
+  border-radius: 50%;
+  color: var(--nexa-primary);
+  background: var(--nexa-surface);
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+.medication-marker i {
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--nexa-primary);
+  border-radius: 50%;
+  clip-path: polygon(0 0, var(--remaining) 0, var(--remaining) 100%, 0 100%);
+}
+.medication-copy > small {
+  margin-left: 7px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.48rem;
+  font-weight: 800;
+}
+.medication-copy h2 {
+  margin: 8px 0 4px;
+  font-size: 1.32rem;
+}
+.medication-copy > strong {
+  font-size: 0.65rem;
+}
+.medication-copy > p {
+  margin: 4px 0 8px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+}
+.medication-copy > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.medication-copy button {
+  padding-inline: 5px;
+  color: var(--nexa-primary);
+  font-size: 0.57rem;
+}
+.medication-list article > aside {
+  padding-left: 18px;
+  border-left: 1px solid var(--nexa-border);
+}
+.medication-list aside small,
+.medication-list aside strong {
+  display: block;
+}
+.medication-list aside small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+}
+.medication-list aside strong {
+  margin-top: 3px;
+  color: var(--nexa-primary);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.2rem;
+}
+.medication-list aside > div {
+  overflow: hidden;
+  height: 5px;
+  margin: 7px 0 12px;
+  border-radius: 999px;
+  background: var(--nexa-primary-soft);
+}
+.medication-list aside > div i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--nexa-primary);
+}
+.medication-list aside button {
+  width: 100%;
+  font-size: 0.55rem;
+}
+.medication-safety {
+  padding: 21px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 18px;
+  background: linear-gradient(150deg, var(--nexa-primary-pale), var(--nexa-surface));
+}
+.medication-safety > span {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.medication-safety h2 {
+  font-size: 1.45rem;
+}
+.medication-safety > p:not(.nexa-eyebrow) {
+  color: var(--nexa-ink-soft);
+  font-size: 0.6rem;
+  line-height: 1.55;
+}
+.medication-safety ul {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 15px 0 0;
+  border-top: 1px solid var(--nexa-border);
+  list-style: none;
+}
+.medication-safety li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.57rem;
+}
+.medication-safety li app-icon {
+  color: var(--nexa-success);
+}

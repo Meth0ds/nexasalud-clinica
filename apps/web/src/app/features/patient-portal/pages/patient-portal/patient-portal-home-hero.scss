@@ -1,0 +1,153 @@
+.patient-welcome {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.patient-welcome h1 {
+  font-size: clamp(2.35rem, 4.4vw, 4.35rem);
+}
+.patient-welcome h1 em {
+  color: var(--nexa-primary);
+  font-weight: inherit;
+}
+.patient-welcome > div > p:last-child {
+  max-width: 660px;
+  margin: 10px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.care-journey {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: 142px minmax(280px, 0.8fr) minmax(420px, 1.2fr);
+  gap: 24px;
+  padding: 25px;
+  border: 1px solid color-mix(in srgb, var(--nexa-primary) 26%, var(--nexa-border));
+  border-radius: 24px;
+  background: linear-gradient(116deg, var(--nexa-surface) 0 55%, var(--nexa-primary-pale) 100%);
+  box-shadow: var(--nexa-shadow);
+}
+.care-journey::after {
+  position: absolute;
+  right: -50px;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid color-mix(in srgb, var(--nexa-primary) 13%, transparent);
+  border-radius: 50%;
+  content: '';
+}
+.care-journey__date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 150px;
+  border-right: 1px solid var(--nexa-border);
+  text-align: center;
+}
+.care-journey__date small {
+  color: var(--nexa-primary);
+  font-size: 0.57rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.care-journey__date strong {
+  margin: 5px 0 -6px;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 4rem;
+  font-weight: 520;
+  line-height: 1;
+}
+.care-journey__date span {
+  color: var(--nexa-ink-soft);
+  font-size: 0.61rem;
+  font-weight: 770;
+  letter-spacing: 0.1em;
+}
+.care-journey__main {
+  align-self: center;
+}
+.care-journey__main .nexa-chip i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.care-journey__main h2 {
+  margin-top: 10px;
+  font-size: 1.65rem;
+}
+.care-journey__main > p {
+  margin: 5px 0 15px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.68rem;
+}
+.care-journey__main > p strong {
+  color: var(--nexa-ink-strong);
+}
+.journey-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.care-route {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+.care-route > div {
+  width: 70px;
+  text-align: center;
+}
+.care-route > div > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  margin: 0 auto;
+  border: 1px solid var(--nexa-border);
+  border-radius: 50%;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface);
+}
+.care-route > div.is-done > span {
+  color: #fff;
+  border-color: var(--nexa-primary);
+  background: var(--nexa-primary);
+}
+.care-route > div.is-current > span {
+  color: var(--nexa-primary);
+  border-color: var(--nexa-primary);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--nexa-primary) 10%, transparent);
+}
+.care-route > div p {
+  margin: 8px 0 0;
+}
+.care-route > div strong,
+.care-route > div small {
+  display: block;
+}
+.care-route > div strong {
+  font-size: 0.54rem;
+}
+.care-route > div small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.48rem;
+}
+.care-route > i {
+  width: clamp(18px, 3vw, 48px);
+  height: 1px;
+  margin-top: -30px;
+  background: var(--nexa-border-strong);
+}

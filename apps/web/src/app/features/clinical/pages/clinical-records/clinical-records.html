@@ -1,0 +1,101 @@
+<div class="nexa-page clinical-page">
+  <header class="nexa-page__heading" appScrollReveal>
+    <div>
+      <p class="nexa-eyebrow">Continuidad asistencial</p>
+      <h1>Historia clínica</h1>
+      <p class="nexa-page__subtitle">Información longitudinal, mínima y relevante para la atención autorizada.</p>
+    </div>
+    <div class="nexa-page__actions">
+      <button mat-stroked-button class="nexa-btn-secondary" (click)="privacyVisible.set(!privacyVisible())"><app-icon [name]="privacyVisible() ? 'eye' : 'lock'" [size]="17" /> {{ privacyVisible() ? 'Ocultar datos' : 'Mostrar datos' }}</button>
+      <button mat-stroked-button class="nexa-btn-secondary" (click)="generateSummary()"><app-icon name="download" [size]="17" /> Resumen PDF</button>
+      <button mat-flat-button class="nexa-btn-primary" (click)="editingNote.set(true)"><app-icon name="plus" [size]="17" /> Nueva nota</button>
+    </div>
+  </header>
+
+  <section class="patient-context nexa-card" appScrollReveal>
+    <div class="patient-context__identity">
+      <span class="patient-avatar">LM</span>
+      <div><small>Paciente seleccionado</small><h2>{{ privacyVisible() ? 'Lucas M.' : '•••••• •.' }}</h2><p>{{ privacyVisible() ? '38 años · ID clínico NS-4821' : 'Datos protegidos' }}</p></div>
+    </div>
+    <dl>
+      <div><dt>Contacto</dt><dd>{{ privacyVisible() ? '+34 ••• •• 41 20' : '•••••••••' }}</dd></div>
+      <div><dt>Cobertura</dt><dd>Salud Integral · activa</dd></div>
+      <div><dt>Profesional referente</dt><dd>Dra. Elena Soler</dd></div>
+      <div><dt>Última visita</dt><dd>4 jun 2026</dd></div>
+    </dl>
+    <button mat-button><app-icon name="search" [size]="16" /> Cambiar paciente</button>
+  </section>
+
+  <section class="clinical-alerts nexa-grid nexa-grid--3 nexa-section">
+    <article class="clinical-alert clinical-alert--danger" appScrollReveal><span><app-icon name="shield" /></span><div><small>Alergia</small><strong>Penicilinas</strong><p>Reacción cutánea moderada · verificada</p></div></article>
+    <article class="clinical-alert clinical-alert--blue" appScrollReveal [revealDelay]="60"><span><app-icon name="spark" /></span><div><small>Tratamiento activo</small><strong>2 medicamentos</strong><p>Última conciliación: hoy</p></div></article>
+    <article class="clinical-alert clinical-alert--green" appScrollReveal [revealDelay]="120"><span><app-icon name="check" /></span><div><small>Consentimientos</small><strong>Al día</strong><p>Revisión prevista: nov 2026</p></div></article>
+  </section>
+
+  <section class="clinical-layout nexa-section">
+    <div class="clinical-main nexa-card" appScrollReveal>
+      <mat-tab-group animationDuration="250ms" preserveContent>
+        <mat-tab label="Evolución">
+          <div class="tab-content">
+            <div class="section-intro"><div><h2>Línea clínica</h2><p>Notas y eventos en orden cronológico</p></div><button mat-button>Filtrar episodios</button></div>
+            <div class="clinical-timeline">
+              <article class="timeline-entry timeline-entry--current">
+                <div class="timeline-entry__date"><strong>HOY</strong><small>09:15</small></div><i></i>
+                <div><header><span class="nexa-chip nexa-chip--info">Consulta en curso</span><small>Dra. Elena Soler</small></header><h3>Seguimiento de tratamiento</h3><p>Motivo operativo protegido. La nota clínica se completará y firmará al finalizar la consulta.</p><div class="entry-actions"><button mat-button (click)="editingNote.set(true)">Continuar nota</button><button mat-button>Ver constantes</button></div></div>
+              </article>
+              <article class="timeline-entry">
+                <div class="timeline-entry__date"><strong>04 JUN</strong><small>2026</small></div><i></i>
+                <div><header><span class="nexa-chip nexa-chip--success">Firmada</span><small>Dra. Elena Soler · 10:42</small></header><h3>Revisión clínica programada</h3><p>Evolución favorable. Se revisa adherencia y tolerancia. Sin incidencias registradas en el periodo.</p><div class="entry-tags"><span>Seguimiento</span><span>Conciliación</span><span>Plan actualizado</span></div><button mat-button>Ver nota completa</button></div>
+              </article>
+              <article class="timeline-entry">
+                <div class="timeline-entry__date"><strong>21 ABR</strong><small>2026</small></div><i></i>
+                <div><header><span class="nexa-chip">Documento</span><small>Importado · verificado</small></header><h3>Informe de resultados</h3><p>Documento incorporado al episodio con procedencia y hash de integridad registrados.</p><button mat-button><app-icon name="download" [size]="14" /> Abrir documento</button></div>
+              </article>
+              <article class="timeline-entry">
+                <div class="timeline-entry__date"><strong>12 MAR</strong><small>2026</small></div><i></i>
+                <div><header><span class="nexa-chip nexa-chip--success">Firmada</span><small>Dr. Mateo Vidal · 16:10</small></header><h3>Primera valoración</h3><p>Antecedentes y plan inicial registrados. Consentimiento asistencial verificado.</p><button mat-button>Ver episodio</button></div>
+              </article>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Medicación">
+          <div class="tab-content"><div class="section-intro"><div><h2>Tratamiento activo</h2><p>Conciliado hoy a las 09:18</p></div><button mat-flat-button class="nexa-btn-primary" routerLink="/prescripciones">Nueva prescripción</button></div>
+            <article class="treatment-row"><span class="treatment-row__icon"><app-icon name="spark" /></span><div><strong>Tratamiento de ejemplo A · 500 mg</strong><p>1 comprimido · vía oral · cada 12 horas</p><small>Desde 4 jun 2026 · revisión 4 sep 2026</small></div><span class="nexa-chip nexa-chip--success">Activo</span><button mat-button>Detalle</button></article>
+            <article class="treatment-row"><span class="treatment-row__icon"><app-icon name="spark" /></span><div><strong>Tratamiento de ejemplo B · 10 mg</strong><p>1 comprimido · vía oral · cada 24 horas</p><small>Desde 12 mar 2026 · tratamiento crónico</small></div><span class="nexa-chip nexa-chip--success">Activo</span><button mat-button>Detalle</button></article>
+          </div>
+        </mat-tab>
+        <mat-tab label="Documentos">
+          <div class="tab-content"><div class="section-intro"><div><h2>Documentos clínicos</h2><p>Versionados, verificados y con control de acceso</p></div><button mat-flat-button class="nexa-btn-primary">Subir documento</button></div>
+            <div class="document-grid">
+              @for (document of [{name:'Resumen clínico',type:'PDF generado',date:'Hoy · 09:20'},{name:'Consentimiento teleconsulta',type:'PDF firmado',date:'12 mar 2026'},{name:'Informe de resultados',type:'PDF importado',date:'21 abr 2026'},{name:'Hoja de medicación',type:'PDF generado',date:'4 jun 2026'}]; track document.name) {
+                <article><span><app-icon name="download" /></span><div><strong>{{ document.name }}</strong><small>{{ document.type }} · {{ document.date }}</small></div><button mat-button>Descargar</button></article>
+              }
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Antecedentes y vacunas">
+          <div class="tab-content"><div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="shield" /></span><h2>Antecedentes estructurados</h2><p>Problemas activos, antecedentes personales y familiares, vacunas, procedimientos e intolerancias con codificación clínica interoperable.</p><button mat-flat-button class="nexa-btn-primary">Añadir registro</button></div></div></div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <aside class="clinical-side">
+      <article class="nexa-card vital-card" appScrollReveal [revealDelay]="100"><div class="nexa-card__header"><div><h2>Constantes</h2><p>Hoy · 09:18</p></div><button mat-button>Editar</button></div><div class="vitals-grid"><div><small>TA</small><strong>122/78</strong><span>mmHg</span></div><div><small>FC</small><strong>68</strong><span>lpm</span></div><div><small>SpO₂</small><strong>98</strong><span>%</span></div><div><small>Temp.</small><strong>36,4</strong><span>°C</span></div><div><small>Peso</small><strong>76,2</strong><span>kg</span></div><div><small>IMC</small><strong>24,1</strong><span>normal</span></div></div></article>
+      <article class="nexa-card next-actions" appScrollReveal [revealDelay]="160"><div class="nexa-card__header"><div><h2>Plan y tareas</h2><p>Seguimiento compartido</p></div></div><label><input type="checkbox" checked /><span><strong>Conciliar medicación</strong><small>Completado hoy</small></span></label><label><input type="checkbox" /><span><strong>Revisar resultados</strong><small>Antes del 24 jul</small></span></label><label><input type="checkbox" /><span><strong>Programar seguimiento</strong><small>En 6 semanas</small></span></label><button mat-button>Gestionar plan</button></article>
+      <article class="privacy-access nexa-card"><app-icon name="eye" [size]="19" /><span><strong>Acceso asistencial</strong><small>Tu consulta de esta historia queda registrada.</small></span></article>
+    </aside>
+  </section>
+</div>
+
+@if (editingNote()) {
+  <div class="note-backdrop"></div>
+  <aside class="note-editor" role="dialog" aria-modal="true" aria-labelledby="note-title">
+    <header><div><p class="nexa-eyebrow">Consulta de hoy</p><h2 id="note-title">Nota clínica</h2></div><button mat-icon-button aria-label="Cerrar" (click)="editingNote.set(false)"><app-icon name="close" /></button></header>
+    <div class="note-patient"><span class="nexa-avatar">LM</span><span><strong>Lucas M.</strong><small>Consulta de seguimiento · 09:15</small></span><span class="nexa-chip nexa-chip--info">En curso</span></div>
+    <label for="clinical-note">Evolución y valoración</label>
+    <textarea id="clinical-note" rows="13" [ngModel]="noteText()" (ngModelChange)="noteText.set($event)" placeholder="Registra únicamente información clínica relevante…"></textarea>
+    <div class="note-sections"><button type="button">+ Exploración</button><button type="button">+ Diagnóstico</button><button type="button">+ Plan</button><button type="button">+ Seguimiento</button></div>
+    <div class="note-warning"><app-icon name="lock" [size]="16" /> La nota no será visible como definitiva hasta que la firmes.</div>
+    <footer><button mat-button (click)="editingNote.set(false)">Guardar borrador</button><button mat-flat-button class="nexa-btn-primary" (click)="saveNote()"><app-icon name="check" [size]="16" /> Firmar y cerrar</button></footer>
+  </aside>
+}

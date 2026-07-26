@@ -1,0 +1,177 @@
+@media (max-width: 720px) {
+  .appointment-actions button {
+    flex: 1;
+  }
+  .cancel-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .cancel-confirmation button {
+    width: 100%;
+  }
+  .past-appointments article {
+    grid-template-columns: 38px 1fr;
+  }
+  .past-appointments article button {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .appointment-policy,
+  .billing-help,
+  .privacy-contact {
+    align-items: start;
+    flex-wrap: wrap;
+  }
+  .appointment-policy button,
+  .billing-help button,
+  .privacy-contact button {
+    width: 100%;
+  }
+  .waitlist-explainer {
+    overflow-x: auto;
+    grid-template-columns: 200px 30px 200px 30px 200px;
+  }
+  .waitlist-requests > article {
+    grid-template-columns: 48px 1fr;
+  }
+  .waitlist-actions {
+    grid-column: 2;
+  }
+  .medication-list > article {
+    grid-template-columns: 45px 1fr;
+    padding: 15px;
+  }
+  .medication-marker {
+    width: 42px;
+    height: 42px;
+  }
+  .medication-list article > aside {
+    grid-column: 1 / -1;
+  }
+  .medication-safety {
+    display: block;
+  }
+  .medication-safety ul {
+    grid-column: auto;
+  }
+  .document-vault > header,
+  .invoice-ledger > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .vault-search {
+    width: 100%;
+  }
+  .document-list article {
+    grid-template-columns: 38px 1fr auto;
+  }
+  .document-list article > .nexa-chip {
+    display: none;
+  }
+  .document-list article button {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+  .document-vault > footer {
+    align-items: start;
+    flex-direction: column;
+  }
+  .billing-balance {
+    grid-template-columns: 1fr;
+  }
+  .balance-seal {
+    padding-top: 14px;
+    border-top: 1px solid var(--nexa-border);
+  }
+  .invoice-ledger > article {
+    grid-template-columns: 39px 1fr auto;
+  }
+  .invoice-ledger > article > .nexa-chip {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .invoice-ledger > article > strong {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .invoice-ledger > article > button {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+  .compose-panel > footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .compose-panel > footer > div button {
+    flex: 1;
+  }
+  .message-workspace {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+  .message-list {
+    max-height: 310px;
+    border-right: 0;
+    border-bottom: 1px solid var(--nexa-border);
+  }
+  .message-reader > div {
+    min-height: 350px;
+  }
+  .message-reader > footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .security-posture {
+    grid-template-columns: 75px 1fr;
+  }
+  .posture-score {
+    width: 70px;
+    height: 70px;
+    padding-top: 16px;
+  }
+  .posture-checks {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, 1fr);
+    padding-top: 13px;
+    border-top: 1px solid var(--nexa-border);
+  }
+  .portal-footer {
+    padding-bottom: 80px;
+  }
+  .portal-footer nav {
+    display: none;
+  }
+  .portal-mobile-nav {
+    position: fixed;
+    z-index: 50;
+    right: 9px;
+    bottom: 8px;
+    left: 9px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 6px;
+    border: 1px solid var(--nexa-border);
+    border-radius: 17px;
+    background: color-mix(in srgb, var(--nexa-surface) 93%, transparent);
+    box-shadow: 0 12px 35px rgba(16, 52, 48, 0.16);
+    backdrop-filter: blur(18px);
+  }
+  .portal-mobile-nav button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 48px;
+    gap: 3px;
+    border: 0;
+    border-radius: 12px;
+    color: var(--nexa-ink-soft);
+    background: transparent;
+    flex-direction: column;
+    font-size: 0.48rem;
+  }
+  .portal-mobile-nav button.is-active {
+    color: var(--nexa-primary);
+    background: var(--nexa-primary-soft);
+  }
+}

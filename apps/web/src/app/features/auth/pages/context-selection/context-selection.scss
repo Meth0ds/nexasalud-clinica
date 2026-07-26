@@ -1,0 +1,37 @@
+:host { display: block; min-height: 100dvh; color: var(--nexa-ink); background: radial-gradient(circle at 12% 15%, rgba(35, 137, 128, .1), transparent 34rem), var(--nexa-canvas); }
+.context-page { min-height: 100dvh; padding: clamp(1.25rem, 3vw, 2.25rem); }
+.context-header { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.nexa-brand { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .75rem; }
+.nexa-brand > span:last-child { display: grid; }
+.nexa-brand strong { font-size: 1.08rem; }
+.nexa-brand small { color: var(--nexa-ink-muted); font-size: .72rem; }
+.assurance { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .8rem; border: 1px solid var(--nexa-border); border-radius: 999px; color: var(--nexa-ink-soft); font-size: .78rem; background: var(--nexa-surface); }
+.context-layout { max-width: 1080px; margin: clamp(3rem, 10vh, 7rem) auto 2rem; display: grid; grid-template-columns: minmax(250px, .72fr) minmax(430px, 1.15fr); gap: clamp(2rem, 7vw, 6rem); align-items: start; }
+aside { padding-top: 1.4rem; }
+aside h1 { max-width: 10ch; margin: .65rem 0 1rem; font-family: 'Newsreader Variable', 'Newsreader', Georgia, serif; font-size: clamp(2.35rem, 5vw, 4.4rem); line-height: .98; font-weight: 500; letter-spacing: -.045em; }
+aside > p:not(.nexa-eyebrow) { max-width: 32rem; color: var(--nexa-ink-soft); line-height: 1.7; }
+.privacy-note { margin-top: 2rem; display: flex; align-items: center; gap: .7rem; padding-top: 1.2rem; border-top: 1px solid var(--nexa-border); }
+.privacy-note > span { display: grid; gap: .15rem; }
+.privacy-note small { color: var(--nexa-ink-soft); }
+.context-card { padding: clamp(1.3rem, 3vw, 2rem); border: 1px solid var(--nexa-border); border-radius: 28px; background: color-mix(in srgb, var(--nexa-surface) 96%, transparent); box-shadow: 0 24px 70px rgba(16, 35, 50, .1); }
+.context-step { display: flex; align-items: center; gap: .75rem; margin-bottom: .9rem; }
+.context-step > span { color: var(--nexa-primary); font: 700 .7rem/1 'Manrope Variable', sans-serif; letter-spacing: .12em; }
+.context-step > div { display: grid; gap: .1rem; }
+.context-step small { color: var(--nexa-ink-soft); }
+.context-step--clinic { margin-top: 1.7rem; }
+.choice-list { display: grid; gap: .65rem; }
+.choice-list button, .clinic-grid button { width: 100%; min-height: 68px; display: flex; align-items: center; gap: .8rem; padding: .75rem; text-align: left; color: inherit; border: 1px solid var(--nexa-border); border-radius: 16px; background: var(--nexa-surface); cursor: pointer; transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.choice-list button:hover, .clinic-grid button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--nexa-primary) 50%, var(--nexa-border)); }
+.choice-list button:focus-visible, .clinic-grid button:focus-visible { outline: 3px solid color-mix(in srgb, var(--nexa-primary) 35%, transparent); outline-offset: 2px; }
+.choice-list button.is-selected, .clinic-grid button.is-selected { border-color: var(--nexa-primary); box-shadow: inset 0 0 0 1px var(--nexa-primary); }
+.choice-mark { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; background: var(--nexa-primary-soft); color: var(--nexa-primary-strong); font-weight: 800; }
+.choice-list button > span:nth-child(2), .clinic-grid button > span { display: grid; gap: .1rem; flex: 1; }
+.choice-list small, .clinic-grid small { color: var(--nexa-ink-soft); }
+.choice-list i, .clinic-grid i { width: 15px; height: 15px; border: 2px solid var(--nexa-border-strong); border-radius: 50%; }
+.is-selected i { border: 4px solid var(--nexa-primary); }
+.clinic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.context-error { margin: 1rem 0 0; padding: .8rem; border-radius: 12px; color: var(--nexa-danger); background: var(--nexa-danger-soft); font-size: .83rem; }
+.continue-button { width: 100%; min-height: 50px; margin-top: 1.4rem; display: inline-flex; gap: .5rem; }
+@media (max-width: 800px) { .context-layout { grid-template-columns: 1fr; margin-top: 2.5rem; gap: 1.5rem; } aside h1 { max-width: 14ch; } }
+@media (max-width: 560px) { .assurance { display: none; } .clinic-grid { grid-template-columns: 1fr; } .context-card { border-radius: 20px; } }
+@media (prefers-reduced-motion: reduce) { .choice-list button, .clinic-grid button { transition: none; } .choice-list button:hover, .clinic-grid button:hover { transform: none; } }

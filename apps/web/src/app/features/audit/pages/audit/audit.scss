@@ -1,0 +1,48 @@
+.audit-integrity { display: flex; align-items: center; gap: 12px; padding: 15px 18px; color: var(--nexa-success); background: var(--nexa-success-soft); }
+.audit-integrity > span:first-child { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 12px; background: var(--nexa-surface); }
+.audit-integrity > div { min-width: 0; flex: 1; }
+.audit-integrity strong,
+.audit-integrity small { display: block; }
+.audit-integrity strong { color: var(--nexa-ink); font-size: 0.66rem; }
+.audit-integrity small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.53rem; }
+.audit-integrity button { color: var(--nexa-success); font-size: 0.56rem; }
+.audit-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px; }
+.audit-toolbar .nexa-search { flex: 1; }
+.audit-toolbar > button:not(.mat-mdc-button-base) { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 11px; border: 1px solid var(--nexa-border); border-radius: 10px; color: var(--nexa-ink-soft); background: var(--nexa-surface); cursor: pointer; font-size: 0.55rem; }
+.audit-layout { display: grid; align-items: start; grid-template-columns: minmax(700px, 1fr) 280px; gap: 16px; }
+.audit-stream { min-width: 0; }
+.audit-stream .nexa-card__header > span { color: var(--nexa-ink-soft); font-size: 0.53rem; }
+.audit-event { display: grid; align-items: center; grid-template-columns: 58px 38px minmax(150px, 1.1fr) minmax(130px, 1fr) auto 95px 32px; gap: 9px; padding: 12px 14px; border-bottom: 1px solid var(--nexa-border); }
+.audit-event > time { color: var(--nexa-ink-soft); font-family: ui-monospace, monospace; font-size: 0.52rem; }
+.audit-event .nexa-avatar { width: 34px; height: 34px; border-radius: 10px; }
+.audit-event > div strong,
+.audit-event > div small { display: block; }
+.audit-event > div strong { font-size: 0.59rem; }
+.audit-event > div small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
+.event-resource { color: var(--nexa-ink-soft); font-size: 0.53rem; }
+.audit-stream > footer { display: flex; align-items: center; justify-content: space-between; padding: 9px 15px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
+.audit-stream > footer button { font-size: 0.53rem; }
+.audit-side { display: grid; gap: 15px; }
+.risk-card .nexa-card__header { padding: 16px; }
+.risk-score { display: flex; align-items: center; gap: 10px; padding: 14px; border-bottom: 1px solid var(--nexa-border); }
+.risk-score > span { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 13px; color: var(--nexa-warn); background: var(--nexa-accent-soft); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.3rem; }
+.risk-score strong,
+.risk-score small { display: block; }
+.risk-score strong { font-size: 0.59rem; }
+.risk-score small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
+.risk-item { display: flex; align-items: start; gap: 8px; padding: 11px 14px; }
+.risk-item i { width: 7px; height: 7px; margin-top: 3px; border-radius: 50%; background: var(--nexa-accent); }
+.risk-item strong,
+.risk-item small { display: block; }
+.risk-item strong { font-size: 0.56rem; }
+.risk-item small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.47rem; }
+.risk-card > button { width: 100%; border-top: 1px solid var(--nexa-border); font-size: 0.53rem; }
+.retention-card { display: flex; align-items: start; gap: 9px; padding: 14px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
+.retention-card strong,
+.retention-card small { display: block; }
+.retention-card strong { color: var(--nexa-ink); font-size: 0.57rem; }
+.retention-card small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.48rem; line-height: 1.45; }
+@media (max-width: 1150px) { .audit-layout { grid-template-columns: 1fr; } .audit-side { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 800px) { .audit-toolbar { align-items: stretch; flex-direction: column; } .audit-event { grid-template-columns: 46px 34px 1fr auto; } .event-resource,
+.audit-event > .nexa-mono,
+.audit-event > button { display: none; } .audit-side { grid-template-columns: 1fr; } }

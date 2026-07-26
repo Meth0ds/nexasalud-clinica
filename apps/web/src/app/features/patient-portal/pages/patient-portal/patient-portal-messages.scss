@@ -1,0 +1,170 @@
+.message-boundary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -9px 0 17px;
+  padding: 11px 14px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 12px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+}
+.message-boundary p {
+  margin: 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+}
+.compose-panel {
+  margin-bottom: 17px;
+  padding: 21px;
+  border: 1px solid color-mix(in srgb, var(--nexa-primary) 28%, var(--nexa-border));
+  border-radius: 18px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow);
+}
+.compose-panel > header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+.compose-panel > header button {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border: 1px solid var(--nexa-border);
+  border-radius: 11px;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface-muted);
+}
+.compose-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+.compose-fields .full-field {
+  grid-column: 1 / -1;
+}
+.compose-panel > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.compose-panel > footer > p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.52rem;
+}
+.compose-panel > footer > div {
+  display: flex;
+  gap: 7px;
+}
+.message-workspace {
+  display: grid;
+  overflow: hidden;
+  min-height: 520px;
+  grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.35fr);
+  border: 1px solid var(--nexa-border);
+  border-radius: 19px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow-soft);
+}
+.message-list {
+  overflow-y: auto;
+  border-right: 1px solid var(--nexa-border);
+  background: var(--nexa-surface-muted);
+}
+.message-list > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 59px;
+  padding: 14px 17px;
+  border-bottom: 1px solid var(--nexa-border);
+}
+.message-list > header strong {
+  font-size: 0.68rem;
+}
+.message-list > header span {
+  color: var(--nexa-primary);
+  font-size: 0.54rem;
+  font-weight: 730;
+}
+.message-list > button {
+  position: relative;
+  display: grid;
+  width: 100%;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  padding: 15px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--nexa-border);
+  color: var(--nexa-ink);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.message-list > button:hover,
+.message-list > button.is-active {
+  background: var(--nexa-surface);
+}
+.message-list > button.is-active::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--nexa-primary);
+  content: '';
+}
+.message-avatar {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+.message-list button > div > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+}
+.message-list button strong {
+  font-size: 0.57rem;
+}
+.message-list button small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.47rem;
+}
+.message-list button b {
+  display: block;
+  overflow: hidden;
+  margin-top: 5px;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.message-list button p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.52rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.message-list button > i {
+  position: absolute;
+  top: 18px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nexa-accent);
+}

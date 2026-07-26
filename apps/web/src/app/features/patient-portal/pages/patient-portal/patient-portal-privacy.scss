@@ -1,0 +1,211 @@
+.security-posture {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 90px 1fr auto;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--nexa-primary) 26%, var(--nexa-border));
+  border-radius: 19px;
+  background: linear-gradient(120deg, var(--nexa-primary-pale), var(--nexa-surface));
+  box-shadow: var(--nexa-shadow-soft);
+}
+.posture-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  width: 82px;
+  height: 82px;
+  padding-top: 20px;
+  border: 7px solid var(--nexa-primary-soft);
+  border-top-color: var(--nexa-primary);
+  border-right-color: var(--nexa-primary);
+  border-radius: 50%;
+  color: var(--nexa-primary);
+}
+.posture-score span {
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.52rem;
+}
+.posture-score small {
+  font-size: 0.5rem;
+}
+.security-posture > div:nth-child(2) > p:last-child {
+  margin: 5px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.59rem;
+}
+.posture-checks {
+  display: grid;
+  gap: 7px;
+}
+.posture-checks span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--nexa-success);
+  font-size: 0.55rem;
+  font-weight: 690;
+}
+.privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+.privacy-panel {
+  overflow: hidden;
+  border: 1px solid var(--nexa-border);
+  border-radius: 18px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow-soft);
+}
+.privacy-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--nexa-border);
+  color: var(--nexa-primary);
+}
+.privacy-panel > header div {
+  color: var(--nexa-ink);
+}
+.privacy-panel > header h2 {
+  font-size: 1.35rem;
+}
+.privacy-panel > header p {
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.53rem;
+}
+.privacy-panel > label {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 19px;
+}
+.privacy-panel > label + label {
+  border-top: 1px solid var(--nexa-border);
+}
+.privacy-panel > label > span {
+  min-width: 0;
+  flex: 1;
+}
+.privacy-panel > label strong,
+.privacy-panel > label small {
+  display: block;
+}
+.privacy-panel > label strong {
+  font-size: 0.62rem;
+}
+.privacy-panel > label small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.sessions-panel > article,
+.access-log > article {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 19px;
+}
+.sessions-panel > article + article,
+.access-log > article + article {
+  border-top: 1px solid var(--nexa-border);
+}
+.device-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.sessions-panel article > div,
+.access-log article > div {
+  min-width: 0;
+  flex: 1;
+}
+.sessions-panel article strong,
+.sessions-panel article small,
+.access-log article strong,
+.access-log article small {
+  display: block;
+}
+.sessions-panel article strong,
+.access-log article strong {
+  font-size: 0.61rem;
+}
+.sessions-panel article small,
+.access-log article small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.sessions-panel > button,
+.access-log > button {
+  margin: 3px 18px 16px;
+}
+.event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nexa-primary);
+  box-shadow: 0 0 0 5px var(--nexa-primary-soft);
+}
+.event-dot--success {
+  background: var(--nexa-success);
+  box-shadow: 0 0 0 5px var(--nexa-success-soft);
+}
+.access-log article button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  color: var(--nexa-ink-soft);
+  background: transparent;
+}
+.rights-panel > button {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  grid-template-columns: 36px 1fr 20px;
+  gap: 11px;
+  padding: 14px 19px;
+  border: 0;
+  color: var(--nexa-ink);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.rights-panel > button + button {
+  border-top: 1px solid var(--nexa-border);
+}
+.rights-panel > button:hover {
+  background: var(--nexa-surface-muted);
+}
+.rights-panel > button > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.rights-panel strong,
+.rights-panel small {
+  display: block;
+}
+.rights-panel strong {
+  font-size: 0.62rem;
+}
+.rights-panel small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}

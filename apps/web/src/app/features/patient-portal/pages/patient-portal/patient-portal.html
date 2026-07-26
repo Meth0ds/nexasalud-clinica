@@ -1,0 +1,1363 @@
+<a class="portal-skip-link" href="#portal-main">Saltar al contenido</a>
+
+<div class="portal-shell">
+  <aside
+    class="portal-sidebar"
+    [class.is-open]="mobileNavOpen()"
+    aria-label="Navegación del portal"
+  >
+    <div class="portal-brand">
+      <span class="portal-brand__mark" aria-hidden="true"><i></i><i></i></span>
+      <span><strong>NexaSalud</strong><small>Portal del paciente</small></span>
+      <button
+        class="portal-close"
+        type="button"
+        aria-label="Cerrar menú"
+        (click)="mobileNavOpen.set(false)"
+      >
+        <app-icon name="close" [size]="19" />
+      </button>
+    </div>
+
+    <div class="demo-identity">
+      <span class="nexa-avatar">{{ patientInitials() }}</span>
+      <span>
+        <strong>{{ patientName() }}</strong>
+        <small>{{
+          overview()?.patient?.relationship === 'self' ? 'Acceso personal' : 'Acceso autorizado'
+        }}</small>
+      </span>
+      <span class="demo-dot" title="Sesión protegida"></span>
+    </div>
+
+    <nav class="portal-nav">
+      <p>Tu espacio</p>
+      @for (item of navItems; track item.id) {
+        <button
+          type="button"
+          [class.is-active]="activeSection() === item.id"
+          [class.is-unavailable]="!item.available"
+          [attr.aria-current]="activeSection() === item.id ? 'page' : null"
+          [attr.aria-disabled]="!item.available"
+          (click)="activateSection(item.id)"
+        >
+          <span class="portal-nav__icon"><app-icon [name]="item.icon" [size]="18" /></span>
+          <span>{{ item.label }}</span>
+          @if (!item.available) {
+            <small class="unavailable-label">No disponible</small>
+          }
+        </button>
+      }
+    </nav>
+
+    <div class="portal-help is-unavailable" aria-disabled="true">
+      <span><app-icon name="phone" [size]="18" /></span>
+      <div><strong>Ayuda por el portal</strong><small>No disponible actualmente</small></div>
+    </div>
+
+    <div class="portal-security">
+      <app-icon name="shield" [size]="17" />
+      <span
+        ><strong>Sesión protegida</strong><small>{{ assuranceLabel() }}</small></span
+      >
+    </div>
+  </aside>
+
+  @if (mobileNavOpen()) {
+    <button
+      class="portal-backdrop"
+      type="button"
+      aria-label="Cerrar navegación"
+      (click)="mobileNavOpen.set(false)"
+    ></button>
+  }
+
+  <div class="portal-workspace">
+    <header class="portal-topbar">
+      <button
+        class="portal-menu"
+        type="button"
+        aria-label="Abrir menú"
+        [attr.aria-expanded]="mobileNavOpen()"
+        (click)="mobileNavOpen.set(true)"
+      >
+        <app-icon name="menu" [size]="20" />
+      </button>
+      <div class="topbar-context">
+        <small>Portal personal</small><strong>{{ currentSectionTitle() }}</strong>
+      </div>
+      <div class="topbar-actions">
+        <span class="demo-pill"><i></i> Conexión segura</span>
+        <button
+          type="button"
+          class="topbar-action"
+          aria-label="Mensajes no disponibles"
+          aria-disabled="true"
+          (click)="announceUnavailable('Mensajes seguros')"
+        >
+          <app-icon name="bell" [size]="19" />
+        </button>
+        <button
+          type="button"
+          class="profile-button"
+          aria-label="Privacidad no disponible"
+          aria-disabled="true"
+          (click)="announceUnavailable('Privacidad y solicitudes')"
+        >
+          <span>{{ patientInitials() }}</span
+          ><app-icon name="chevron" [size]="14" />
+        </button>
+      </div>
+    </header>
+
+    <main id="portal-main" class="portal-main" tabindex="-1">
+      @if (overviewLoading()) {
+        <section
+          class="portal-view portal-state"
+          aria-labelledby="portal-loading-title"
+          aria-busy="true"
+        >
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <span><app-icon name="shield" [size]="27" /></span>
+          <h1 id="portal-loading-title">Preparando tu espacio seguro</h1>
+          <p>Estamos recuperando únicamente la información necesaria para esta sesión.</p>
+        </section>
+      } @else if (overviewError(); as error) {
+        <section
+          class="portal-view portal-state portal-state--error"
+          aria-labelledby="portal-error-title"
+          role="alert"
+        >
+          <span><app-icon name="shield" [size]="27" /></span>
+          <p class="nexa-eyebrow">No se pudo cargar el portal</p>
+          <h1 id="portal-error-title">Tu información no se ha mostrado</h1>
+          <p>{{ error.message }}</p>
+          @if (error.correlationId) {
+            <small>Referencia: {{ error.correlationId }}</small>
+          }
+          <button mat-flat-button class="nexa-btn-primary" type="button" (click)="loadOverview()">
+            Volver a intentar
+          </button>
+        </section>
+      } @else {
+        @switch (activeSection()) {
+          @case ('inicio') {
+            <section class="portal-view portal-home" aria-labelledby="portal-home-title">
+              <header class="patient-welcome" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Tu espacio asistencial</p>
+                  <h1 id="portal-home-title">
+                    Hola, <em>{{ patientName() }}</em>
+                  </h1>
+                  <p>
+                    Consulta tus próximas citas, documentación clínica y facturación desde una
+                    sesión protegida.
+                  </p>
+                </div>
+                <button
+                  mat-flat-button
+                  class="nexa-btn-primary"
+                  type="button"
+                  [disabled]="catalogLoading() || !!catalogError()"
+                  (click)="activateSection('reservar')"
+                >
+                  <app-icon name="plus" [size]="17" /> Pedir nueva cita
+                </button>
+              </header>
+
+              @if (nextAppointment(); as appointment) {
+                <article class="care-journey" appScrollReveal [revealDelay]="70">
+                  <div class="care-journey__date">
+                    <small>Tu próxima cita</small
+                    ><strong>{{ formatDayNumber(appointment.startsAt) }}</strong
+                    ><span>{{ formatMonth(appointment.startsAt) }}</span>
+                  </div>
+                  <div class="care-journey__main">
+                    <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}"
+                      ><i></i> {{ statusLabel(appointment.status) }}</span
+                    >
+                    <h2>{{ appointment.typeName || 'Consulta programada' }}</h2>
+                    <p>
+                      <strong>{{ formatTime(appointment.startsAt) }}</strong> ·
+                      {{ appointment.practitionerName || 'Profesional por asignar' }} ·
+                      {{ appointment.clinicName || modeLabel(appointment.mode) }}
+                    </p>
+                    <div class="journey-actions">
+                      <button
+                        mat-flat-button
+                        class="nexa-btn-primary"
+                        type="button"
+                        (click)="activateSection('citas')"
+                      >
+                        Ver detalles
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="nexa-btn-secondary"
+                        type="button"
+                        (click)="healthTab.set('documentos'); activateSection('salud')"
+                      >
+                        <app-icon name="download" [size]="16" /> Documentos
+                      </button>
+                    </div>
+                  </div>
+                  <div class="care-route" aria-label="Itinerario de la cita">
+                    <div class="is-done">
+                      <span><app-icon name="check" [size]="14" /></span>
+                      <p>
+                        <strong>Reservada</strong
+                        ><small>{{ statusLabel(appointment.status) }}</small>
+                      </p>
+                    </div>
+                    <i></i>
+                    <div class="is-current">
+                      <span><app-icon name="bell" [size]="14" /></span>
+                      <p><strong>Preparación</strong><small>Antes de acudir</small></p>
+                    </div>
+                    <i></i>
+                    <div>
+                      <span><app-icon name="patients" [size]="14" /></span>
+                      <p>
+                        <strong>Consulta</strong
+                        ><small>{{ formatDate(appointment.startsAt) }}</small>
+                      </p>
+                    </div>
+                    <i></i>
+                    <div>
+                      <span><app-icon name="shield" [size]="14" /></span>
+                      <p><strong>Seguimiento</strong><small>Según indicación</small></p>
+                    </div>
+                  </div>
+                </article>
+              } @else {
+                <section class="portal-empty" appScrollReveal>
+                  <span><app-icon name="calendar" [size]="28" /></span>
+                  <h2>No tienes citas próximas</h2>
+                  <p>Puedes buscar disponibilidad si necesitas una nueva consulta.</p>
+                  <button
+                    mat-flat-button
+                    class="nexa-btn-primary"
+                    type="button"
+                    [disabled]="catalogLoading() || !!catalogError()"
+                    (click)="activateSection('reservar')"
+                  >
+                    Buscar una cita
+                  </button>
+                </section>
+              }
+
+              <div class="home-layout nexa-section">
+                <section class="home-primary" aria-labelledby="home-summary-title">
+                  <div class="section-heading" appScrollReveal>
+                    <div>
+                      <p class="nexa-eyebrow">Resumen personal</p>
+                      <h2 id="home-summary-title">Tu información disponible</h2>
+                    </div>
+                    <span>Actualizada al abrir esta sesión</span>
+                  </div>
+                  <div class="preparation-list" appScrollReveal [revealDelay]="80">
+                    <article class="preparation-item">
+                      <span class="task-check"><app-icon name="calendar" [size]="16" /></span>
+                      <div>
+                        <strong
+                          >{{ upcomingAppointments().length }}
+                          {{
+                            upcomingAppointments().length === 1 ? 'cita próxima' : 'citas próximas'
+                          }}</strong
+                        >
+                        <p>Consulta instrucciones o gestiona cambios permitidos.</p>
+                      </div>
+                      <button mat-button type="button" (click)="activateSection('citas')">
+                        Abrir
+                      </button>
+                    </article>
+                    <article class="preparation-item">
+                      <span class="task-index"><app-icon name="shield" [size]="16" /></span>
+                      <div>
+                        <strong
+                          >{{ prescriptions().length }}
+                          {{
+                            prescriptions().length === 1
+                              ? 'plan de medicación'
+                              : 'planes de medicación'
+                          }}</strong
+                        >
+                        <p>Información clínica visible para tu cuenta autorizada.</p>
+                      </div>
+                      <button
+                        mat-button
+                        type="button"
+                        (click)="healthTab.set('medicacion'); activateSection('salud')"
+                      >
+                        Revisar
+                      </button>
+                    </article>
+                    <article class="preparation-item">
+                      <span class="task-index"><app-icon name="download" [size]="16" /></span>
+                      <div>
+                        <strong
+                          >{{ documents().length }}
+                          {{
+                            documents().length === 1
+                              ? 'documento disponible'
+                              : 'documentos disponibles'
+                          }}</strong
+                        >
+                        <p>Las descargas se autorizan y auditan individualmente.</p>
+                      </div>
+                      <button
+                        mat-button
+                        type="button"
+                        (click)="healthTab.set('documentos'); activateSection('salud')"
+                      >
+                        Ver documentos
+                      </button>
+                    </article>
+                  </div>
+
+                  <article class="health-summary" appScrollReveal [revealDelay]="120">
+                    <header>
+                      <div>
+                        <p class="nexa-eyebrow">Carpeta de salud</p>
+                        <h2>Información clínica y económica</h2>
+                      </div>
+                      <button mat-button type="button" (click)="activateSection('salud')">
+                        Abrir carpeta <app-icon name="arrow" [size]="15" />
+                      </button>
+                    </header>
+                    <div class="health-summary__rail">
+                      <button
+                        type="button"
+                        (click)="healthTab.set('medicacion'); activateSection('salud')"
+                      >
+                        <span><app-icon name="shield" [size]="19" /></span
+                        ><strong>{{ prescriptions().length }}</strong
+                        ><small>Planes registrados</small></button
+                      ><i></i>
+                      <button
+                        type="button"
+                        (click)="healthTab.set('documentos'); activateSection('salud')"
+                      >
+                        <span><app-icon name="download" [size]="19" /></span
+                        ><strong>{{ documents().length }}</strong
+                        ><small>Documentos</small></button
+                      ><i></i>
+                      <button type="button" (click)="activateSection('pagos')">
+                        <span><app-icon name="check" [size]="19" /></span
+                        ><strong>{{
+                          money(outstandingBalance(), invoices()[0]?.currency || 'EUR')
+                        }}</strong
+                        ><small>Saldo pendiente</small>
+                      </button>
+                    </div>
+                  </article>
+                </section>
+
+                <aside class="home-aside">
+                  <article class="secure-inbox" appScrollReveal [revealDelay]="100">
+                    <header>
+                      <span><app-icon name="calendar" [size]="18" /></span>
+                      <div>
+                        <strong>Actividad asistencial</strong
+                        ><small>{{ appointments().length }} citas registradas</small>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Abrir citas"
+                        (click)="activateSection('citas')"
+                      >
+                        <app-icon name="arrow" [size]="16" />
+                      </button>
+                    </header>
+                    @for (appointment of upcomingAppointments().slice(0, 2); track appointment.id) {
+                      <button
+                        class="inbox-preview"
+                        type="button"
+                        (click)="activateSection('citas')"
+                      >
+                        <span class="is-unread"></span>
+                        <div>
+                          <strong>{{ appointment.typeName || 'Consulta programada' }}</strong
+                          ><small
+                            >{{ formatDate(appointment.startsAt) }} ·
+                            {{ formatTime(appointment.startsAt) }}</small
+                          >
+                        </div>
+                      </button>
+                    } @empty {
+                      <div class="compact-empty">No hay actividad próxima.</div>
+                    }
+                  </article>
+                  <article class="availability-note" appScrollReveal [revealDelay]="150">
+                    <span class="availability-orbit"><app-icon name="calendar" [size]="21" /></span>
+                    <p class="nexa-eyebrow">Disponibilidad real</p>
+                    <h2>Busca el momento adecuado</h2>
+                    <p>
+                      Los huecos se consultan en tiempo real y se retienen solo durante la
+                      confirmación.
+                    </p>
+                    <button
+                      mat-button
+                      type="button"
+                      [disabled]="catalogLoading() || !!catalogError()"
+                      (click)="activateSection('reservar')"
+                    >
+                      Buscar un hueco <app-icon name="arrow" [size]="15" />
+                    </button>
+                  </article>
+                  @if (catalogError(); as error) {
+                    <article class="privacy-note" role="status" appScrollReveal>
+                      <app-icon name="shield" [size]="19" />
+                      <div>
+                        <strong>Reserva no disponible</strong>
+                        <p>{{ error.message }}</p>
+                      </div>
+                    </article>
+                  }
+                </aside>
+              </div>
+            </section>
+          }
+
+          @case ('reservar') {
+            <section class="portal-view booking-view" aria-labelledby="booking-title">
+              <header class="view-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Reserva guiada</p>
+                  <h1 id="booking-title">
+                    {{
+                      bookingIntent() === 'reschedule'
+                        ? 'Elige un nuevo momento'
+                        : 'Encuentra tu cita'
+                    }}
+                  </h1>
+                  <p>
+                    La disponibilidad se obtiene del centro activo y vuelve a validarse antes de
+                    confirmar.
+                  </p>
+                </div>
+                <span class="demo-data-label"
+                  ><app-icon name="shield" [size]="15" /> Reserva protegida</span
+                >
+              </header>
+
+              @if (catalogLoading()) {
+                <section class="portal-empty" aria-busy="true">
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  <h2>Cargando opciones de reserva</h2>
+                  <p>Estamos consultando centros y tipos de atención disponibles.</p>
+                </section>
+              } @else if (catalogError(); as error) {
+                <section class="portal-empty portal-state--error" role="alert">
+                  <span><app-icon name="shield" [size]="28" /></span>
+                  <h2>La reserva no está disponible</h2>
+                  <p>{{ error.message }}</p>
+                  @if (error.correlationId) {
+                    <small>Referencia: {{ error.correlationId }}</small>
+                  }
+                  <button
+                    mat-flat-button
+                    class="nexa-btn-primary"
+                    type="button"
+                    (click)="loadCatalog()"
+                  >
+                    Volver a intentar
+                  </button>
+                </section>
+              } @else {
+                <div class="booking-frame" appScrollReveal [revealDelay]="60">
+                  <header class="booking-progress">
+                    <div>
+                      <span>Paso {{ bookingStep() }} de 4</span
+                      ><strong>{{ bookingProgress() }}% completado</strong>
+                    </div>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="bookingProgress()"
+                      aria-label="Progreso de la reserva"
+                    ></mat-progress-bar>
+                    <ol aria-label="Pasos de la reserva">
+                      @for (
+                        step of [
+                          { n: 1, l: 'Atención' },
+                          { n: 2, l: 'Fecha y hora' },
+                          { n: 3, l: 'Detalles' },
+                          { n: 4, l: 'Confirmar' },
+                        ];
+                        track step.n
+                      ) {
+                        <li
+                          [class.is-active]="bookingStep() === step.n"
+                          [class.is-done]="bookingStep() > step.n"
+                        >
+                          <span>{{ bookingStep() > step.n ? '✓' : step.n }}</span
+                          ><small>{{ step.l }}</small>
+                        </li>
+                      }
+                    </ol>
+                  </header>
+
+                  @if (availabilityError(); as error) {
+                    <div class="inline-problem" role="alert">
+                      <app-icon name="shield" [size]="18" />
+                      <div>
+                        <strong>No se pudo consultar la disponibilidad</strong>
+                        <p>{{ error.message }}</p>
+                        @if (error.correlationId) {
+                          <small>Referencia: {{ error.correlationId }}</small>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <div class="booking-body">
+                    @switch (bookingStep()) {
+                      @case (1) {
+                        <section class="booking-step" aria-labelledby="care-type-title">
+                          <header>
+                            <p class="nexa-eyebrow">Qué necesitas</p>
+                            <h2 id="care-type-title">Selecciona el tipo de atención</h2>
+                            <p>Las opciones corresponden al catálogo activo del centro.</p>
+                          </header>
+                          @if (careOptions().length) {
+                            <div
+                              class="care-options"
+                              role="radiogroup"
+                              aria-labelledby="care-type-title"
+                            >
+                              @for (care of careOptions(); track care.id) {
+                                <button
+                                  type="button"
+                                  role="radio"
+                                  [attr.aria-checked]="selectedAppointmentTypeId() === care.id"
+                                  [class.is-selected]="selectedAppointmentTypeId() === care.id"
+                                  (click)="
+                                    selectedAppointmentTypeId.set(care.id);
+                                    selectedMode.set(
+                                      care.allowsVideo ? selectedMode() : 'in-person'
+                                    )
+                                  "
+                                >
+                                  <span><app-icon name="calendar" [size]="20" /></span>
+                                  <div>
+                                    <strong>{{ care.name }}</strong
+                                    ><small
+                                      >{{ care.durationMinutes }} min{{
+                                        care.allowsVideo ? ' · presencial o vídeo' : ' · presencial'
+                                      }}</small
+                                    >
+                                  </div>
+                                  <i><app-icon name="check" [size]="13" /></i>
+                                </button>
+                              }
+                            </div>
+                            <div class="booking-preferences">
+                              <fieldset>
+                                <legend>Modalidad</legend>
+                                <div class="segmented-choice">
+                                  <button
+                                    type="button"
+                                    [class.is-selected]="selectedMode() === 'in-person'"
+                                    [attr.aria-pressed]="selectedMode() === 'in-person'"
+                                    (click)="selectedMode.set('in-person')"
+                                  >
+                                    <app-icon name="location" [size]="16" /> En el centro
+                                  </button>
+                                  <button
+                                    type="button"
+                                    [disabled]="!selectedCareType()?.allowsVideo"
+                                    [class.is-selected]="selectedMode() === 'video'"
+                                    [attr.aria-pressed]="selectedMode() === 'video'"
+                                    (click)="selectedMode.set('video')"
+                                  >
+                                    <app-icon name="video" [size]="16" /> Videoconsulta
+                                  </button>
+                                </div>
+                              </fieldset>
+                              <mat-form-field appearance="outline"
+                                ><mat-label>Centro</mat-label
+                                ><mat-select
+                                  [value]="selectedClinicId()"
+                                  (selectionChange)="selectedClinicId.set($event.value)"
+                                >
+                                  @for (clinic of catalog()?.clinics ?? []; track clinic.id) {
+                                    <mat-option [value]="clinic.id">{{ clinic.name }}</mat-option>
+                                  }
+                                </mat-select></mat-form-field
+                              >
+                            </div>
+                          } @else {
+                            <div class="portal-empty">
+                              <span><app-icon name="calendar" [size]="28" /></span>
+                              <h2>No hay tipos de atención disponibles</h2>
+                              <p>El centro activo no ha publicado opciones reservables.</p>
+                            </div>
+                          }
+                        </section>
+                      }
+                      @case (2) {
+                        <section class="booking-step slot-step" aria-labelledby="slot-title">
+                          <header>
+                            <p class="nexa-eyebrow">Disponibilidad</p>
+                            <h2 id="slot-title">Elige fecha y hora</h2>
+                            <p>El hueco se retendrá durante cinco minutos en el siguiente paso.</p>
+                          </header>
+                          @if (availabilityLoading()) {
+                            <div class="portal-empty" aria-busy="true">
+                              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                              <h2>Consultando horarios</h2>
+                              <p>Comprobamos profesionales, salas y conflictos de agenda.</p>
+                            </div>
+                          } @else if (bookingDates().length) {
+                            <div
+                              class="date-strip"
+                              role="radiogroup"
+                              aria-label="Fechas disponibles"
+                            >
+                              @for (date of bookingDates(); track date.id) {
+                                <button
+                                  type="button"
+                                  role="radio"
+                                  [attr.aria-checked]="selectedDate() === date.id"
+                                  [class.is-selected]="selectedDate() === date.id"
+                                  (click)="chooseDate(date.id)"
+                                >
+                                  <small>{{ date.day }}</small
+                                  ><strong>{{ date.date }}</strong
+                                  ><span>{{ date.month }}</span
+                                  ><i>{{ date.availability }}</i>
+                                </button>
+                              }
+                            </div>
+                            <div class="slot-layout">
+                              <div>
+                                <p class="slot-label">
+                                  Horas disponibles · {{ selectedDateLabel() }}
+                                </p>
+                                <div
+                                  class="slot-grid"
+                                  role="radiogroup"
+                                  aria-label="Horas disponibles"
+                                >
+                                  @for (slot of availableSlots(); track slot.startsAt) {
+                                    <button
+                                      type="button"
+                                      role="radio"
+                                      [attr.aria-checked]="
+                                        selectedSlot()?.startsAt === slot.startsAt
+                                      "
+                                      [class.is-selected]="
+                                        selectedSlot()?.startsAt === slot.startsAt
+                                      "
+                                      (click)="selectedSlot.set(slot); activeHold.set(null)"
+                                    >
+                                      {{ formatTime(slot.startsAt) }}
+                                    </button>
+                                  }
+                                </div>
+                                @if (!selectedSlot()) {
+                                  <p class="slot-hint">
+                                    <app-icon name="clock" [size]="15" /> Selecciona una hora para
+                                    continuar.
+                                  </p>
+                                }
+                              </div>
+                              <aside class="slot-context">
+                                <span
+                                  ><app-icon
+                                    [name]="selectedMode() === 'video' ? 'video' : 'location'"
+                                    [size]="19"
+                                /></span>
+                                <div>
+                                  <small>Tu selección</small><strong>{{ selectedCare() }}</strong>
+                                  <p>
+                                    {{ modeLabel(selectedMode()) }} · {{ selectedClinic()?.name }}
+                                  </p>
+                                </div>
+                                <button mat-button type="button" (click)="bookingStep.set(1)">
+                                  Cambiar preferencias
+                                </button>
+                              </aside>
+                            </div>
+                          } @else {
+                            <div class="portal-empty">
+                              <span><app-icon name="clock" [size]="28" /></span>
+                              <h2>No hay huecos en este periodo</h2>
+                              <p>
+                                Cambia la modalidad o el tipo de atención para realizar otra
+                                búsqueda.
+                              </p>
+                              <button
+                                mat-stroked-button
+                                class="nexa-btn-secondary"
+                                type="button"
+                                (click)="bookingStep.set(1)"
+                              >
+                                Cambiar búsqueda
+                              </button>
+                            </div>
+                          }
+                        </section>
+                      }
+                      @case (3) {
+                        <section class="booking-step detail-step" aria-labelledby="detail-title">
+                          <header>
+                            <p class="nexa-eyebrow">Preparación</p>
+                            <h2 id="detail-title">Cuéntanos lo necesario</h2>
+                            <p>
+                              Una descripción breve permite asignar el contexto adecuado. No uses
+                              este formulario para urgencias.
+                            </p>
+                          </header>
+                          <div class="urgent-warning">
+                            <app-icon name="phone" [size]="18" />
+                            <div>
+                              <strong>Si necesitas atención inmediata</strong>
+                              <p>
+                                Contacta con emergencias o con el teléfono urgente de tu centro.
+                              </p>
+                            </div>
+                          </div>
+                          <mat-form-field appearance="outline" class="full-field"
+                            ><mat-label>Motivo de la consulta</mat-label
+                            ><textarea
+                              matInput
+                              rows="4"
+                              maxlength="500"
+                              [ngModel]="bookingReason()"
+                              (ngModelChange)="bookingReason.set($event)"
+                            ></textarea
+                            ><mat-hint align="start"
+                              >Incluye solo la información necesaria.</mat-hint
+                            ><mat-hint align="end"
+                              >{{ bookingReason().length }} / 500</mat-hint
+                            ></mat-form-field
+                          >
+                          <mat-form-field appearance="outline" class="full-field"
+                            ><mat-label>Necesidades de accesibilidad (opcional)</mat-label
+                            ><input
+                              matInput
+                              [ngModel]="bookingAccessibility()"
+                              (ngModelChange)="bookingAccessibility.set($event)"
+                          /></mat-form-field>
+                          <p class="clinical-boundary">
+                            <app-icon name="lock" [size]="16" /> El equipo verá el motivo cuando la
+                            reserva quede confirmada.
+                          </p>
+                        </section>
+                      }
+                      @case (4) {
+                        <section class="booking-step confirm-step" aria-labelledby="confirm-title">
+                          <header>
+                            <p class="nexa-eyebrow">Última revisión</p>
+                            <h2 id="confirm-title">Confirma que todo está bien</h2>
+                            <p>
+                              El hueco está retenido temporalmente. Si caduca, deberás seleccionar
+                              otro.
+                            </p>
+                          </header>
+                          @if (selectedSlot(); as slot) {
+                            <div class="confirmation-ticket">
+                              <div class="ticket-date">
+                                <small>{{ selectedDateLabel() }}</small
+                                ><strong>{{ formatTime(slot.startsAt) }}</strong
+                                ><span>{{ availability()?.timezone }}</span>
+                              </div>
+                              <div class="ticket-details">
+                                <span class="nexa-chip nexa-chip--info">{{
+                                  bookingIntent() === 'reschedule' ? 'Reprogramación' : 'Nueva cita'
+                                }}</span>
+                                <h3>{{ selectedCare() }}</h3>
+                                <p>
+                                  <app-icon
+                                    [name]="selectedMode() === 'video' ? 'video' : 'location'"
+                                    [size]="16"
+                                  />
+                                  {{ modeLabel(selectedMode()) }} · {{ selectedClinic()?.name }}
+                                </p>
+                                <p>
+                                  <app-icon name="patients" [size]="16" />
+                                  {{ slot.practitionerName || 'Profesional disponible' }}
+                                </p>
+                                <p>
+                                  <app-icon name="waitlist" [size]="16" /> {{ bookingReason() }}
+                                </p>
+                              </div>
+                            </div>
+                          }
+                          <mat-checkbox
+                            [checked]="bookingConsent()"
+                            (change)="bookingConsent.set($event.checked)"
+                            >He revisado la fecha, la modalidad y el centro de esta
+                            cita.</mat-checkbox
+                          >
+                          <div class="confirmation-security">
+                            <app-icon name="shield" [size]="19" />
+                            <div>
+                              <strong>Confirmación segura</strong>
+                              <p>
+                                La operación usa una clave de idempotencia y la disponibilidad se
+                                valida de nuevo en el servidor.
+                              </p>
+                            </div>
+                          </div>
+                        </section>
+                      }
+                    }
+                  </div>
+
+                  <footer class="booking-actions">
+                    <button
+                      mat-stroked-button
+                      class="nexa-btn-secondary"
+                      type="button"
+                      [disabled]="bookingStep() === 1 || !!actionBusy()"
+                      (click)="previousBookingStep()"
+                    >
+                      Atrás
+                    </button>
+                    <span>
+                      @if (activeHold(); as hold) {
+                        Retención válida hasta {{ formatTime(hold.expiresAt) }}
+                      } @else {
+                        Los horarios se validan al continuar.
+                      }
+                    </span>
+                    @if (bookingStep() < 4) {
+                      <button
+                        mat-flat-button
+                        class="nexa-btn-primary"
+                        type="button"
+                        [disabled]="!!actionBusy() || availabilityLoading()"
+                        (click)="continueBooking()"
+                      >
+                        {{ actionBusy() === 'hold' ? 'Reteniendo hueco…' : 'Continuar' }}
+                        <app-icon name="arrow" [size]="16" />
+                      </button>
+                    } @else {
+                      <button
+                        mat-flat-button
+                        class="nexa-btn-primary"
+                        type="button"
+                        [disabled]="!!actionBusy()"
+                        (click)="confirmBooking()"
+                      >
+                        <app-icon name="check" [size]="16" />
+                        {{
+                          actionBusy() === 'booking'
+                            ? 'Confirmando…'
+                            : bookingIntent() === 'reschedule'
+                              ? 'Confirmar cambio'
+                              : 'Confirmar cita'
+                        }}
+                      </button>
+                    }
+                  </footer>
+                </div>
+              }
+            </section>
+          }
+
+          @case ('citas') {
+            <section class="portal-view appointments-view" aria-labelledby="appointments-title">
+              <header class="view-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Tu agenda</p>
+                  <h1 id="appointments-title">Mis citas</h1>
+                  <p>
+                    Consulta detalles y realiza cambios cuando la política del centro lo permita.
+                  </p>
+                </div>
+                <button
+                  mat-flat-button
+                  class="nexa-btn-primary"
+                  type="button"
+                  [disabled]="catalogLoading() || !!catalogError()"
+                  (click)="
+                    bookingIntent.set('new');
+                    bookingAppointment.set(null);
+                    bookingStep.set(1);
+                    activateSection('reservar')
+                  "
+                >
+                  <app-icon name="plus" [size]="17" /> Pedir cita
+                </button>
+              </header>
+              <nav class="content-switch" aria-label="Filtrar citas" appScrollReveal>
+                <button
+                  type="button"
+                  [class.is-active]="appointmentFilter() === 'proximas'"
+                  [attr.aria-pressed]="appointmentFilter() === 'proximas'"
+                  (click)="appointmentFilter.set('proximas')"
+                >
+                  Próximas <span>{{ upcomingAppointments().length }}</span></button
+                ><button
+                  type="button"
+                  [class.is-active]="appointmentFilter() === 'anteriores'"
+                  [attr.aria-pressed]="appointmentFilter() === 'anteriores'"
+                  (click)="appointmentFilter.set('anteriores')"
+                >
+                  Anteriores <span>{{ pastAppointments().length }}</span>
+                </button>
+              </nav>
+
+              @if (appointmentFilter() === 'proximas') {
+                <div class="appointment-ledger" appScrollReveal [revealDelay]="70">
+                  @for (appointment of upcomingAppointments(); track appointment.id) {
+                    <article class="patient-appointment">
+                      <div class="appointment-date">
+                        <small>{{ formatDay(appointment.startsAt) }}</small
+                        ><strong>{{ formatDayNumber(appointment.startsAt) }}</strong
+                        ><span>{{ formatMonth(appointment.startsAt) }}</span
+                        ><i>{{ formatTime(appointment.startsAt) }}</i>
+                      </div>
+                      <div class="appointment-detail">
+                        <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}">{{
+                          statusLabel(appointment.status)
+                        }}</span>
+                        <h2>{{ appointment.typeName || 'Consulta programada' }}</h2>
+                        <p>{{ appointment.practitionerName || 'Profesional por asignar' }}</p>
+                        <div>
+                          <span
+                            ><app-icon
+                              [name]="
+                                appointment.mode === 'video'
+                                  ? 'video'
+                                  : appointment.mode === 'phone'
+                                    ? 'phone'
+                                    : 'location'
+                              "
+                              [size]="16"
+                            />
+                            {{ modeLabel(appointment.mode) }}</span
+                          ><span
+                            >{{ appointment.clinicName
+                            }}{{ appointment.roomName ? ' · ' + appointment.roomName : '' }}</span
+                          >
+                        </div>
+                      </div>
+                      <div class="appointment-actions">
+                        <button
+                          mat-stroked-button
+                          class="nexa-btn-secondary"
+                          type="button"
+                          [disabled]="
+                            !appointment.canReschedule || !!actionBusy() || !!catalogError()
+                          "
+                          (click)="startReschedule(appointment)"
+                        >
+                          Cambiar cita
+                        </button>
+                        <button
+                          mat-button
+                          type="button"
+                          [disabled]="!appointment.canCancel || !!actionBusy()"
+                          (click)="askToCancel(appointment.id)"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                      @if (cancelCandidate() === appointment.id) {
+                        <div class="cancel-confirmation" role="alert">
+                          <div>
+                            <strong>¿Cancelar esta cita?</strong>
+                            <p>
+                              El hueco volverá a estar disponible. La operación quedará registrada.
+                            </p>
+                          </div>
+                          <button
+                            mat-button
+                            type="button"
+                            [disabled]="!!actionBusy()"
+                            (click)="cancelCandidate.set(null)"
+                          >
+                            Mantener cita</button
+                          ><button
+                            mat-flat-button
+                            type="button"
+                            [disabled]="!!actionBusy()"
+                            (click)="confirmCancellation(appointment)"
+                          >
+                            {{
+                              actionBusy() === 'cancel:' + appointment.id
+                                ? 'Cancelando…'
+                                : 'Sí, cancelar'
+                            }}
+                          </button>
+                        </div>
+                      }
+                    </article>
+                  } @empty {
+                    <div class="portal-empty">
+                      <span><app-icon name="calendar" [size]="28" /></span>
+                      <h2>No tienes citas próximas</h2>
+                      <p>Puedes buscar un hueco disponible desde este portal.</p>
+                      <button
+                        mat-flat-button
+                        class="nexa-btn-primary"
+                        type="button"
+                        [disabled]="catalogLoading() || !!catalogError()"
+                        (click)="activateSection('reservar')"
+                      >
+                        Buscar cita
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <section class="past-appointments" appScrollReveal [revealDelay]="70">
+                  @for (appointment of pastAppointments(); track appointment.id) {
+                    <article>
+                      <span
+                        ><app-icon
+                          [name]="appointment.status === 'cancelled' ? 'close' : 'check'"
+                          [size]="17"
+                      /></span>
+                      <div>
+                        <small
+                          >{{ formatDate(appointment.startsAt) }} ·
+                          {{ formatTime(appointment.startsAt) }}</small
+                        ><strong>{{ appointment.typeName || 'Consulta' }}</strong>
+                        <p>{{ appointment.practitionerName || statusLabel(appointment.status) }}</p>
+                      </div>
+                      <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}">{{
+                        statusLabel(appointment.status)
+                      }}</span>
+                    </article>
+                  } @empty {
+                    <div class="portal-empty">
+                      <span><app-icon name="calendar" [size]="28" /></span>
+                      <h2>No hay citas anteriores</h2>
+                      <p>El historial aparecerá aquí cuando exista actividad.</p>
+                    </div>
+                  }
+                </section>
+              }
+              <aside class="appointment-policy" appScrollReveal [revealDelay]="110">
+                <app-icon name="clock" [size]="19" />
+                <div>
+                  <strong>Cambios sujetos a disponibilidad</strong>
+                  <p>
+                    Las acciones se deshabilitan cuando faltan menos de cuatro horas o el estado ya
+                    no permite cambios.
+                  </p>
+                </div>
+              </aside>
+            </section>
+          }
+
+          @case ('salud') {
+            <section class="portal-view health-view" aria-labelledby="health-title">
+              <header class="view-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Tu carpeta</p>
+                  <h1 id="health-title">Medicación y documentos</h1>
+                  <p>
+                    Consulta planes registrados y descarga documentos autorizados para tu cuenta.
+                  </p>
+                </div>
+              </header>
+              <nav class="content-switch" aria-label="Contenido de salud" appScrollReveal>
+                <button
+                  type="button"
+                  [class.is-active]="healthTab() === 'medicacion'"
+                  [attr.aria-pressed]="healthTab() === 'medicacion'"
+                  (click)="healthTab.set('medicacion')"
+                >
+                  Medicación <span>{{ prescriptions().length }}</span></button
+                ><button
+                  type="button"
+                  [class.is-active]="healthTab() === 'documentos'"
+                  [attr.aria-pressed]="healthTab() === 'documentos'"
+                  (click)="healthTab.set('documentos')"
+                >
+                  Documentos <span>{{ documents().length }}</span>
+                </button>
+              </nav>
+              @if (healthTab() === 'medicacion') {
+                <div class="medication-layout">
+                  <section
+                    class="medication-list"
+                    aria-label="Planes de medicación"
+                    appScrollReveal
+                    [revealDelay]="60"
+                  >
+                    @for (
+                      prescription of prescriptions();
+                      track prescription.id;
+                      let index = $index
+                    ) {
+                      <article>
+                        <div class="medication-marker">
+                          <span>{{ index + 1 }}</span>
+                        </div>
+                        <div class="medication-copy">
+                          <span
+                            class="nexa-chip nexa-chip--{{ statusTone(prescription.status) }}"
+                            >{{ statusLabel(prescription.status) }}</span
+                          >
+                          <h2>Plan de medicación</h2>
+                          <strong>{{ prescriptionSummary(prescription) }}</strong>
+                          <p>{{ prescription.prescriberName || 'Profesional no especificado' }}</p>
+                        </div>
+                        <aside>
+                          <small>Estado actual</small
+                          ><strong>{{ statusLabel(prescription.status) }}</strong
+                          ><button
+                            mat-stroked-button
+                            class="nexa-btn-secondary"
+                            type="button"
+                            disabled
+                          >
+                            No disponible: solicitar revisión
+                          </button>
+                        </aside>
+                      </article>
+                    } @empty {
+                      <div class="portal-empty">
+                        <span><app-icon name="shield" [size]="28" /></span>
+                        <h2>No hay planes de medicación</h2>
+                        <p>No consta medicación visible para esta cuenta.</p>
+                      </div>
+                    }
+                  </section>
+                  <aside class="medication-safety" appScrollReveal [revealDelay]="110">
+                    <span><app-icon name="shield" [size]="22" /></span>
+                    <p class="nexa-eyebrow">Uso seguro</p>
+                    <h2>No cambies la pauta desde el portal</h2>
+                    <p>
+                      Las modificaciones requieren valoración profesional. La solicitud de
+                      renovación todavía no está disponible aquí.
+                    </p>
+                    <ul>
+                      <li>
+                        <app-icon name="check" [size]="14" /> Información procedente del registro
+                        clínico
+                      </li>
+                      <li><app-icon name="check" [size]="14" /> Acceso limitado a tu cuenta</li>
+                    </ul>
+                  </aside>
+                </div>
+              } @else {
+                <section class="document-vault" appScrollReveal [revealDelay]="60">
+                  <header>
+                    <div>
+                      <span><app-icon name="lock" [size]="20" /></span>
+                      <div>
+                        <h2>Archivo privado</h2>
+                        <p>Cada descarga se autoriza y queda registrada.</p>
+                      </div>
+                    </div>
+                  </header>
+                  <div class="document-list">
+                    @for (document of documents(); track document.id) {
+                      <article>
+                        <span><app-icon name="download" [size]="19" /></span>
+                        <div>
+                          <strong>{{ documentLabel(document) }}</strong
+                          ><small
+                            >{{ formatDate(document.generatedAt) }} · Revisión
+                            {{ document.revision }}</small
+                          >
+                        </div>
+                        <span class="nexa-chip nexa-chip--success"
+                          ><app-icon name="check" [size]="12" /> Disponible</span
+                        ><button
+                          mat-button
+                          type="button"
+                          [disabled]="!!downloadingDocumentId()"
+                          (click)="downloadDocument(document)"
+                        >
+                          <app-icon name="download" [size]="15" />
+                          {{
+                            downloadingDocumentId() === document.id
+                              ? 'Descargando…'
+                              : 'Descargar PDF'
+                          }}
+                        </button>
+                      </article>
+                    } @empty {
+                      <div class="portal-empty">
+                        <span><app-icon name="download" [size]="28" /></span>
+                        <h2>No hay documentos disponibles</h2>
+                        <p>Los documentos firmados aparecerán aquí cuando estén preparados.</p>
+                      </div>
+                    }
+                  </div>
+                </section>
+              }
+            </section>
+          }
+
+          @case ('pagos') {
+            <section class="portal-view billing-view" aria-labelledby="billing-title">
+              <header class="view-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Área económica</p>
+                  <h1 id="billing-title">Facturas y pagos</h1>
+                  <p>
+                    Consulta importes y estados registrados. El pago en línea todavía no está
+                    disponible.
+                  </p>
+                </div>
+              </header>
+              <section class="billing-balance" appScrollReveal [revealDelay]="50">
+                <div>
+                  <p class="nexa-eyebrow">Saldo actual</p>
+                  <strong>{{
+                    money(outstandingBalance(), invoices()[0]?.currency || 'EUR')
+                  }}</strong
+                  ><span>{{
+                    outstandingBalance() === 0
+                      ? 'Sin pagos pendientes'
+                      : 'Pendiente de gestión con el centro'
+                  }}</span>
+                </div>
+                <div class="balance-seal">
+                  <span
+                    ><app-icon [name]="outstandingBalance() === 0 ? 'check' : 'clock'" [size]="18"
+                  /></span>
+                  <p>
+                    <strong
+                      >{{ invoices().length }}
+                      {{
+                        invoices().length === 1 ? 'factura registrada' : 'facturas registradas'
+                      }}</strong
+                    ><small>Información actual del portal</small>
+                  </p>
+                </div>
+                <div class="payment-boundary">
+                  <app-icon name="shield" [size]="18" />
+                  <p>
+                    <strong>Pago en línea no disponible</strong
+                    ><small>El portal no solicita ni almacena datos completos de tarjeta.</small>
+                  </p>
+                </div>
+              </section>
+              <section class="invoice-ledger" appScrollReveal [revealDelay]="90">
+                <header>
+                  <div>
+                    <h2>Facturas</h2>
+                    <p>Importes expresados en la moneda registrada</p>
+                  </div>
+                </header>
+                @for (invoice of invoices(); track invoice.id) {
+                  <article>
+                    <span class="invoice-icon"><app-icon name="download" [size]="18" /></span>
+                    <div>
+                      <strong>{{ invoiceConcept(invoice) }}</strong
+                      ><small>Identificador {{ invoice.id }}</small>
+                    </div>
+                    <span class="nexa-chip nexa-chip--{{ statusTone(invoice.status) }}">{{
+                      statusLabel(invoice.status)
+                    }}</span
+                    ><strong>{{ money(invoice.totalMinor, invoice.currency) }}</strong
+                    ><button mat-button type="button" disabled>PDF no vinculado</button>
+                  </article>
+                } @empty {
+                  <div class="portal-empty">
+                    <span><app-icon name="download" [size]="28" /></span>
+                    <h2>No hay facturas</h2>
+                    <p>No consta actividad económica visible para esta cuenta.</p>
+                  </div>
+                }
+              </section>
+            </section>
+          }
+
+          @case ('espera') {
+            <section class="portal-view unavailable-view">
+              <div class="portal-empty">
+                <span><app-icon name="waitlist" [size]="28" /></span>
+                <p class="nexa-eyebrow">No disponible</p>
+                <h1>Lista de espera</h1>
+                <p>
+                  El backend del portal todavía no ofrece esta operación. No se ha creado ninguna
+                  solicitud.
+                </p>
+                <button
+                  mat-stroked-button
+                  class="nexa-btn-secondary"
+                  type="button"
+                  (click)="activateSection('inicio')"
+                >
+                  Volver a Mi salud
+                </button>
+              </div>
+            </section>
+          }
+          @case ('mensajes') {
+            <section class="portal-view unavailable-view">
+              <div class="portal-empty">
+                <span><app-icon name="bell" [size]="28" /></span>
+                <p class="nexa-eyebrow">No disponible</p>
+                <h1>Mensajes seguros</h1>
+                <p>
+                  La mensajería aún no está conectada al backend. Ningún mensaje se enviará desde
+                  esta pantalla.
+                </p>
+                <button
+                  mat-stroked-button
+                  class="nexa-btn-secondary"
+                  type="button"
+                  (click)="activateSection('inicio')"
+                >
+                  Volver a Mi salud
+                </button>
+              </div>
+            </section>
+          }
+          @case ('privacidad') {
+            <section class="portal-view unavailable-view">
+              <div class="portal-empty">
+                <span><app-icon name="shield" [size]="28" /></span>
+                <p class="nexa-eyebrow">No disponible</p>
+                <h1>Privacidad y solicitudes</h1>
+                <p>
+                  Las solicitudes de acceso, rectificación o exportación todavía no están
+                  disponibles en este portal. No se simulará su envío.
+                </p>
+                <button
+                  mat-stroked-button
+                  class="nexa-btn-secondary"
+                  type="button"
+                  (click)="activateSection('inicio')"
+                >
+                  Volver a Mi salud
+                </button>
+              </div>
+            </section>
+          }
+        }
+      }
+    </main>
+
+    <footer class="portal-footer">
+      <span>NexaSalud · Portal seguro</span>
+      <nav aria-label="Estado de funciones">
+        <button type="button" (click)="announceUnavailable('Privacidad y solicitudes')">
+          Privacidad: no disponible</button
+        ><button type="button" disabled>Accesibilidad</button>
+      </nav>
+    </footer>
+    <nav class="portal-mobile-nav" aria-label="Navegación rápida">
+      @for (item of navItems.slice(0, 4); track item.id) {
+        <button
+          type="button"
+          [class.is-active]="activeSection() === item.id"
+          [class.is-unavailable]="!item.available"
+          [attr.aria-current]="activeSection() === item.id ? 'page' : null"
+          [attr.aria-disabled]="!item.available"
+          (click)="activateSection(item.id)"
+        >
+          <app-icon [name]="item.icon" [size]="19" /><span>{{ item.shortLabel }}</span>
+        </button>
+      }
+      <button type="button" [class.is-active]="mobileNavOpen()" (click)="mobileNavOpen.set(true)">
+        <app-icon name="menu" [size]="19" /><span>Más</span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ statusMessage() }}</div>

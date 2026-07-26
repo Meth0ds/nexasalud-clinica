@@ -1,0 +1,56 @@
+@media (max-width: 420px) {
+  .topbar-context small {
+    display: none;
+  }
+  .profile-button app-icon {
+    display: none;
+  }
+  .care-journey {
+    grid-template-columns: 1fr;
+  }
+  .care-journey__date {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: auto auto 1fr;
+    gap: 7px;
+    padding-bottom: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--nexa-border);
+    text-align: left;
+  }
+  .care-journey__date small {
+    grid-column: 1 / -1;
+  }
+  .care-journey__date strong {
+    margin: 0;
+    font-size: 2rem;
+  }
+  .care-journey__date span {
+    align-self: end;
+    padding-bottom: 4px;
+  }
+  .slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .content-switch {
+    display: flex;
+    width: 100%;
+  }
+  .content-switch button {
+    flex: 1;
+  }
+  .posture-checks {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-sidebar,
+  .portal-nav > button,
+  .care-options > button {
+    transition: none;
+  }
+  .search-pulse > i {
+    animation: none;
+  }
+}

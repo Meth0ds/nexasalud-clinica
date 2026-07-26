@@ -1,0 +1,36 @@
+.appointment-inspector { position: sticky; top: 98px; padding: 17px; }
+.appointment-inspector header { display: flex; align-items: start; justify-content: space-between; gap: 9px; }
+.appointment-inspector h2 { font-size: 1.45rem; }
+.inspector-patient { display: flex; align-items: center; gap: 10px; margin: 17px -3px; padding: 13px; border-radius: 12px; background: var(--nexa-surface-muted); }
+.inspector-patient strong,
+.inspector-patient small { display: block; }
+.inspector-patient strong { font-size: 0.65rem; }
+.inspector-patient small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.52rem; }
+.appointment-inspector dl { margin: 0; }
+.appointment-inspector dl div { padding: 10px 1px; border-bottom: 1px solid var(--nexa-border); }
+.appointment-inspector dt { color: var(--nexa-ink-soft); font-size: 0.52rem; text-transform: uppercase; }
+.appointment-inspector dd { margin: 4px 0 0; font-size: 0.64rem; }
+.inspector-alert { display: flex; gap: 8px; margin-top: 13px; padding: 10px; border-radius: 10px; color: var(--nexa-danger); background: var(--nexa-danger-soft); }
+.inspector-alert strong,
+.inspector-alert small { display: block; }
+.inspector-alert strong { font-size: 0.6rem; }
+.inspector-alert small { margin-top: 2px; font-size: 0.52rem; }
+.inspector-actions { display: grid; gap: 7px; margin-top: 15px; }
+.inspector-actions button { width: 100%; font-size: 0.62rem; }
+.inspector-audit { display: flex; justify-content: center; gap: 5px; margin: 14px 0 0; color: var(--nexa-ink-soft); font-size: 0.49rem; }
+
+.alternate-view { display: grid; min-height: 640px; place-items: center; align-content: center; padding: 40px; text-align: center; }
+.alternate-view__icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 18px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
+.alternate-view h2 { margin: 14px 0 5px; }
+.alternate-view > p { margin: 0; color: var(--nexa-ink-soft); font-size: 0.72rem; }
+.week-summary { display: grid; width: min(100%, 670px); height: 220px; grid-template-columns: repeat(7, 1fr); gap: 8px; margin: 30px 0; }
+.week-summary div { display: flex; align-items: center; flex-direction: column; justify-content: flex-end; gap: 7px; padding: 9px; border-radius: 11px; background: var(--nexa-surface-muted); }
+.week-summary div.is-today { border: 1px solid var(--nexa-primary); background: var(--nexa-primary-pale); }
+.week-summary span { width: 100%; max-height: 130px; border-radius: 6px 6px 2px 2px; background: var(--nexa-primary-soft); }
+.week-summary strong { font-size: 0.57rem; }
+.week-summary small { color: var(--nexa-ink-soft); font-size: 0.48rem; }
+
+@media (max-width: 1380px) { .agenda-workspace.has-inspector { grid-template-columns: 170px minmax(570px, 1fr); } .appointment-inspector { position: fixed; z-index: 30; right: 18px; bottom: 18px; width: 290px; max-height: calc(100vh - 110px); overflow: auto; box-shadow: var(--nexa-shadow); } }
+@media (max-width: 900px) { .agenda-workspace,
+.agenda-workspace.has-inspector { grid-template-columns: 1fr; } .agenda-filters { display: none; } }
+@media (max-width: 720px) { .agenda-toolbar { align-items: stretch; flex-direction: column; } .date-navigation > div { flex: 1; } mat-button-toggle-group { align-self: stretch; } mat-button-toggle { flex: 1; } .appointment-inspector { right: 10px; bottom: 10px; left: 10px; width: auto; } }

@@ -1,0 +1,29 @@
+.setting-columns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.setting-list { overflow: hidden; border: 1px solid var(--nexa-border); border-radius: 13px; }
+.setting-list.full { width: min(100%, 850px); }
+.setting-list h3 { margin: 0; padding: 13px; border-bottom: 1px solid var(--nexa-border); background: var(--nexa-surface-muted); font-size: 0.65rem; }
+.setting-list label { display: flex; align-items: center; gap: 12px; min-height: 61px; padding: 10px 13px; border-bottom: 1px solid var(--nexa-border); }
+.setting-list label:last-child { border-bottom: 0; }
+.setting-list label > span:first-child { min-width: 0; flex: 1; }
+.setting-list strong,
+.setting-list small { display: block; }
+.setting-list strong { font-size: 0.58rem; }
+.setting-list small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
+.setting-list select { padding: 7px; border: 1px solid var(--nexa-border); border-radius: 8px; color: var(--nexa-ink); background: var(--nexa-surface); font-size: 0.52rem; }
+.appointment-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.appointment-types > button:not(.add-resource) { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 9px; border: 1px solid var(--nexa-border); border-radius: 10px; color: var(--nexa-ink); background: var(--nexa-surface); cursor: pointer; text-align: left; }
+.appointment-types button span { min-width: 0; flex: 1; }
+.appointment-types strong,
+.appointment-types small { display: block; }
+.appointment-types strong { font-size: 0.55rem; }
+.appointment-types small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.46rem; }
+.type-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--nexa-primary); }
+.type-dot--blue { background: var(--nexa-blue); }
+.type-dot--coral { background: var(--nexa-accent); }
+.type-dot--sand { background: #9f8755; }
+.template-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+.template-list button { display: grid; align-items: center; grid-template-columns: 34px 1fr auto 16px; gap: 8px; padding: 10px; border: 1px solid var(--nexa-border); border-radius: 10px; color: var(--nexa-ink); background: var(--nexa-surface); cursor: pointer; text-align: left; }
+.template-list button > span { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 9px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
+.template-list strong,
+.template-list small { font-size: 0.53rem; }
+.template-list small { color: var(--nexa-ink-soft); }

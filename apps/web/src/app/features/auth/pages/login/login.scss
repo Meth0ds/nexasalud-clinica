@@ -1,0 +1,332 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.login-page {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(480px, 1.08fr) minmax(440px, 0.92fr);
+  background: var(--nexa-surface);
+}
+
+.login-story {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-height: 100dvh;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(30px, 4vw, 64px);
+  color: #eaf5f1;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(121, 197, 181, 0.2), transparent 22rem),
+    linear-gradient(145deg, #153f3e 0%, #102f30 58%, #183e3b 100%);
+}
+
+.login-story::before,
+.login-story::after {
+  position: absolute;
+  border: 1px solid rgba(188, 229, 218, 0.12);
+  border-radius: 50%;
+  content: '';
+}
+
+.login-story::before {
+  top: -30%;
+  right: -30%;
+  width: 70vw;
+  height: 70vw;
+}
+
+.login-story::after {
+  right: 11%;
+  bottom: -36%;
+  width: 44vw;
+  height: 44vw;
+}
+
+.login-story__top,
+.login-story__content,
+.login-story blockquote {
+  position: relative;
+  z-index: 1;
+}
+
+.login-story__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nexa-brand__mark {
+  position: relative;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 13px;
+  background: #e5f4ef;
+}
+
+.nexa-brand__mark i {
+  position: absolute;
+  width: 19px;
+  height: 5px;
+  border-radius: 4px;
+  background: #176f67;
+}
+
+.nexa-brand__mark i:last-child {
+  transform: rotate(90deg);
+}
+
+.login-story__top strong,
+.login-story__top small {
+  display: block;
+}
+
+.login-story__top strong {
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.35rem;
+}
+
+.login-story__top small {
+  margin-top: 2px;
+  color: #96bdb5;
+  font-size: 0.61rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-story__content {
+  width: min(100%, 660px);
+  margin: 11vh auto 8vh;
+}
+
+.login-story .nexa-eyebrow {
+  color: #9dd3c7;
+}
+
+.login-story h2 {
+  margin: 8px 0 18px;
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: clamp(2.7rem, 5vw, 5.15rem);
+  font-weight: 430;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.login-story h2 em {
+  color: #9bd1c5;
+  font-weight: 390;
+}
+
+.login-story__content > p:last-of-type {
+  max-width: 510px;
+  color: #b4d0ca;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.care-ribbon {
+  position: relative;
+  margin-top: clamp(38px, 7vh, 74px);
+  padding: 15px 16px 15px 35px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  background: rgba(235, 248, 244, 0.07);
+  box-shadow: 0 28px 65px rgba(0, 0, 0, 0.13);
+  backdrop-filter: blur(16px);
+}
+
+.care-ribbon__line {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 19px;
+  width: 1px;
+  background: rgba(143, 210, 196, 0.3);
+}
+
+.care-ribbon__line i {
+  position: absolute;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #88cdbf;
+}
+
+.care-ribbon__line i:nth-child(2) { top: 18%; }
+.care-ribbon__line i:nth-child(3) { top: 65%; }
+.care-ribbon__line i:nth-child(4) { top: 100%; }
+
+.care-ribbon article {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 48px 42px 1fr auto;
+  gap: 12px;
+  padding: 11px 2px;
+}
+
+.care-ribbon article + article {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.care-ribbon time {
+  color: #8fc4ba;
+  font-size: 0.7rem;
+  font-weight: 740;
+}
+
+.care-ribbon strong,
+.care-ribbon small {
+  display: block;
+}
+
+.care-ribbon strong {
+  color: #eef7f4;
+  font-size: 0.75rem;
+}
+
+.care-ribbon small {
+  margin-top: 3px;
+  color: #8fb1ab;
+  font-size: 0.61rem;
+}
+
+.login-story blockquote {
+  max-width: 600px;
+  margin: 0;
+  color: #8fb0aa;
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 0.88rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.login-panel {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 6vw, 80px);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(110, 190, 174, 0.1), transparent 19rem),
+    var(--nexa-surface);
+}
+
+.login-card {
+  width: min(100%, 460px);
+}
+
+.login-card__seal {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 28px;
+  place-items: center;
+  border: 1px solid var(--nexa-border);
+  border-radius: 16px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+}
+
+.login-card h1 {
+  font-size: clamp(2.35rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.login-card__lead {
+  margin: 15px 0 25px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.session-notice {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 16px;
+  padding: 12px 13px;
+  border: 1px solid #f0d7c9;
+  border-radius: 13px;
+  color: var(--nexa-warn);
+  background: var(--nexa-accent-soft);
+}
+
+.session-notice strong,
+.session-notice small {
+  display: block;
+}
+
+.session-notice strong { font-size: 0.72rem; }
+.session-notice small { margin-top: 2px; font-size: 0.62rem; }
+.session-notice--error {
+  border-color: color-mix(in srgb, var(--nexa-danger) 28%, var(--nexa-border));
+  color: var(--nexa-danger);
+  background: var(--nexa-danger-soft);
+}
+
+.login-action {
+  width: 100%;
+  min-height: 52px !important;
+}
+
+.login-action app-icon {
+  margin-left: 8px;
+}
+
+.login-action--patient {
+  margin-top: 10px;
+}
+
+.security-points {
+  display: grid;
+  gap: 11px;
+  margin: 25px 0;
+  padding: 21px 0;
+  border-top: 1px solid var(--nexa-border);
+  border-bottom: 1px solid var(--nexa-border);
+}
+
+.security-points span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.71rem;
+}
+
+.security-points app-icon {
+  color: var(--nexa-primary);
+}
+
+.login-card__privacy {
+  color: var(--nexa-ink-soft);
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+
+.login-panel footer {
+  display: flex;
+  width: min(100%, 460px);
+  flex-wrap: wrap;
+  gap: 17px;
+  margin-top: 50px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.61rem;
+}
+
+.login-panel footer span { margin-right: auto; }
+.login-panel footer a { text-decoration: none; }
+.login-panel footer a:hover { color: var(--nexa-primary); }
+
+@media (max-width: 900px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-story { display: none; }
+  .login-panel { min-height: 100dvh; }
+}

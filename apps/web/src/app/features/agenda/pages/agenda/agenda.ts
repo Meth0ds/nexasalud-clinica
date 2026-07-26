@@ -1,10 +1,12 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { finalize } from 'rxjs';
 
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { AppointmentsService } from '../../../../core/services/appointments';
@@ -66,6 +68,7 @@ export class Agenda implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(ErrorNotificationService);
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly appointmentApi = inject(AppointmentsService);
   private readonly patientApi = inject(PatientsService);
   private readonly referenceApi = inject(ReferenceDataService);
@@ -74,6 +77,7 @@ export class Agenda implements OnInit {
   protected readonly view = signal<'day' | 'week' | 'month'>('day');
   protected readonly selectedId = signal<string | null>(null);
   protected readonly appointments = signal<readonly AgendaItem[]>([]);
+  protected readonly pdfId = signal<string | null>(null);
   protected readonly practitioners = signal<readonly { id: string; name: string; role: string; initials: string; tone: string }[]>([]);
   protected readonly rooms = signal<readonly { id: string; name: string }[]>([]);
   private readonly appointmentTypes = signal<ReferenceData['appointmentTypes']>([]);
@@ -122,11 +126,29 @@ export class Agenda implements OnInit {
   }
 
   protected downloadConfirmation(item: AgendaItem): void {
-    this.document.defaultView?.open(
-      `/api/v1/appointments/${encodeURIComponent(item.id)}/documents/confirmation.pdf`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+    if (this.pdfId() === item.id) {
+      return;
+    }
+
+    this.pdfId.set(item.id);
+    this.appointmentApi
+      .downloadAppointmentConfirmation(item.id)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.pdfId.set(null)))
+      .subscribe({
+        next: ({ blob, filename }) => {
+          const url = URL.createObjectURL(blob);
+          const anchor = this.document.createElement('a');
+          anchor.href = url;
+          anchor.download = filename;
+          anchor.rel = 'noopener';
+          anchor.style.display = 'none';
+          this.document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          globalThis.setTimeout(() => URL.revokeObjectURL(url), 0);
+          this.notifications.success('El justificante se ha generado y descargado de forma segura.');
+        },
+      });
   }
 
   protected select(item: AgendaItem): void {

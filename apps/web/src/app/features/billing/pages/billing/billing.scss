@@ -14,32 +14,22 @@
 .issued-date { display: block; margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.47rem; }
 .invoice-actions { display: flex; gap: 4px; }
 .invoice-actions button { font-size: 0.54rem; }
+.collect-button { color: #fff !important; background: var(--nexa-primary) !important; font-size: 0.54rem; }
 .billing-side { display: grid; gap: 15px; }
-.insurer-card .nexa-card__header { padding: 16px; }
-.insurer-card h2 { font-size: 1.2rem; }
-.claim { display: grid; align-items: center; grid-template-columns: 35px 1fr auto; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--nexa-border); }
-.claim > span:first-child { display: grid; width: 33px; height: 33px; place-items: center; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-soft); font-size: 0.53rem; font-weight: 800; }
-.claim strong,
-.claim small { display: block; }
-.claim strong { font-size: 0.58rem; }
-.claim small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
-.insurer-card > button { width: 100%; font-size: 0.54rem; }
 .payment-card { display: flex; align-items: start; gap: 9px; padding: 14px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
 .payment-card strong,
 .payment-card small { display: block; }
 .payment-card strong { color: var(--nexa-ink); font-size: 0.59rem; }
 .payment-card small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.49rem; line-height: 1.45; }
-.invoice-backdrop { position: fixed; z-index: 99; inset: 0; background: rgba(7, 28, 27, 0.46); backdrop-filter: blur(4px); }
-.invoice-panel { position: fixed; z-index: 100; top: 0; right: 0; display: flex; width: min(480px, 96vw); height: 100dvh; flex-direction: column; gap: 15px; padding: 23px; color: var(--nexa-ink); background: var(--nexa-surface); box-shadow: var(--nexa-shadow); }
-.invoice-panel header { display: flex; align-items: start; justify-content: space-between; }
-.invoice-panel h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.7rem; }
-.invoice-panel > label { display: grid; gap: 6px; font-size: 0.56rem; font-weight: 730; text-transform: uppercase; }
-.invoice-panel input { padding: 12px; border: 1px solid var(--nexa-border); border-radius: 10px; outline: 0; color: var(--nexa-ink); background: var(--nexa-surface-muted); font-size: 0.65rem; text-transform: none; }
-.invoice-panel input:focus { border-color: var(--nexa-primary); box-shadow: var(--nexa-focus); }
-.tax-summary { margin-top: 8px; padding: 13px; border: 1px solid var(--nexa-border); border-radius: 11px; }
-.tax-summary div { display: flex; justify-content: space-between; padding: 6px; font-size: 0.59rem; }
-.tax-summary div:last-child { margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--nexa-border); color: var(--nexa-ink-strong); }
-.draft-note { display: flex; gap: 8px; padding: 10px; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-pale); font-size: 0.53rem; line-height: 1.45; }
-.invoice-panel footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--nexa-border); }
+.finance-security { display: flex; align-items: flex-start; gap: 10px; padding: 15px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
+.finance-security h2 { margin: 0; color: var(--nexa-ink-strong); font-size: 0.72rem; }
+.finance-security p { margin: 4px 0 0; color: var(--nexa-ink-soft); font-size: 0.56rem; line-height: 1.45; }
+.billing-loading,
+.billing-error { display: flex; align-items: center; gap: 12px; padding: 24px; }
+.billing-error { color: var(--nexa-danger); border-color: #ecc8cc; background: var(--nexa-danger-soft); }
+.billing-error strong,
+.billing-error p { display: block; }
+.billing-error strong { color: var(--nexa-ink-strong); }
+.billing-error p { margin: 3px 0 0; color: var(--nexa-ink-soft); font-size: 0.62rem; }
 @media (max-width: 1050px) { .billing-layout { grid-template-columns: 1fr; } .billing-side { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 700px) { .billing-side { grid-template-columns: 1fr; } }

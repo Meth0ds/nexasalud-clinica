@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\WaitlistEntry;
+use App\Support\Auditing\AuditRecorder;
 use App\Support\Authorization\PermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class DashboardController extends Controller
 {
-    public function __construct(private readonly PermissionService $permissions) {}
+    public function __construct(
+        private readonly PermissionService $permissions,
+        private readonly AuditRecorder $audit,
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -41,6 +45,24 @@ final class DashboardController extends Controller
             AppointmentStatus::InProgress,
         ])->count();
 
+        $dayAppointments = (clone $appointments)
+            ->with(['patient', 'room', 'appointmentType'])
+            ->orderBy('starts_at')
+            ->limit(24)
+            ->get()
+            ->map(fn (Appointment $appointment): array => $this->appointmentPayload($appointment));
+
+        $waitingList = WaitlistEntry::query()
+            ->where('clinic_id', $clinic->getKey())
+            ->where('status', WaitlistStatus::Waiting)
+            ->count();
+
+        $this->audit->record($request, 'dashboard.viewed', metadata: [
+            'clinic_id' => $clinic->getKey(),
+            'appointment_count' => $total,
+            'waiting_list_count' => $waitingList,
+        ]);
+
         return response()->json([
             'data' => [
                 'date' => now($clinic->timezone)->toDateString(),
@@ -51,7 +73,7 @@ final class DashboardController extends Controller
                     'active' => $active,
                     'completed' => $completed,
                     'cancelledOrNoShow' => $cancelled,
-                    'waitingList' => WaitlistEntry::query()->where('clinic_id', $clinic->getKey())->where('status', WaitlistStatus::Waiting)->count(),
+                    'waitingList' => $waitingList,
                     'occupancyPercent' => $total === 0 ? 0 : (int) round((($total - $cancelled) / $total) * 100),
                 ],
                 'nextAppointments' => Appointment::query()
@@ -72,7 +94,37 @@ final class DashboardController extends Controller
                         'typeName' => $appointment->appointmentType?->name,
                         'status' => $appointment->status->value,
                     ]),
+                'dayAppointments' => $dayAppointments,
             ],
         ]);
+    }
+
+    /** @return array<string, string|null> */
+    private function appointmentPayload(Appointment $appointment): array
+    {
+        $patientName = trim((string) $appointment->patient?->first_name.' '.(string) $appointment->patient?->last_name);
+
+        return [
+            'id' => (string) $appointment->getKey(),
+            'startsAt' => $appointment->starts_at?->toIso8601String(),
+            'endsAt' => $appointment->ends_at?->toIso8601String(),
+            'patientDisplayName' => $patientName !== '' ? $patientName : 'Paciente no disponible',
+            'patientInitials' => collect(explode(' ', $patientName))
+                ->filter()
+                ->take(2)
+                ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
+                ->join(''),
+            'roomName' => $appointment->room?->name,
+            'typeName' => $appointment->appointmentType?->name,
+            'status' => match ($appointment->status) {
+                AppointmentStatus::Scheduled => 'pending',
+                AppointmentStatus::Confirmed => 'confirmed',
+                AppointmentStatus::CheckedIn => 'waiting',
+                AppointmentStatus::InProgress => 'in-progress',
+                AppointmentStatus::Completed => 'completed',
+                AppointmentStatus::Cancelled => 'cancelled',
+                AppointmentStatus::NoShow => 'no-show',
+            },
+        ];
     }
 }

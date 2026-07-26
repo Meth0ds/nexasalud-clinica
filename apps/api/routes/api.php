@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ClinicalNoteController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\InvoiceController;
+use App\Http\Controllers\Api\V1\PatientCommunicationController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\PortalController;
 use App\Http\Controllers\Api\V1\PrescriptionController;
@@ -74,6 +75,20 @@ Route::prefix('v1')
         Route::post('/waitlist-entries/{waitlistEntry}/offer', [WaitlistController::class, 'offer'])
             ->middleware(['throttle:clinical-mutation', 'idempotent'])
             ->name('waitlist-entries.offer');
+
+        Route::get('/communications', [PatientCommunicationController::class, 'index'])
+            ->name('communications.index');
+        Route::post('/communications', [PatientCommunicationController::class, 'store'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('communications.store');
+        Route::get('/communications/{communication}', [PatientCommunicationController::class, 'show'])
+            ->name('communications.show');
+        Route::post('/communications/{communication}/queue', [PatientCommunicationController::class, 'queue'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('communications.queue');
+        Route::post('/communications/{communication}/cancel', [PatientCommunicationController::class, 'cancel'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('communications.cancel');
 
         Route::apiResource('prescriptions', PrescriptionController::class)
             ->middlewareFor(['store', 'update', 'destroy'], 'throttle:clinical-mutation')

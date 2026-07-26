@@ -217,7 +217,8 @@ class ClinicalDemoSeeder extends Seeder
                     'patients.write',
                     'billing.*',
                     'documents.generate',
-                    'communications.*',
+                    'communications.read',
+                    'communications.write',
                 ],
             ],
             'auditor' => [

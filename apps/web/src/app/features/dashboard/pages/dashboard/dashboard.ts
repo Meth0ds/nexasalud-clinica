@@ -1,58 +1,120 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
+import { AppointmentStatus } from '../../../../core/models/app.models';
+import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
+import { DashboardApiService, DashboardAppointment, DashboardData } from '../../data-access/dashboard-api';
 
 interface Metric {
   readonly label: string;
   readonly value: string;
   readonly note: string;
-  readonly trend: string;
   readonly icon: AppIconName;
   readonly tone: 'green' | 'coral' | 'blue' | 'sand';
 }
 
-interface TodayAppointment {
-  readonly id: string;
-  readonly time: string;
-  readonly duration: string;
-  readonly initials: string;
-  readonly patient: string;
-  readonly type: string;
-  readonly place: string;
-  readonly status: 'En curso' | 'Confirmada' | 'Por confirmar' | 'Completada';
-  readonly statusTone: string;
-  readonly flags: readonly string[];
-}
-
 @Component({
   selector: 'app-dashboard',
-  imports: [MatButtonModule, RouterLink, AppIcon, ScrollReveal],
+  imports: [MatButtonModule, MatProgressSpinnerModule, RouterLink, AppIcon, ScrollReveal],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrls: ['./dashboard.scss', './dashboard-agenda.scss', './dashboard-panels.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dashboard {
-  protected readonly selectedAppointment = signal<string | null>('apt-2');
+  private readonly dashboardApi = inject(DashboardApiService);
+  private readonly notifications = inject(ErrorNotificationService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly metrics: readonly Metric[] = [
-    { label: 'Citas de hoy', value: '24', note: '19 confirmadas', trend: '+8%', icon: 'calendar', tone: 'green' },
-    { label: 'En espera', value: '08', note: '2 de prioridad', trend: '−3', icon: 'waitlist', tone: 'coral' },
-    { label: 'Ocupación', value: '86%', note: 'Salas y profesionales', trend: '+4%', icon: 'chart', tone: 'blue' },
-    { label: 'Tiempo medio', value: '18 min', note: 'Espera en recepción', trend: '−6 min', icon: 'clock', tone: 'sand' },
-  ];
+  protected readonly loading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly dashboard = signal<DashboardData | null>(null);
+  protected readonly selectedAppointment = signal<string | null>(null);
+  protected readonly metrics = computed<readonly Metric[]>(() => {
+    const data = this.dashboard();
+    if (!data) {
+      return [];
+    }
+    return [
+      { label: 'Citas de hoy', value: String(data.metrics.appointments), note: `${data.metrics.completed} completadas`, icon: 'calendar', tone: 'green' },
+      { label: 'En espera', value: String(data.metrics.waitingList), note: 'Solicitudes activas', icon: 'waitlist', tone: 'coral' },
+      { label: 'Ocupación', value: `${data.metrics.occupancyPercent}%`, note: 'Agenda del centro', icon: 'chart', tone: 'blue' },
+      { label: 'Citas activas', value: String(data.metrics.active), note: 'Pendientes o en curso', icon: 'clock', tone: 'sand' },
+    ];
+  });
+  protected readonly appointments = computed(() => this.dashboard()?.dayAppointments ?? []);
+  protected readonly selected = computed(() => this.appointments().find((appointment) => appointment.id === this.selectedAppointment()) ?? null);
 
-  protected readonly appointments: readonly TodayAppointment[] = [
-    { id: 'apt-1', time: '08:30', duration: '30 min', initials: 'EV', patient: 'Elena V.', type: 'Revisión de tratamiento', place: 'Sala Encina', status: 'Completada', statusTone: 'success', flags: [] },
-    { id: 'apt-2', time: '09:15', duration: '45 min', initials: 'LM', patient: 'Lucas M.', type: 'Consulta de seguimiento', place: 'Sala Olivo', status: 'En curso', statusTone: 'info', flags: ['Alergia registrada'] },
-    { id: 'apt-3', time: '10:15', duration: '30 min', initials: 'AR', patient: 'Ana R.', type: 'Primera valoración', place: 'Videoconsulta', status: 'Confirmada', statusTone: 'success', flags: ['Documentos pendientes'] },
-    { id: 'apt-4', time: '11:00', duration: '20 min', initials: 'DG', patient: 'David G.', type: 'Resultados y seguimiento', place: 'Sala Encina', status: 'Por confirmar', statusTone: 'warning', flags: [] },
-    { id: 'apt-5', time: '11:30', duration: '30 min', initials: 'CF', patient: 'Clara F.', type: 'Consulta programada', place: 'Sala Olivo', status: 'Confirmada', statusTone: 'success', flags: [] },
-  ];
+  constructor() {
+    this.load();
+  }
+
+  protected load(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.dashboardApi.load()
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => {
+          this.dashboard.set(data);
+          this.selectedAppointment.set(data.dayAppointments[0]?.id ?? null);
+        },
+        error: () => this.errorMessage.set('No se ha podido cargar el resumen operativo del centro activo.'),
+      });
+  }
 
   protected selectAppointment(id: string): void {
     this.selectedAppointment.set(this.selectedAppointment() === id ? null : id);
+  }
+
+  protected statusLabel(status: AppointmentStatus): string {
+    return ({ pending: 'Pendiente', confirmed: 'Confirmada', waiting: 'En espera', 'in-progress': 'En curso', completed: 'Completada', cancelled: 'Cancelada', 'no-show': 'No asistió' })[status];
+  }
+
+  protected statusTone(status: AppointmentStatus): 'info' | 'success' | 'warning' | 'danger' {
+    switch (status) {
+      case 'confirmed':
+      case 'completed':
+        return 'success';
+      case 'waiting':
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+      case 'no-show':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  }
+
+  protected time(value: string | null): string {
+    if (!value) {
+      return '--:--';
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '--:--' : new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(date);
+  }
+
+  protected duration(appointment: DashboardAppointment): string {
+    if (!appointment.startsAt || !appointment.endsAt) {
+      return 'Duración no disponible';
+    }
+    const minutes = Math.round((new Date(appointment.endsAt).getTime() - new Date(appointment.startsAt).getTime()) / 60_000);
+    return Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : 'Duración no disponible';
+  }
+
+  protected dateLabel(value: string): string {
+    const date = new Date(`${value}T12:00:00`);
+    return Number.isNaN(date.getTime()) ? 'Resumen del día' : new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
+  }
+
+  protected notifyDataRefresh(): void {
+    this.notifications.success('Resumen operativo actualizado con los datos del centro activo.');
+    this.load();
   }
 }

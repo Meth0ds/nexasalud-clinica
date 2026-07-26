@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Feature\Auth;
 
-use App\Exceptions\IdentityAccessDeniedException;
 use App\Exceptions\IdentityUnavailableException;
 use App\Exceptions\InvalidOidcTransactionException;
 use App\Models\Clinic;
@@ -203,6 +202,7 @@ class OidcAuthenticationTest extends TestCase
         $session = [
             'auth.session.absolute_expires_at' => time() + 3600,
             'auth.assurance.authenticated_at' => time() - 60,
+            '_token' => 'context-selection-test-token',
         ];
 
         $this->actingAs($user)->withSession($session)->getJson('/api/session')
@@ -215,7 +215,7 @@ class OidcAuthenticationTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'items');
 
-        $this->postJson('/api/session/context', [
+        $this->withHeader('X-CSRF-TOKEN', 'context-selection-test-token')->postJson('/api/session/context', [
             'membershipId' => $firstMembership->getKey(),
             'clinicId' => $firstClinic->getKey(),
         ])->assertOk()
@@ -234,7 +234,11 @@ class OidcAuthenticationTest extends TestCase
         [, $otherClinic, $otherMembership] = $this->createTenantContext($otherUser);
 
         $response = $this->actingAs($user)
-            ->withSession(['auth.session.absolute_expires_at' => time() + 3600])
+            ->withSession([
+                'auth.session.absolute_expires_at' => time() + 3600,
+                '_token' => 'context-rejection-test-token',
+            ])
+            ->withHeader('X-CSRF-TOKEN', 'context-rejection-test-token')
             ->postJson('/api/session/context', [
                 'membershipId' => $otherMembership->getKey(),
                 'clinicId' => $otherClinic->getKey(),
@@ -273,7 +277,9 @@ class OidcAuthenticationTest extends TestCase
             ->withSession([
                 'auth.session.absolute_expires_at' => time() + 300,
                 'sensitive-local-state' => 'remove-me',
+                '_token' => 'logout-test-token',
             ])
+            ->withHeader('X-CSRF-TOKEN', 'logout-test-token')
             ->postJson('/auth/logout', ['upstream' => false]);
 
         $response->assertOk()

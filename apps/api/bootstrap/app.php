@@ -2,11 +2,16 @@
 
 use App\Exceptions\ProblemDetailsFactory;
 use App\Http\Middleware\AssignTraceId;
+use App\Http\Middleware\EnforceAbsoluteSessionLifetime;
+use App\Http\Middleware\EnforceIdempotency;
+use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\PreventSensitiveResponseCaching;
+use App\Http\Middleware\ResolveTenantContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -23,10 +28,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->preventRequestForgery();
         $middleware->alias([
-            'secure.session' => \App\Http\Middleware\EnforceAbsoluteSessionLifetime::class,
-            'tenant.context' => \App\Http\Middleware\ResolveTenantContext::class,
-            'idempotent' => \App\Http\Middleware\EnforceIdempotency::class,
+            'secure.session' => EnforceAbsoluteSessionLifetime::class,
+            'tenant.context' => ResolveTenantContext::class,
+            'idempotent' => EnforceIdempotency::class,
         ]);
+        $middleware->prependToPriorityList(
+            SubstituteBindings::class,
+            ResolveTenantContext::class,
+        );
+        $middleware->prependToPriorityList(
+            ResolveTenantContext::class,
+            EnsureUserIsActive::class,
+        );
+        $middleware->prependToPriorityList(
+            EnsureUserIsActive::class,
+            EnforceAbsoluteSessionLifetime::class,
+        );
         $middleware->append([
             AssignTraceId::class,
             PreventSensitiveResponseCaching::class,
@@ -38,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReportDuplicates();
         $exceptions->dontReport([
-            \DomainException::class,
+            DomainException::class,
         ]);
         $exceptions->dontFlash([
             'access_token',
@@ -56,7 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request): bool => $request->is('api/*') || $request->is('auth/*') || $request->expectsJson(),
         );
 
-        $exceptions->render(function (\Throwable $exception, Request $request) {
+        $exceptions->render(function (Throwable $exception, Request $request) {
             if (! $request->is('api/*') && ! $request->is('auth/*') && ! $request->expectsJson()) {
                 return null;
             }

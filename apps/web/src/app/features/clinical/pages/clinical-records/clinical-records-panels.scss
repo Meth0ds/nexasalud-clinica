@@ -21,29 +21,20 @@
 .next-actions strong { font-size: 0.61rem; }
 .next-actions small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.51rem; }
 .next-actions > button { width: 100%; border-top: 1px solid var(--nexa-border); color: var(--nexa-primary); font-size: 0.57rem; }
+.clinical-control { display: flex; align-items: flex-start; gap: 9px; padding: 12px 16px; }
+.clinical-control + .clinical-control { border-top: 1px solid var(--nexa-border); }
+.clinical-control > app-icon { color: var(--nexa-primary); }
+.clinical-control strong,
+.clinical-control small { display: block; }
+.clinical-control strong { color: var(--nexa-ink); font-size: 0.61rem; }
+.clinical-control small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.51rem; line-height: 1.4; }
 .privacy-access { display: flex; align-items: start; gap: 10px; padding: 14px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
 .privacy-access strong,
 .privacy-access small { display: block; }
 .privacy-access strong { color: var(--nexa-ink); font-size: 0.61rem; }
 .privacy-access small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.51rem; line-height: 1.45; }
 
-.note-backdrop { position: fixed; z-index: 99; inset: 0; background: rgba(7, 28, 27, 0.46); backdrop-filter: blur(4px); }
-.note-editor { position: fixed; z-index: 100; top: 0; right: 0; display: flex; width: min(620px, 96vw); height: 100dvh; flex-direction: column; padding: 22px; color: var(--nexa-ink); background: var(--nexa-surface); box-shadow: var(--nexa-shadow); }
-.note-editor > header { display: flex; align-items: start; justify-content: space-between; }
-.note-editor h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.7rem; }
-.note-patient { display: flex; align-items: center; gap: 10px; margin: 18px 0; padding: 12px; border-radius: 12px; background: var(--nexa-surface-muted); }
-.note-patient > span:nth-child(2) { flex: 1; }
-.note-patient strong,
-.note-patient small { display: block; }
-.note-patient strong { font-size: 0.64rem; }
-.note-patient small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.53rem; }
-.note-editor > label { margin-bottom: 6px; font-size: 0.58rem; font-weight: 740; text-transform: uppercase; }
-.note-editor textarea { width: 100%; min-height: 260px; padding: 14px; border: 1px solid var(--nexa-border); border-radius: 12px; outline: 0; color: var(--nexa-ink); background: var(--nexa-surface-muted); font-size: 0.68rem; line-height: 1.6; resize: vertical; }
-.note-editor textarea:focus { border-color: var(--nexa-primary); box-shadow: var(--nexa-focus); }
-.note-sections { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.note-sections button { padding: 5px 9px; border: 1px solid var(--nexa-border); border-radius: 999px; color: var(--nexa-primary); background: var(--nexa-surface); cursor: pointer; font-size: 0.54rem; }
-.note-warning { display: flex; gap: 7px; margin-top: 14px; padding: 10px; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-pale); font-size: 0.56rem; }
-.note-editor footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 15px; border-top: 1px solid var(--nexa-border); }
+.notes-loading { display: flex; align-items: center; justify-content: center; gap: 11px; min-height: 220px; color: var(--nexa-ink-soft); font-size: 0.62rem; }
 @media (max-width: 1100px) { .patient-context { grid-template-columns: 1fr auto; } .patient-context dl { grid-column: 1 / -1; } .clinical-layout { grid-template-columns: 1fr; } .clinical-side { grid-template-columns: repeat(2, 1fr); } .privacy-access { grid-column: 1 / -1; } }
 @media (max-width: 720px) { .patient-context { grid-template-columns: 1fr; } .patient-context dl { grid-template-columns: repeat(2, 1fr); grid-column: auto; } .patient-context dl div { border: 0; padding: 8px 0; } .clinical-side,
 .document-grid { grid-template-columns: 1fr; } .signature-summary { grid-template-columns: 1fr; } }

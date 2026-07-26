@@ -37,6 +37,7 @@ final class PrescriptionSignatureSecurityTest extends TestCase
         config()->set('app.key', 'base64:'.base64_encode(str_repeat('s', 32)));
         config()->set('session.absolute_lifetime', 480);
         $this->withoutMiddleware(ValidateCsrfToken::class);
+        $this->withHeader('Origin', 'http://localhost:4200');
 
         $this->tenant = Tenant::factory()->create(['timezone' => 'Europe/Madrid']);
         app()->instance('currentTenant', $this->tenant);
@@ -74,6 +75,7 @@ final class PrescriptionSignatureSecurityTest extends TestCase
         $this->actingAs($this->clinician);
 
         $missingReason = $this->withSession($this->recentMfaContext())
+            ->withHeader('Idempotency-Key', 'prescription-signature-0001')
             ->postJson('/api/v1/prescriptions/'.$prescription->getKey().'/transition', [
                 'version' => $prescription->lock_version,
                 'status' => 'signed',
@@ -81,6 +83,7 @@ final class PrescriptionSignatureSecurityTest extends TestCase
         $missingReason->assertConflict();
 
         $shortReason = $this->withSession($this->recentMfaContext())
+            ->withHeader('Idempotency-Key', 'prescription-signature-0002')
             ->postJson('/api/v1/prescriptions/'.$prescription->getKey().'/transition', [
                 'version' => $prescription->lock_version,
                 'status' => 'signed',
@@ -89,6 +92,7 @@ final class PrescriptionSignatureSecurityTest extends TestCase
         $shortReason->assertConflict();
 
         $approved = $this->withSession($this->recentMfaContext())
+            ->withHeader('Idempotency-Key', 'prescription-signature-0003')
             ->postJson('/api/v1/prescriptions/'.$prescription->getKey().'/transition', [
                 'version' => $prescription->lock_version,
                 'status' => 'signed',

@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\OfferWaitlistRequest;
 use App\Http\Requests\Api\V1\StoreWaitlistRequest;
 use App\Http\Resources\Api\V1\WaitlistEntryResource;
+use App\Models\Appointment;
 use App\Models\Tenant;
 use App\Models\WaitlistEntry;
 use App\Support\Auditing\AuditRecorder;
@@ -123,11 +124,12 @@ final class WaitlistController extends Controller
             $entry = WaitlistEntry::query()->lockForUpdate()->findOrFail($waitlistEntry->getKey());
             abort_if($entry->lock_version !== (int) $data['version'], Response::HTTP_CONFLICT);
             abort_unless($entry->status === WaitlistStatus::Waiting, Response::HTTP_CONFLICT);
+            $appointmentId = $this->matchingAppointmentId($entry, $data['appointmentId'] ?? null);
 
             $entry->status = WaitlistStatus::Offered;
             $entry->offered_at = now();
             $entry->offer_expires_at = now()->addMinutes((int) $data['expiresInMinutes']);
-            $entry->fulfilled_appointment_id = $data['appointmentId'] ?? null;
+            $entry->fulfilled_appointment_id = $appointmentId;
             $entry->lock_version++;
             $entry->save();
 
@@ -139,6 +141,24 @@ final class WaitlistController extends Controller
         ]);
 
         return new WaitlistEntryResource($this->load($entry));
+    }
+
+    private function matchingAppointmentId(WaitlistEntry $entry, mixed $appointmentId): ?string
+    {
+        if (! is_string($appointmentId) || $appointmentId === '') {
+            return null;
+        }
+
+        $appointment = Appointment::query()->findOrFail($appointmentId);
+        abort_unless(
+            $appointment->patient_id === $entry->patient_id
+            && $appointment->clinic_id === $entry->clinic_id
+            && $appointment->appointment_type_id === $entry->appointment_type_id
+            && $appointment->status->blocksAvailability(),
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+        );
+
+        return (string) $appointment->getKey();
     }
 
     public function destroy(Request $request, WaitlistEntry $waitlistEntry): Response

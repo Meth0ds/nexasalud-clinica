@@ -6,7 +6,6 @@ use App\Services\Identity\Contracts\OidcClient;
 use App\Services\Identity\SocialiteOidcClient;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
@@ -20,7 +19,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        JsonResource::withoutWrapping();
         RateLimiter::for('oidc-login', fn (Request $request): Limit => Limit::perMinute(10)
             ->by(hash('sha256', (string) $request->ip())));
         RateLimiter::for('oidc-callback', fn (Request $request): Limit => Limit::perMinute(20)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AdministrationController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuditController;
+use App\Http\Controllers\Api\V1\ClinicalNoteController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\InvoiceController;
@@ -57,6 +58,14 @@ Route::prefix('v1')
         Route::apiResource('patients', PatientController::class)
             ->middlewareFor(['store', 'update', 'destroy'], 'throttle:clinical-mutation')
             ->middlewareFor('store', 'idempotent');
+        Route::get('/patients/{patient}/clinical-notes', [ClinicalNoteController::class, 'index'])
+            ->name('patients.clinical-notes.index');
+        Route::post('/patients/{patient}/clinical-notes', [ClinicalNoteController::class, 'store'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('patients.clinical-notes.store');
+        Route::post('/patients/{patient}/clinical-notes/sign', [ClinicalNoteController::class, 'sign'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('patients.clinical-notes.sign');
 
         Route::apiResource('waitlist-entries', WaitlistController::class)
             ->parameters(['waitlist-entries' => 'waitlistEntry'])

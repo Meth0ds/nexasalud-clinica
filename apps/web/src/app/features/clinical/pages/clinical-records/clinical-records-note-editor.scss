@@ -1,0 +1,16 @@
+.note-backdrop { position: fixed; z-index: 99; inset: 0; background: rgba(7, 28, 27, 0.46); backdrop-filter: blur(4px); }
+.note-editor { position: fixed; z-index: 100; top: 0; right: 0; display: flex; width: min(620px, 96vw); height: 100dvh; flex-direction: column; padding: 22px; color: var(--nexa-ink); background: var(--nexa-surface); box-shadow: var(--nexa-shadow); }
+.note-editor > header { display: flex; align-items: start; justify-content: space-between; }
+.note-editor h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.7rem; }
+.note-patient { display: flex; align-items: center; gap: 10px; margin: 18px 0; padding: 12px; border-radius: 12px; background: var(--nexa-surface-muted); }
+.note-patient > span:nth-child(2) { flex: 1; }
+.note-patient strong,
+.note-patient small { display: block; }
+.note-patient strong { font-size: 0.64rem; }
+.note-patient small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.53rem; }
+.note-editor textarea { width: 100%; min-height: 260px; padding: 14px; border: 1px solid var(--nexa-border); border-radius: 12px; outline: 0; color: var(--nexa-ink); background: var(--nexa-surface-muted); font-size: 0.68rem; line-height: 1.6; resize: vertical; }
+.note-editor textarea:focus { border-color: var(--nexa-primary); box-shadow: var(--nexa-focus); }
+.note-form { min-height: 0; flex: 1; }
+.note-form mat-form-field { width: 100%; }
+.note-warning { display: flex; gap: 7px; margin-top: 14px; padding: 10px; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-pale); font-size: 0.56rem; }
+.note-editor footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 15px; border-top: 1px solid var(--nexa-border); }

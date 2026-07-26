@@ -60,7 +60,7 @@ RUN apk add --no-cache \
 
 WORKDIR /var/www/html
 
-COPY --chown=nexasalud:nexasalud artisan composer.json composer.lock ./
+COPY --chown=nexasalud:nexasalud artisan composer.json composer.lock phpunit.xml ./
 COPY --chown=nexasalud:nexasalud app ./app
 COPY --chown=nexasalud:nexasalud bootstrap ./bootstrap
 COPY --chown=nexasalud:nexasalud config ./config

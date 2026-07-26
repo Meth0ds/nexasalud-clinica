@@ -9,6 +9,21 @@
 .patient-context dt { color: var(--nexa-ink-soft); font-size: 0.51rem; text-transform: uppercase; }
 .patient-context dd { margin: 5px 0 0; font-size: 0.61rem; }
 .patient-context > button { color: var(--nexa-primary); font-size: 0.62rem; }
+.clinical-selector { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; }
+.clinical-selector h2 { margin: 0; color: var(--nexa-ink-strong); font-size: 1.05rem; }
+.clinical-selector p { margin: 4px 0 0; color: var(--nexa-ink-soft); font-size: 0.59rem; }
+.clinical-selector mat-form-field { width: min(390px, 100%); }
+.clinical-loading,
+.clinical-error,
+.clinical-empty { display: flex; align-items: center; gap: 13px; padding: 24px; }
+.clinical-error { color: var(--nexa-danger); border-color: #ecc8cc; background: var(--nexa-danger-soft); }
+.clinical-error strong,
+.clinical-error p { display: block; }
+.clinical-error strong { color: var(--nexa-ink-strong); }
+.clinical-error p { margin: 3px 0 0; color: var(--nexa-ink-soft); font-size: 0.62rem; }
+.clinical-empty { justify-content: center; min-height: 240px; text-align: center; }
+.clinical-empty h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.55rem; }
+.clinical-empty p { max-width: 480px; margin: 6px 0 0; color: var(--nexa-ink-soft); font-size: 0.64rem; line-height: 1.5; }
 
 .clinical-alert { display: flex; align-items: center; gap: 12px; padding: 16px; }
 .clinical-alert > span { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; color: var(--nexa-danger); background: var(--nexa-danger-soft); }
@@ -28,3 +43,4 @@
 .section-intro h2 { font-size: 1.4rem; }
 .section-intro p { margin: 3px 0 0; color: var(--nexa-ink-soft); font-size: 0.59rem; }
 .section-intro button { font-size: 0.62rem; }
+@media (max-width: 720px) { .clinical-selector { align-items: stretch; flex-direction: column; } .clinical-selector mat-form-field { width: 100%; } }

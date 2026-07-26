@@ -34,6 +34,7 @@ final class AdministrationSecurityTest extends TestCase
         config()->set('app.key', 'base64:'.base64_encode(str_repeat('c', 32)));
         config()->set('session.absolute_lifetime', 480);
         $this->withoutMiddleware(ValidateCsrfToken::class);
+        $this->withHeader('Origin', 'http://localhost:4200');
 
         $this->tenant = Tenant::factory()->create(['timezone' => 'Europe/Madrid']);
         app()->instance('currentTenant', $this->tenant);
@@ -138,7 +139,7 @@ final class AdministrationSecurityTest extends TestCase
     }
 
     /**
-     * @param array<string, int|string|array<int, string>> $assurance
+     * @param  array<string, int|string|array<int, string>>  $assurance
      * @return array<string, int|string|array<int, string>>
      */
     private function sessionContext(array $assurance): array

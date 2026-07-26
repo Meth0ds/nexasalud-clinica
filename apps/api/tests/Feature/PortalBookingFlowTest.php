@@ -42,6 +42,7 @@ final class PortalBookingFlowTest extends TestCase
         config()->set('app.key', 'base64:'.base64_encode(str_repeat('b', 32)));
         config()->set('session.absolute_lifetime', 480);
         $this->withoutMiddleware(ValidateCsrfToken::class);
+        $this->withHeader('Origin', 'http://localhost:4200');
 
         $this->tenant = Tenant::factory()->create(['timezone' => 'Europe/Madrid']);
         app()->instance('currentTenant', $this->tenant);
@@ -152,22 +153,22 @@ final class PortalBookingFlowTest extends TestCase
         $booking = $this->withSession($session)
             ->withHeader('Idempotency-Key', 'portal-booking-0001')
             ->postJson('/api/v1/portal/bookings', $bookingPayload);
-        $booking->assertOk()->assertJsonPath('patientId', $overview->json('data.patient.id'));
+        $booking->assertCreated()->assertJsonPath('data.patientId', $overview->json('data.patient.id'));
 
         $replay = $this->withSession($session)
             ->withHeader('Idempotency-Key', 'portal-booking-0001')
             ->postJson('/api/v1/portal/bookings', $bookingPayload);
-        $replay->assertOk()->assertHeader('Idempotency-Replayed', 'true');
+        $replay->assertCreated()->assertHeader('Idempotency-Replayed', 'true');
 
-        $appointmentId = $booking->json('id');
-        $version = $booking->json('version');
+        $appointmentId = $booking->json('data.id');
+        $version = $booking->json('data.version');
         $cancelled = $this->withSession($session)
             ->withHeader('Idempotency-Key', 'portal-cancel-000001')
             ->postJson('/api/v1/portal/appointments/'.$appointmentId.'/cancel', [
                 'version' => $version,
                 'reason' => 'Cambio de disponibilidad personal',
             ]);
-        $cancelled->assertOk()->assertJsonPath('status', 'cancelled');
+        $cancelled->assertOk()->assertJsonPath('data.status', 'cancelled');
         $this->assertDatabaseHas('appointments', ['id' => $appointmentId, 'status' => 'cancelled']);
     }
 

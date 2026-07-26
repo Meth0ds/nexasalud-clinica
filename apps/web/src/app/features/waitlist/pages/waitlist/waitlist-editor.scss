@@ -1,0 +1,16 @@
+.waitlist-loading,
+.waitlist-error { display: flex; align-items: center; gap: 12px; padding: 24px; color: var(--nexa-ink-soft); }
+.waitlist-error { color: var(--nexa-danger); }
+.waitlist-error strong,
+.waitlist-error p { display: block; margin: 0; }
+.waitlist-error p { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.62rem; }
+.waitlist-backdrop { position: fixed; z-index: 50; inset: 0; background: rgba(16, 29, 52, 0.46); }
+.waitlist-editor { position: fixed; z-index: 51; top: 50%; left: 50%; width: min(670px, calc(100vw - 32px)); max-height: calc(100vh - 34px); padding: 24px; overflow: auto; transform: translate(-50%, -50%); border: 1px solid var(--nexa-border); border-radius: 18px; background: var(--nexa-surface); box-shadow: 0 28px 80px rgba(16, 29, 52, 0.28); }
+.waitlist-editor header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.waitlist-editor header h2 { margin: 0; }
+.waitlist-editor > p { margin: 8px 0 17px; color: var(--nexa-ink-soft); font-size: 0.61rem; line-height: 1.55; }
+.waitlist-editor form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 12px; }
+.waitlist-editor mat-form-field { width: 100%; }
+.waitlist-editor__notes { grid-column: 1 / -1; }
+.waitlist-editor footer { display: flex; justify-content: flex-end; gap: 9px; margin-top: 12px; }
+@media (max-width: 800px) { .waitlist-editor { padding: 18px; } .waitlist-editor form { grid-template-columns: 1fr; } .waitlist-editor__notes { grid-column: auto; } }

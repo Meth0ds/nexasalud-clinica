@@ -1,101 +1,60 @@
 <div class="nexa-page clinical-page">
   <header class="nexa-page__heading" appScrollReveal>
-    <div>
-      <p class="nexa-eyebrow">Continuidad asistencial</p>
-      <h1>Historia clínica</h1>
-      <p class="nexa-page__subtitle">Información longitudinal, mínima y relevante para la atención autorizada.</p>
-    </div>
-    <div class="nexa-page__actions">
-      <button mat-stroked-button class="nexa-btn-secondary" (click)="privacyVisible.set(!privacyVisible())"><app-icon [name]="privacyVisible() ? 'eye' : 'lock'" [size]="17" /> {{ privacyVisible() ? 'Ocultar datos' : 'Mostrar datos' }}</button>
-      <button mat-stroked-button class="nexa-btn-secondary" (click)="generateSummary()"><app-icon name="download" [size]="17" /> Resumen PDF</button>
-      <button mat-flat-button class="nexa-btn-primary" (click)="editingNote.set(true)"><app-icon name="plus" [size]="17" /> Nueva nota</button>
-    </div>
+    <div><p class="nexa-eyebrow">Continuidad asistencial</p><h1>Historia clínica</h1><p class="nexa-page__subtitle">Línea clínica cifrada, mínima y relevante para la atención autorizada. Ningún paciente se muestra hasta seleccionarlo.</p></div>
+    <div class="nexa-page__actions"><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="privacyVisible.set(!privacyVisible())"><app-icon [name]="privacyVisible() ? 'eye' : 'lock'" [size]="17" /> {{ privacyVisible() ? 'Ocultar datos' : 'Mostrar datos' }}</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="loading() || !selectedPatient()" (click)="openNoteEditor()"><app-icon name="plus" [size]="17" /> Nueva nota</button></div>
   </header>
 
-  <section class="patient-context nexa-card" appScrollReveal>
-    <div class="patient-context__identity">
-      <span class="patient-avatar">LM</span>
-      <div><small>Paciente seleccionado</small><h2>{{ privacyVisible() ? 'Lucas M.' : '•••••• •.' }}</h2><p>{{ privacyVisible() ? '38 años · ID clínico NS-4821' : 'Datos protegidos' }}</p></div>
-    </div>
-    <dl>
-      <div><dt>Contacto</dt><dd>{{ privacyVisible() ? '+34 ••• •• 41 20' : '•••••••••' }}</dd></div>
-      <div><dt>Cobertura</dt><dd>Salud Integral · activa</dd></div>
-      <div><dt>Profesional referente</dt><dd>Dra. Elena Soler</dd></div>
-      <div><dt>Última visita</dt><dd>4 jun 2026</dd></div>
-    </dl>
-    <button mat-button><app-icon name="search" [size]="16" /> Cambiar paciente</button>
-  </section>
+  @if (loading()) {
+    <section class="clinical-loading nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Cargando directorio autorizado…</span></section>
+  } @else if (errorMessage(); as error) {
+    <section class="clinical-error nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>Historia clínica no disponible</strong><p>{{ error }}</p></div></section>
+  } @else {
+    <section class="clinical-selector nexa-card" appScrollReveal><div><h2>Contexto asistencial</h2><p>Selecciona un paciente del centro activo; el acceso y la consulta quedarán auditados.</p></div><mat-form-field appearance="outline"><mat-label>Paciente autorizado</mat-label><mat-select [value]="selectedPatientId() ?? ''" (selectionChange)="selectPatient($event.value)"><mat-option value="">Selecciona un paciente</mat-option>@for (patient of patients(); track patient.id) { <mat-option [value]="patient.id">{{ patient.displayName }} · {{ patient.ageRange }}</mat-option> }</mat-select></mat-form-field></section>
 
-  <section class="clinical-alerts nexa-grid nexa-grid--3 nexa-section">
-    <article class="clinical-alert clinical-alert--danger" appScrollReveal><span><app-icon name="shield" /></span><div><small>Alergia</small><strong>Penicilinas</strong><p>Reacción cutánea moderada · verificada</p></div></article>
-    <article class="clinical-alert clinical-alert--blue" appScrollReveal [revealDelay]="60"><span><app-icon name="spark" /></span><div><small>Tratamiento activo</small><strong>2 medicamentos</strong><p>Última conciliación: hoy</p></div></article>
-    <article class="clinical-alert clinical-alert--green" appScrollReveal [revealDelay]="120"><span><app-icon name="check" /></span><div><small>Consentimientos</small><strong>Al día</strong><p>Revisión prevista: nov 2026</p></div></article>
-  </section>
+    @if (selectedPatient(); as patient) {
+      <section class="patient-context nexa-card" appScrollReveal>
+        <div class="patient-context__identity"><span class="patient-avatar">{{ patient.initials }}</span><div><small>Paciente seleccionado</small><h2>{{ privacyVisible() ? patient.displayName : '•••••• •.' }}</h2><p>{{ privacyVisible() ? patient.ageRange : 'Datos protegidos' }}</p></div></div>
+        <dl><div><dt>Cobertura</dt><dd>{{ privacyVisible() ? patient.coverageLabel : '••••••••' }}</dd></div><div><dt>Consentimientos</dt><dd>{{ patient.consentStatus === 'current' ? 'Vigentes' : 'Revisión necesaria' }}</dd></div><div><dt>Profesional asignado</dt><dd>{{ privacyVisible() ? patient.assignedPractitioner : '••••••••' }}</dd></div><div><dt>Última visita</dt><dd>{{ patient.lastVisitLabel }}</dd></div></dl>
+      </section>
 
-  <section class="clinical-layout nexa-section">
-    <div class="clinical-main nexa-card" appScrollReveal>
-      <mat-tab-group animationDuration="250ms" preserveContent>
-        <mat-tab label="Evolución">
-          <div class="tab-content">
-            <div class="section-intro"><div><h2>Línea clínica</h2><p>Notas y eventos en orden cronológico</p></div><button mat-button>Filtrar episodios</button></div>
-            <div class="clinical-timeline">
-              <article class="timeline-entry timeline-entry--current">
-                <div class="timeline-entry__date"><strong>HOY</strong><small>09:15</small></div><i></i>
-                <div><header><span class="nexa-chip nexa-chip--info">Consulta en curso</span><small>Dra. Elena Soler</small></header><h3>Seguimiento de tratamiento</h3><p>Motivo operativo protegido. La nota clínica se completará y firmará al finalizar la consulta.</p><div class="entry-actions"><button mat-button (click)="editingNote.set(true)">Continuar nota</button><button mat-button>Ver constantes</button></div></div>
-              </article>
-              <article class="timeline-entry">
-                <div class="timeline-entry__date"><strong>04 JUN</strong><small>2026</small></div><i></i>
-                <div><header><span class="nexa-chip nexa-chip--success">Firmada</span><small>Dra. Elena Soler · 10:42</small></header><h3>Revisión clínica programada</h3><p>Evolución favorable. Se revisa adherencia y tolerancia. Sin incidencias registradas en el periodo.</p><div class="entry-tags"><span>Seguimiento</span><span>Conciliación</span><span>Plan actualizado</span></div><button mat-button>Ver nota completa</button></div>
-              </article>
-              <article class="timeline-entry">
-                <div class="timeline-entry__date"><strong>21 ABR</strong><small>2026</small></div><i></i>
-                <div><header><span class="nexa-chip">Documento</span><small>Importado · verificado</small></header><h3>Informe de resultados</h3><p>Documento incorporado al episodio con procedencia y hash de integridad registrados.</p><button mat-button><app-icon name="download" [size]="14" /> Abrir documento</button></div>
-              </article>
-              <article class="timeline-entry">
-                <div class="timeline-entry__date"><strong>12 MAR</strong><small>2026</small></div><i></i>
-                <div><header><span class="nexa-chip nexa-chip--success">Firmada</span><small>Dr. Mateo Vidal · 16:10</small></header><h3>Primera valoración</h3><p>Antecedentes y plan inicial registrados. Consentimiento asistencial verificado.</p><button mat-button>Ver episodio</button></div>
-              </article>
-            </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Medicación">
-          <div class="tab-content"><div class="section-intro"><div><h2>Tratamiento activo</h2><p>Conciliado hoy a las 09:18</p></div><button mat-flat-button class="nexa-btn-primary" routerLink="/prescripciones">Nueva prescripción</button></div>
-            <article class="treatment-row"><span class="treatment-row__icon"><app-icon name="spark" /></span><div><strong>Tratamiento de ejemplo A · 500 mg</strong><p>1 comprimido · vía oral · cada 12 horas</p><small>Desde 4 jun 2026 · revisión 4 sep 2026</small></div><span class="nexa-chip nexa-chip--success">Activo</span><button mat-button>Detalle</button></article>
-            <article class="treatment-row"><span class="treatment-row__icon"><app-icon name="spark" /></span><div><strong>Tratamiento de ejemplo B · 10 mg</strong><p>1 comprimido · vía oral · cada 24 horas</p><small>Desde 12 mar 2026 · tratamiento crónico</small></div><span class="nexa-chip nexa-chip--success">Activo</span><button mat-button>Detalle</button></article>
-          </div>
-        </mat-tab>
-        <mat-tab label="Documentos">
-          <div class="tab-content"><div class="section-intro"><div><h2>Documentos clínicos</h2><p>Versionados, verificados y con control de acceso</p></div><button mat-flat-button class="nexa-btn-primary">Subir documento</button></div>
-            <div class="document-grid">
-              @for (document of [{name:'Resumen clínico',type:'PDF generado',date:'Hoy · 09:20'},{name:'Consentimiento teleconsulta',type:'PDF firmado',date:'12 mar 2026'},{name:'Informe de resultados',type:'PDF importado',date:'21 abr 2026'},{name:'Hoja de medicación',type:'PDF generado',date:'4 jun 2026'}]; track document.name) {
-                <article><span><app-icon name="download" /></span><div><strong>{{ document.name }}</strong><small>{{ document.type }} · {{ document.date }}</small></div><button mat-button>Descargar</button></article>
-              }
-            </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Antecedentes y vacunas">
-          <div class="tab-content"><div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="shield" /></span><h2>Antecedentes estructurados</h2><p>Problemas activos, antecedentes personales y familiares, vacunas, procedimientos e intolerancias con codificación clínica interoperable.</p><button mat-flat-button class="nexa-btn-primary">Añadir registro</button></div></div></div>
-        </mat-tab>
-      </mat-tab-group>
-    </div>
+      <section class="clinical-alerts nexa-grid nexa-grid--3 nexa-section">
+        <article class="clinical-alert clinical-alert--danger" appScrollReveal><span><app-icon name="shield" /></span><div><small>Alertas disponibles</small><strong>{{ patient.alertLabels.length }}</strong><p>{{ patient.alertLabels.length ? patient.alertLabels.join(' · ') : 'Sin alertas resumidas en este contexto' }}</p></div></article>
+        <article class="clinical-alert clinical-alert--blue" appScrollReveal [revealDelay]="60"><span><app-icon name="spark" /></span><div><small>Notas firmadas</small><strong>{{ signedNotes() }}</strong><p>Registros clínicos inmutables</p></div></article>
+        <article class="clinical-alert clinical-alert--green" appScrollReveal [revealDelay]="120"><span><app-icon name="check" /></span><div><small>Borradores</small><strong>{{ draftNotes() }}</strong><p>Requieren firma explícita para quedar definitivos</p></div></article>
+      </section>
 
-    <aside class="clinical-side">
-      <article class="nexa-card vital-card" appScrollReveal [revealDelay]="100"><div class="nexa-card__header"><div><h2>Constantes</h2><p>Hoy · 09:18</p></div><button mat-button>Editar</button></div><div class="vitals-grid"><div><small>TA</small><strong>122/78</strong><span>mmHg</span></div><div><small>FC</small><strong>68</strong><span>lpm</span></div><div><small>SpO₂</small><strong>98</strong><span>%</span></div><div><small>Temp.</small><strong>36,4</strong><span>°C</span></div><div><small>Peso</small><strong>76,2</strong><span>kg</span></div><div><small>IMC</small><strong>24,1</strong><span>normal</span></div></div></article>
-      <article class="nexa-card next-actions" appScrollReveal [revealDelay]="160"><div class="nexa-card__header"><div><h2>Plan y tareas</h2><p>Seguimiento compartido</p></div></div><label><input type="checkbox" checked /><span><strong>Conciliar medicación</strong><small>Completado hoy</small></span></label><label><input type="checkbox" /><span><strong>Revisar resultados</strong><small>Antes del 24 jul</small></span></label><label><input type="checkbox" /><span><strong>Programar seguimiento</strong><small>En 6 semanas</small></span></label><button mat-button>Gestionar plan</button></article>
-      <article class="privacy-access nexa-card"><app-icon name="eye" [size]="19" /><span><strong>Acceso asistencial</strong><small>Tu consulta de esta historia queda registrada.</small></span></article>
-    </aside>
-  </section>
+      <section class="clinical-layout nexa-section">
+        <div class="clinical-main nexa-card" appScrollReveal>
+          <mat-tab-group animationDuration="250ms" preserveContent>
+            <mat-tab label="Evolución">
+              <div class="tab-content"><div class="section-intro"><div><h2>Línea clínica</h2><p>Notas de este paciente, ordenadas de más reciente a más antigua.</p></div><button mat-button type="button" (click)="openNoteEditor()">Nueva nota</button></div>
+                @if (notesLoading()) { <div class="notes-loading"><mat-spinner diameter="28" /><span>Cargando registros cifrados…</span></div> } @else {
+                  <div class="clinical-timeline">
+                    @for (note of notes(); track note.id) {
+                      <article class="timeline-entry" [class.timeline-entry--current]="note.status === 'draft'"><div class="timeline-entry__date"><strong>{{ note.status === 'signed' ? 'FIRMADA' : 'BORRADOR' }}</strong><small>{{ formatDate(note.signedAt ?? note.createdAt) }}</small></div><i></i><div><header><span class="nexa-chip nexa-chip--{{ statusTone(note.status) }}">{{ statusLabel(note.status) }}</span><small>{{ note.authorDisplayName ?? 'Autor no disponible' }}</small></header><p>{{ privacyVisible() ? note.content : 'Contenido clínico oculto' }}</p><small>Referencia segura · {{ note.id }}</small></div></article>
+                    } @empty { <div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="spark" /></span><h2>Sin notas registradas</h2><p>Registra una evolución relevante; los borradores y firmas se conservarán como versiones inmutables.</p><button mat-flat-button class="nexa-btn-primary" type="button" (click)="openNoteEditor()">Crear primera nota</button></div></div> }
+                  </div>
+                }
+              </div>
+            </mat-tab>
+            <mat-tab label="Medicación"><div class="tab-content"><div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="spark" /></span><h2>Prescripciones separadas y trazables</h2><p>La medicación se gestiona desde el módulo de Prescripciones, con comprobaciones de alergias, firma MFA y PDF privado.</p><button mat-flat-button class="nexa-btn-primary" routerLink="/prescripciones">Abrir prescripciones</button></div></div></div></mat-tab>
+            <mat-tab label="Documentos"><div class="tab-content"><div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="download" /></span><h2>Documentación privada</h2><p>Los documentos de citas, prescripciones y facturas se generan en sus flujos correspondientes, se cifran en reposo y se descargan con verificación de integridad.</p></div></div></div></mat-tab>
+            <mat-tab label="Seguridad"><div class="tab-content"><div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="lock" /></span><h2>Acceso asistencial auditado</h2><p>La lectura de esta línea y cada cambio se registran con el usuario, tenant, correlación y propósito asistencial. La firma exige MFA reciente en el servidor.</p></div></div></div></mat-tab>
+          </mat-tab-group>
+        </div>
+        <aside class="clinical-side"><article class="nexa-card next-actions" appScrollReveal [revealDelay]="100"><div class="nexa-card__header"><div><h2>Estado del registro</h2><p>Controles aplicados por servidor</p></div></div><div class="clinical-control"><app-icon name="shield" [size]="17" /><span><strong>Cifrado en reposo</strong><small>Contenido clínico protegido antes de persistir.</small></span></div><div class="clinical-control"><app-icon name="eye" [size]="17" /><span><strong>Trazabilidad</strong><small>Lecturas, borradores y firmas quedan auditados.</small></span></div><div class="clinical-control"><app-icon name="lock" [size]="17" /><span><strong>Firma reforzada</strong><small>MFA reciente requerida para notas definitivas.</small></span></div></article><article class="privacy-access nexa-card"><app-icon name="eye" [size]="19" /><span><strong>Acceso asistencial</strong><small>La consulta de esta historia queda registrada por seguridad.</small></span></article></aside>
+      </section>
+    } @else { <section class="nexa-card clinical-empty" appScrollReveal><app-icon name="shield" [size]="27" /><div><h2>Selecciona un contexto asistencial</h2><p>La historia clínica permanece cerrada hasta que se selecciona un paciente autorizado en el tenant activo.</p></div></section> }
+  }
 </div>
 
-@if (editingNote()) {
-  <div class="note-backdrop"></div>
+@if (editingNote(); as open) {
+  <div class="note-backdrop" (click)="closeNoteEditor()" (keydown.escape)="closeNoteEditor()" tabindex="-1"></div>
   <aside class="note-editor" role="dialog" aria-modal="true" aria-labelledby="note-title">
-    <header><div><p class="nexa-eyebrow">Consulta de hoy</p><h2 id="note-title">Nota clínica</h2></div><button mat-icon-button aria-label="Cerrar" (click)="editingNote.set(false)"><app-icon name="close" /></button></header>
-    <div class="note-patient"><span class="nexa-avatar">LM</span><span><strong>Lucas M.</strong><small>Consulta de seguimiento · 09:15</small></span><span class="nexa-chip nexa-chip--info">En curso</span></div>
-    <label for="clinical-note">Evolución y valoración</label>
-    <textarea id="clinical-note" rows="13" [ngModel]="noteText()" (ngModelChange)="noteText.set($event)" placeholder="Registra únicamente información clínica relevante…"></textarea>
-    <div class="note-sections"><button type="button">+ Exploración</button><button type="button">+ Diagnóstico</button><button type="button">+ Plan</button><button type="button">+ Seguimiento</button></div>
-    <div class="note-warning"><app-icon name="lock" [size]="16" /> La nota no será visible como definitiva hasta que la firmes.</div>
-    <footer><button mat-button (click)="editingNote.set(false)">Guardar borrador</button><button mat-flat-button class="nexa-btn-primary" (click)="saveNote()"><app-icon name="check" [size]="16" /> Firmar y cerrar</button></footer>
+    <header><div><p class="nexa-eyebrow">Registro clínico protegido</p><h2 id="note-title">Nueva nota</h2></div><button mat-icon-button type="button" aria-label="Cerrar" [disabled]="saving()" (click)="closeNoteEditor()"><app-icon name="close" /></button></header>
+    @if (selectedPatient(); as patient) { <div class="note-patient"><span class="nexa-avatar">{{ patient.initials }}</span><span><strong>{{ patient.displayName }}</strong><small>Registro asistencial seleccionado</small></span></div> }
+    <form [formGroup]="noteForm" class="note-form"><mat-form-field appearance="outline"><mat-label>Evolución y valoración</mat-label><textarea matInput rows="13" formControlName="content" maxlength="20000" placeholder="Registra únicamente información clínica relevante…"></textarea><mat-hint>Mínimo 10 caracteres. Evita duplicar datos administrativos.</mat-hint><mat-error>Indica una evolución clínica de al menos 10 caracteres.</mat-error></mat-form-field></form>
+    <div class="note-warning"><app-icon name="lock" [size]="16" /> El borrador y la firma se guardan como registros inmutables. La firma verifica MFA reciente exclusivamente en el servidor.</div>
+    <footer><button mat-stroked-button type="button" [disabled]="saving()" (click)="closeNoteEditor()">Cancelar</button><button mat-stroked-button type="button" [disabled]="saving()" (click)="saveDraft()">{{ saving() ? 'Guardando…' : 'Guardar borrador' }}</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="saving()" (click)="signNote()"><app-icon name="check" [size]="16" /> {{ saving() ? 'Verificando…' : 'Firmar con MFA' }}</button></footer>
   </aside>
 }

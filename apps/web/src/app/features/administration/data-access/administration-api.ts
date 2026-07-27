@@ -95,12 +95,15 @@ export class AdministrationApiService {
       .pipe(map((response) => response.data));
   }
 
-  revokeSessions(userId: string, reason: string): Observable<{ readonly revoked: true; readonly effectiveAt: string }> {
+  revokeSessions(
+    userId: string,
+    reason: string,
+  ): Observable<{ readonly revoked: true; readonly effectiveAt: string }> {
     return this.api
-      .post<ApiData<{ readonly revoked: true; readonly effectiveAt: string }>, { readonly reason: string }>(
-        `/api/v1/administration/users/${encodeURIComponent(userId)}/revoke-sessions`,
-        { reason },
-      )
+      .post<
+        ApiData<{ readonly revoked: true; readonly effectiveAt: string }>,
+        { readonly reason: string }
+      >(`/api/v1/administration/users/${encodeURIComponent(userId)}/revoke-sessions`, { reason })
       .pipe(map((response) => response.data));
   }
 }

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\AppointmentChangeHistory;
 use App\Models\Appointment;
+use App\Models\AppointmentChangeHistory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

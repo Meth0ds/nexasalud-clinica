@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\PrescriptionStatusHistory;
 use App\Models\Prescription;
+use App\Models\PrescriptionStatusHistory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

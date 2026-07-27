@@ -1,34 +1,167 @@
-.clinical-timeline { position: relative; }
-.clinical-timeline::before { position: absolute; top: 13px; bottom: 16px; left: 74px; width: 1px; background: var(--nexa-border); content: ''; }
-.timeline-entry { position: relative; display: grid; grid-template-columns: 61px 13px 1fr; gap: 9px; padding: 0 0 24px; }
-.timeline-entry__date { padding-top: 2px; text-align: right; }
+.clinical-timeline {
+  position: relative;
+}
+.clinical-timeline::before {
+  position: absolute;
+  top: 13px;
+  bottom: 16px;
+  left: 74px;
+  width: 1px;
+  background: var(--nexa-border);
+  content: '';
+}
+.timeline-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 61px 13px 1fr;
+  gap: 9px;
+  padding: 0 0 24px;
+}
+.timeline-entry__date {
+  padding-top: 2px;
+  text-align: right;
+}
 .timeline-entry__date strong,
-.timeline-entry__date small { display: block; }
-.timeline-entry__date strong { color: var(--nexa-ink); font-size: 0.52rem; }
-.timeline-entry__date small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
-.timeline-entry > i { z-index: 1; width: 9px; height: 9px; margin-top: 3px; border: 2px solid var(--nexa-surface); border-radius: 50%; background: var(--nexa-border-strong); box-shadow: 0 0 0 1px var(--nexa-border-strong); }
-.timeline-entry--current > i { background: var(--nexa-primary); box-shadow: 0 0 0 1px var(--nexa-primary), 0 0 0 5px var(--nexa-primary-soft); }
-.timeline-entry > div:last-child { padding: 0 0 3px 6px; }
-.timeline-entry header { display: flex; align-items: center; gap: 8px; }
-.timeline-entry header > small { color: var(--nexa-ink-soft); font-size: 0.51rem; }
-.timeline-entry h3 { margin: 9px 0 5px; font-size: 0.72rem; }
-.timeline-entry p { max-width: 720px; margin: 0; color: var(--nexa-ink-soft); font-size: 0.61rem; line-height: 1.6; }
-.timeline-entry button { margin-top: 6px; color: var(--nexa-primary); font-size: 0.57rem; }
-.entry-tags { display: flex; gap: 5px; margin-top: 8px; }
-.entry-tags span { padding: 3px 7px; border-radius: 999px; color: var(--nexa-ink-soft); background: var(--nexa-surface-strong); font-size: 0.48rem; }
-.entry-actions { display: flex; gap: 4px; }
-.treatment-row { display: grid; align-items: center; grid-template-columns: 42px 1fr auto auto; gap: 12px; padding: 14px; border: 1px solid var(--nexa-border); border-radius: 13px; }
-.treatment-row + .treatment-row { margin-top: 10px; }
-.treatment-row__icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
-.treatment-row strong { font-size: 0.68rem; }
+.timeline-entry__date small {
+  display: block;
+}
+.timeline-entry__date strong {
+  color: var(--nexa-ink);
+  font-size: 0.52rem;
+}
+.timeline-entry__date small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.49rem;
+}
+.timeline-entry > i {
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  margin-top: 3px;
+  border: 2px solid var(--nexa-surface);
+  border-radius: 50%;
+  background: var(--nexa-border-strong);
+  box-shadow: 0 0 0 1px var(--nexa-border-strong);
+}
+.timeline-entry--current > i {
+  background: var(--nexa-primary);
+  box-shadow:
+    0 0 0 1px var(--nexa-primary),
+    0 0 0 5px var(--nexa-primary-soft);
+}
+.timeline-entry > div:last-child {
+  padding: 0 0 3px 6px;
+}
+.timeline-entry header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.timeline-entry header > small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.timeline-entry h3 {
+  margin: 9px 0 5px;
+  font-size: 0.72rem;
+}
+.timeline-entry p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.61rem;
+  line-height: 1.6;
+}
+.timeline-entry button {
+  margin-top: 6px;
+  color: var(--nexa-primary);
+  font-size: 0.57rem;
+}
+.entry-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.entry-tags span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--nexa-ink-soft);
+  background: var(--nexa-surface-strong);
+  font-size: 0.48rem;
+}
+.entry-actions {
+  display: flex;
+  gap: 4px;
+}
+.treatment-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 42px 1fr auto auto;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 13px;
+}
+.treatment-row + .treatment-row {
+  margin-top: 10px;
+}
+.treatment-row__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.treatment-row strong {
+  font-size: 0.68rem;
+}
 .treatment-row p,
-.treatment-row small { margin: 3px 0 0; color: var(--nexa-ink-soft); font-size: 0.55rem; }
-.document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.document-grid article { display: flex; align-items: center; gap: 10px; padding: 13px; border: 1px solid var(--nexa-border); border-radius: 12px; }
-.document-grid article > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; color: var(--nexa-danger); background: var(--nexa-danger-soft); }
-.document-grid article > div { min-width: 0; flex: 1; }
+.treatment-row small {
+  margin: 3px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.55rem;
+}
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.document-grid article {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 12px;
+}
+.document-grid article > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--nexa-danger);
+  background: var(--nexa-danger-soft);
+}
+.document-grid article > div {
+  min-width: 0;
+  flex: 1;
+}
 .document-grid strong,
-.document-grid small { display: block; }
-.document-grid strong { font-size: 0.63rem; }
-.document-grid small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.51rem; }
-.document-grid button { font-size: 0.56rem; }
+.document-grid small {
+  display: block;
+}
+.document-grid strong {
+  font-size: 0.63rem;
+}
+.document-grid small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.document-grid button {
+  font-size: 0.56rem;
+}

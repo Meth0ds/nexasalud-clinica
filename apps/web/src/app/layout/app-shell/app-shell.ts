@@ -17,7 +17,6 @@ interface NavigationItem {
   readonly label: string;
   readonly route: string;
   readonly icon: AppIconName;
-  readonly badge?: string;
   readonly permission?: string;
 }
 
@@ -47,15 +46,24 @@ export class AppShell {
     this.breakpoints.observe('(max-width: 980px)').pipe(map((state) => state.matches)),
     { initialValue: false },
   );
-  readonly userInitials = computed(() => this.session.user()?.initials ?? 'NS');
+  readonly userInitials = computed(() => this.session.user()?.initials ?? '—');
+  readonly assuranceLabel = computed(() => {
+    const assurance = this.session.assuranceLevel();
+
+    return assurance === 'passkey'
+      ? 'Passkey verificada'
+      : assurance === 'mfa'
+        ? 'MFA verificado'
+        : 'Sesión verificada';
+  });
 
   readonly principalNavigation: readonly NavigationItem[] = [
     { label: 'Centro de mando', route: '/inicio', icon: 'home' },
     { label: 'Agenda clínica', route: '/agenda', icon: 'calendar' },
     { label: 'Pacientes', route: '/pacientes', icon: 'patients' },
     { label: 'Historia clínica', route: '/historia-clinica', icon: 'shield' },
-    { label: 'Prescripciones', route: '/prescripciones', icon: 'spark', badge: 'Nuevo' },
-    { label: 'Lista de espera', route: '/lista-espera', icon: 'waitlist', badge: '8' },
+    { label: 'Prescripciones', route: '/prescripciones', icon: 'spark' },
+    { label: 'Lista de espera', route: '/lista-espera', icon: 'waitlist' },
   ];
 
   readonly operationsNavigation: readonly NavigationItem[] = [
@@ -68,7 +76,12 @@ export class AppShell {
   readonly systemNavigation: readonly NavigationItem[] = [
     { label: 'Auditoría', route: '/auditoria', icon: 'eye' },
     { label: 'Configuración', route: '/configuracion', icon: 'settings' },
-    { label: 'Administración', route: '/administracion', icon: 'shield', permission: 'admin.users.read' },
+    {
+      label: 'Administración',
+      route: '/administracion',
+      icon: 'shield',
+      permission: 'admin.users.read',
+    },
   ];
 
   closeOnMobile(drawer: MatSidenav): void {

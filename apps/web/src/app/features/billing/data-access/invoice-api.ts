@@ -81,7 +81,9 @@ export class InvoiceApiService {
 
   create(input: CreateInvoiceInput): Observable<InvoiceRecord> {
     return this.api
-      .post<ApiData<InvoiceRecord>, CreateInvoiceInput>('/api/v1/invoices', input, { idempotencyKey: idempotencyKey() })
+      .post<ApiData<InvoiceRecord>, CreateInvoiceInput>('/api/v1/invoices', input, {
+        idempotencyKey: idempotencyKey(),
+      })
       .pipe(map((response) => response.data));
   }
 
@@ -97,10 +99,22 @@ export class InvoiceApiService {
 
   recordPayment(
     invoice: InvoiceRecord,
-    input: { readonly amountMinor: number; readonly methodCode: PaymentMethod; readonly externalReference?: string },
+    input: {
+      readonly amountMinor: number;
+      readonly methodCode: PaymentMethod;
+      readonly externalReference?: string;
+    },
   ): Observable<InvoiceRecord> {
     return this.api
-      .post<ApiData<InvoiceRecord>, { readonly version: number; readonly amountMinor: number; readonly methodCode: PaymentMethod; readonly externalReference?: string }>(
+      .post<
+        ApiData<InvoiceRecord>,
+        {
+          readonly version: number;
+          readonly amountMinor: number;
+          readonly methodCode: PaymentMethod;
+          readonly externalReference?: string;
+        }
+      >(
         `/api/v1/invoices/${encodeURIComponent(invoice.id)}/payments`,
         { version: invoice.version, ...input },
         { idempotencyKey: idempotencyKey() },
@@ -121,11 +135,18 @@ export class InvoiceApiService {
   private downloadDocument(downloadPath: string): Observable<DownloadedInvoiceDocument> {
     const context = new HttpContext().set(SILENT_HTTP_ERROR, true);
     return this.http
-      .get(downloadPath, { context, observe: 'response', responseType: 'blob', withCredentials: true })
-      .pipe(map((response: HttpResponse<Blob>) => ({
-        blob: response.body ?? new Blob([], { type: 'application/pdf' }),
-        filename: filenameFromDisposition(response.headers.get('content-disposition')),
-      })));
+      .get(downloadPath, {
+        context,
+        observe: 'response',
+        responseType: 'blob',
+        withCredentials: true,
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) => ({
+          blob: response.body ?? new Blob([], { type: 'application/pdf' }),
+          filename: filenameFromDisposition(response.headers.get('content-disposition')),
+        })),
+      );
   }
 }
 

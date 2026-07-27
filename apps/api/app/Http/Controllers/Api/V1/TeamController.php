@@ -11,10 +11,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Exposes the active tenant's staff directory without inventing availability or performance data.
+ */
 final class TeamController extends Controller
 {
     public function __construct(private readonly PermissionService $permissions) {}
 
+    /**
+     * Returns identities, roles and operational membership state after server-side permission verification.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         abort_unless(

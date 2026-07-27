@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Invoice;
 use App\Models\Clinic;
+use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\PatientCoverage;
 use Illuminate\Database\Eloquent\Factories\Factory;

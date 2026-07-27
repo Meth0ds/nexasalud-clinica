@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\PrescriptionItem;
 use App\Models\Prescription;
+use App\Models\PrescriptionItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

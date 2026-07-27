@@ -8,6 +8,7 @@ use App\Enums\CommunicationChannel;
 use App\Enums\CommunicationContentClass;
 use App\Enums\CommunicationStatus;
 use App\Enums\ConsentStatus;
+use App\Events\CommunicationQueued;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CancelPatientCommunicationRequest;
 use App\Http\Requests\Api\V1\QueuePatientCommunicationRequest;
@@ -27,6 +28,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped patient communications without exposing clinical content to external channels.
+ */
 final class PatientCommunicationController extends Controller
 {
     public function __construct(
@@ -34,6 +38,9 @@ final class PatientCommunicationController extends Controller
         private readonly PermissionService $permissions,
     ) {}
 
+    /**
+     * Lists communications that the authenticated actor may read in the active tenant.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', PatientCommunication::class);
@@ -61,6 +68,9 @@ final class PatientCommunicationController extends Controller
         return PatientCommunicationResource::collection($communications);
     }
 
+    /**
+     * Returns one authorized communication and records the sensitive read operation.
+     */
     public function show(Request $request, PatientCommunication $communication): PatientCommunicationResource
     {
         Gate::authorize('view', $communication);
@@ -69,6 +79,9 @@ final class PatientCommunicationController extends Controller
         return new PatientCommunicationResource($this->load($communication));
     }
 
+    /**
+     * Creates a draft or queues a compliant communication after validating content and consent boundaries.
+     */
     public function store(StorePatientCommunicationRequest $request): PatientCommunicationResource
     {
         $data = $request->validated();
@@ -104,10 +117,16 @@ final class PatientCommunicationController extends Controller
                 'content_class' => $communication->content_class->value,
                 'uses_external_template' => $communication->channel->requiresTemplate(),
             ]);
+        if ($communication->status === CommunicationStatus::Queued) {
+            $this->dispatchQueuedEvent($request, $communication, $actor);
+        }
 
         return new PatientCommunicationResource($this->load($communication));
     }
 
+    /**
+     * Queues a draft using an optimistic version check so a stale actor cannot alter its delivery state.
+     */
     public function queue(QueuePatientCommunicationRequest $request, PatientCommunication $communication): PatientCommunicationResource
     {
         $data = $request->validated();
@@ -125,10 +144,14 @@ final class PatientCommunicationController extends Controller
             'content_class' => $queued->content_class->value,
             'uses_external_template' => $queued->channel->requiresTemplate(),
         ]);
+        $this->dispatchQueuedEvent($request, $queued, $this->actor($request));
 
         return new PatientCommunicationResource($this->load($queued));
     }
 
+    /**
+     * Cancels an eligible queued communication using an optimistic version check.
+     */
     public function cancel(CancelPatientCommunicationRequest $request, PatientCommunication $communication): PatientCommunicationResource
     {
         $data = $request->validated();
@@ -153,6 +176,9 @@ final class PatientCommunicationController extends Controller
         return new PatientCommunicationResource($this->load($cancelled));
     }
 
+    /**
+     * Applies the consent snapshot and queue state while the communication row is locked in a transaction.
+     */
     private function queueLocked(PatientCommunication $communication, mixed $scheduledAt): void
     {
         $this->assertSecureContentBoundary($communication);
@@ -173,6 +199,28 @@ final class PatientCommunicationController extends Controller
         $communication->save();
     }
 
+    /**
+     * Dispatches a post-commit event containing only operational identifiers for durable downstream handoff.
+     */
+    private function dispatchQueuedEvent(Request $request, PatientCommunication $communication, User $actor): void
+    {
+        $traceId = $request->attributes->get('trace_id');
+
+        event(new CommunicationQueued(
+            communicationId: $communication->getKey(),
+            tenantId: $this->tenant()->getKey(),
+            actorUserId: $actor->getKey(),
+            actorSubject: $actor->oidc_subject,
+            traceId: is_string($traceId) ? $traceId : null,
+            channel: $communication->channel->value,
+            contentClass: $communication->content_class->value,
+            usesExternalTemplate: $communication->channel->requiresTemplate(),
+        ));
+    }
+
+    /**
+     * Rejects clinical free text in external channels and requires templates for administrative delivery.
+     */
     private function assertSecureContentBoundary(PatientCommunication $communication): void
     {
         if ($communication->channel !== CommunicationChannel::Portal) {
@@ -197,6 +245,9 @@ final class PatientCommunicationController extends Controller
         );
     }
 
+    /**
+     * Enforces the elevated capability required to create clinical-link communications.
+     */
     private function assertCanWriteContentClass(User $actor, CommunicationContentClass $contentClass): void
     {
         abort_unless(
@@ -206,6 +257,9 @@ final class PatientCommunicationController extends Controller
         );
     }
 
+    /**
+     * Finds the currently valid channel-specific consent for the communication recipient.
+     */
     private function activeConsentFor(PatientCommunication $communication): ?ConsentRecord
     {
         return ConsentRecord::query()
@@ -218,11 +272,17 @@ final class PatientCommunicationController extends Controller
             ->first();
     }
 
+    /**
+     * Loads the minimal relations required by the API resource.
+     */
     private function load(PatientCommunication $communication): PatientCommunication
     {
         return $communication->load(['patient', 'author']);
     }
 
+    /**
+     * Returns the authenticated application user or terminates the request safely.
+     */
     private function actor(Request $request): User
     {
         $actor = $request->user();
@@ -231,6 +291,9 @@ final class PatientCommunicationController extends Controller
         return $actor;
     }
 
+    /**
+     * Returns the fail-closed tenant context resolved by middleware.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

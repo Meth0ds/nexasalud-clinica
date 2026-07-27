@@ -52,15 +52,22 @@ export class WaitlistApiService {
 
   create(input: CreateWaitlistEntryInput): Observable<WaitlistEntryRecord> {
     return this.api
-      .post<ApiData<WaitlistEntryRecord>, CreateWaitlistEntryInput>('/api/v1/waitlist-entries', input, {
-        idempotencyKey: idempotencyKey(),
-      })
+      .post<ApiData<WaitlistEntryRecord>, CreateWaitlistEntryInput>(
+        '/api/v1/waitlist-entries',
+        input,
+        {
+          idempotencyKey: idempotencyKey(),
+        },
+      )
       .pipe(map((response) => response.data));
   }
 
   offer(entry: WaitlistEntryRecord, expiresInMinutes = 20): Observable<WaitlistEntryRecord> {
     return this.api
-      .post<ApiData<WaitlistEntryRecord>, { readonly version: number; readonly expiresInMinutes: number }>(
+      .post<
+        ApiData<WaitlistEntryRecord>,
+        { readonly version: number; readonly expiresInMinutes: number }
+      >(
         `/api/v1/waitlist-entries/${encodeURIComponent(entry.id)}/offer`,
         { version: entry.version, expiresInMinutes },
         { idempotencyKey: idempotencyKey() },

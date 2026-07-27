@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -9,7 +16,11 @@ import { AppointmentStatus } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
-import { DashboardApiService, DashboardAppointment, DashboardData } from '../../data-access/dashboard-api';
+import {
+  DashboardApiService,
+  DashboardAppointment,
+  DashboardData,
+} from '../../data-access/dashboard-api';
 
 interface Metric {
   readonly label: string;
@@ -41,14 +52,42 @@ export class Dashboard {
       return [];
     }
     return [
-      { label: 'Citas de hoy', value: String(data.metrics.appointments), note: `${data.metrics.completed} completadas`, icon: 'calendar', tone: 'green' },
-      { label: 'En espera', value: String(data.metrics.waitingList), note: 'Solicitudes activas', icon: 'waitlist', tone: 'coral' },
-      { label: 'Ocupación', value: `${data.metrics.occupancyPercent}%`, note: 'Agenda del centro', icon: 'chart', tone: 'blue' },
-      { label: 'Citas activas', value: String(data.metrics.active), note: 'Pendientes o en curso', icon: 'clock', tone: 'sand' },
+      {
+        label: 'Citas de hoy',
+        value: String(data.metrics.appointments),
+        note: `${data.metrics.completed} completadas`,
+        icon: 'calendar',
+        tone: 'green',
+      },
+      {
+        label: 'En espera',
+        value: String(data.metrics.waitingList),
+        note: 'Solicitudes activas',
+        icon: 'waitlist',
+        tone: 'coral',
+      },
+      {
+        label: 'Ocupación',
+        value: `${data.metrics.occupancyPercent}%`,
+        note: 'Agenda del centro',
+        icon: 'chart',
+        tone: 'blue',
+      },
+      {
+        label: 'Citas activas',
+        value: String(data.metrics.active),
+        note: 'Pendientes o en curso',
+        icon: 'clock',
+        tone: 'sand',
+      },
     ];
   });
   protected readonly appointments = computed(() => this.dashboard()?.dayAppointments ?? []);
-  protected readonly selected = computed(() => this.appointments().find((appointment) => appointment.id === this.selectedAppointment()) ?? null);
+  protected readonly selected = computed(
+    () =>
+      this.appointments().find((appointment) => appointment.id === this.selectedAppointment()) ??
+      null,
+  );
 
   constructor() {
     this.load();
@@ -57,14 +96,19 @@ export class Dashboard {
   protected load(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.dashboardApi.load()
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+    this.dashboardApi
+      .load()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: (data) => {
           this.dashboard.set(data);
           this.selectedAppointment.set(data.dayAppointments[0]?.id ?? null);
         },
-        error: () => this.errorMessage.set('No se ha podido cargar el resumen operativo del centro activo.'),
+        error: () =>
+          this.errorMessage.set('No se ha podido cargar el resumen operativo del centro activo.'),
       });
   }
 
@@ -73,7 +117,15 @@ export class Dashboard {
   }
 
   protected statusLabel(status: AppointmentStatus): string {
-    return ({ pending: 'Pendiente', confirmed: 'Confirmada', waiting: 'En espera', 'in-progress': 'En curso', completed: 'Completada', cancelled: 'Cancelada', 'no-show': 'No asistió' })[status];
+    return {
+      pending: 'Pendiente',
+      confirmed: 'Confirmada',
+      waiting: 'En espera',
+      'in-progress': 'En curso',
+      completed: 'Completada',
+      cancelled: 'Cancelada',
+      'no-show': 'No asistió',
+    }[status];
   }
 
   protected statusTone(status: AppointmentStatus): 'info' | 'success' | 'warning' | 'danger' {
@@ -97,20 +149,46 @@ export class Dashboard {
       return '--:--';
     }
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '--:--' : new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(date);
+    return Number.isNaN(date.getTime())
+      ? '--:--'
+      : new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(date);
   }
 
   protected duration(appointment: DashboardAppointment): string {
     if (!appointment.startsAt || !appointment.endsAt) {
       return 'Duración no disponible';
     }
-    const minutes = Math.round((new Date(appointment.endsAt).getTime() - new Date(appointment.startsAt).getTime()) / 60_000);
+    const minutes = Math.round(
+      (new Date(appointment.endsAt).getTime() - new Date(appointment.startsAt).getTime()) / 60_000,
+    );
     return Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : 'Duración no disponible';
   }
 
   protected dateLabel(value: string): string {
     const date = new Date(`${value}T12:00:00`);
-    return Number.isNaN(date.getTime()) ? 'Resumen del día' : new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
+    return Number.isNaN(date.getTime())
+      ? 'Resumen del día'
+      : new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(
+          date,
+        );
+  }
+
+  protected updateTime(value: string, timezone: string): string {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return 'recientemente';
+    }
+
+    try {
+      return new Intl.DateTimeFormat('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: timezone,
+      }).format(date);
+    } catch {
+      return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(date);
+    }
   }
 
   protected notifyDataRefresh(): void {

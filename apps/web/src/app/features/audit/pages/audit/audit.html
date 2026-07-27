@@ -1,22 +1,126 @@
 <div class="nexa-page audit-page">
   <header class="nexa-page__heading" appScrollReveal>
-    <div><p class="nexa-eyebrow">Responsabilidad y control</p><h1>Auditoría</h1><p class="nexa-page__subtitle">Registro append-only de acciones autorizadas y bloqueadas, con identificadores de recurso minimizados.</p></div>
-    <div class="nexa-page__actions"><span class="audit-live"><i></i> Registro protegido</span><button mat-stroked-button class="nexa-btn-secondary" type="button" [disabled]="refreshing()" (click)="refresh()"><app-icon name="spark" [size]="16" /> {{ refreshing() ? 'Actualizando…' : 'Actualizar' }}</button></div>
+    <div>
+      <p class="nexa-eyebrow">Responsabilidad y control</p>
+      <h1>Auditoría</h1>
+      <p class="nexa-page__subtitle">
+        Registro append-only de acciones autorizadas y bloqueadas, con identificadores de recurso
+        minimizados.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <span class="audit-live"><i></i> Registro protegido</span
+      ><button
+        mat-stroked-button
+        class="nexa-btn-secondary"
+        type="button"
+        [disabled]="refreshing()"
+        (click)="refresh()"
+      >
+        <app-icon name="spark" [size]="16" /> {{ refreshing() ? 'Actualizando…' : 'Actualizar' }}
+      </button>
+    </div>
   </header>
 
   @if (loading()) {
-    <section class="audit-loading nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Verificando el registro de auditoría…</span></section>
+    <section class="audit-loading nexa-card" aria-live="polite">
+      <mat-spinner diameter="34" /><span>Verificando el registro de auditoría…</span>
+    </section>
   } @else if (errorMessage(); as error) {
-    <section class="audit-error nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>Auditoría no disponible</strong><p>{{ error }}</p></div><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">Reintentar</button></section>
+    <section class="audit-error nexa-card" role="alert">
+      <app-icon name="shield" [size]="22" />
+      <div>
+        <strong>Auditoría no disponible</strong>
+        <p>{{ error }}</p>
+      </div>
+      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
+        Reintentar
+      </button>
+    </section>
   } @else {
-    <section class="audit-integrity nexa-card" appScrollReveal><span><app-icon name="shield" [size]="22" /></span><div><strong>Registro de auditoría de solo inserción</strong><small>Los recursos se minimizan en origen y la escritura sensible se audita en el servidor.</small></div><span class="nexa-chip nexa-chip--success"><app-icon name="check" [size]="13" /> Disponible</span></section>
+    <section class="audit-integrity nexa-card" appScrollReveal>
+      <span><app-icon name="shield" [size]="22" /></span>
+      <div>
+        <strong>Registro de auditoría de solo inserción</strong
+        ><small
+          >Los recursos se minimizan en origen y la escritura sensible se audita en el
+          servidor.</small
+        >
+      </div>
+      <span class="nexa-chip nexa-chip--success"
+        ><app-icon name="check" [size]="13" /> Disponible</span
+      >
+    </section>
 
-    <section class="audit-toolbar nexa-card nexa-card--flat nexa-section" appScrollReveal><label class="nexa-search"><app-icon name="search" [size]="16" /><span class="sr-only">Buscar eventos</span><input type="search" placeholder="actor, acción, recurso o traza" [value]="query()" (input)="query.set($any($event.target).value)" /></label><span>{{ filteredEvents().length }} de {{ total() }} eventos cargados</span></section>
+    <section class="audit-toolbar nexa-card nexa-card--flat nexa-section" appScrollReveal>
+      <label class="nexa-search"
+        ><app-icon name="search" [size]="16" /><span class="sr-only">Buscar eventos</span
+        ><input
+          type="search"
+          placeholder="actor, acción, recurso o traza"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)" /></label
+      ><span>{{ filteredEvents().length }} de {{ total() }} eventos cargados</span>
+    </section>
 
-    <section class="audit-layout nexa-section"><article class="nexa-card audit-stream" appScrollReveal><div class="nexa-card__header"><div><h2>Eventos recientes</h2><p>Consulta limitada a los últimos 100 eventos autorizados para este contexto.</p></div><span>{{ total() }} en total</span></div>
-      @for(event of filteredEvents(); track event.id) {
-        <article class="audit-event"><time>{{ formatDate(event.occurredAt) }}</time><span class="nexa-avatar">{{ eventInitials(event) }}</span><div><strong>{{ event.actionLabel }}</strong><small>{{ event.actorDisplayName }} · {{ event.resourceType }}</small></div><span class="event-resource">{{ event.resourceIdHint ?? 'Sin identificador expuesto' }}</span><span class="nexa-chip" [class.nexa-chip--success]="event.outcome === 'allowed'" [class.nexa-chip--danger]="event.outcome === 'blocked'">{{ outcomeLabel(event.outcome) }}</span><code class="nexa-mono">{{ event.traceId ?? 'Sin traza' }}</code></article>
-      } @empty { <div class="audit-empty">No hay eventos que coincidan con la búsqueda.</div> }
-    </article><aside class="audit-side"><article class="nexa-card risk-card" appScrollReveal [revealDelay]="100"><div class="nexa-card__header"><div><h2>Señales bloqueadas</h2><p>Eventos cargados</p></div></div><div class="risk-score"><span>{{ blockedCount() }}</span><div><strong>{{ blockedCount() === 1 ? 'evento bloqueado' : 'eventos bloqueados' }}</strong><small>La revisión se realiza sobre evidencia minimizada.</small></div></div></article><article class="nexa-card retention-card" appScrollReveal [revealDelay]="150"><app-icon name="lock" [size]="20" /><div><strong>Sin exportación en navegador</strong><small>Las exportaciones requieren un flujo específico con autorización, retención y auditoría adicional.</small></div></article></aside></section>
+    <section class="audit-layout nexa-section">
+      <article class="nexa-card audit-stream" appScrollReveal>
+        <div class="nexa-card__header">
+          <div>
+            <h2>Eventos recientes</h2>
+            <p>Consulta limitada a los últimos 100 eventos autorizados para este contexto.</p>
+          </div>
+          <span>{{ total() }} en total</span>
+        </div>
+        @for (event of filteredEvents(); track event.id) {
+          <article class="audit-event">
+            <time>{{ formatDate(event.occurredAt) }}</time
+            ><span class="nexa-avatar">{{ eventInitials(event) }}</span>
+            <div>
+              <strong>{{ event.actionLabel }}</strong
+              ><small>{{ event.actorDisplayName }} · {{ event.resourceType }}</small>
+            </div>
+            <span class="event-resource">{{
+              event.resourceIdHint ?? 'Sin identificador expuesto'
+            }}</span
+            ><span
+              class="nexa-chip"
+              [class.nexa-chip--success]="event.outcome === 'allowed'"
+              [class.nexa-chip--danger]="event.outcome === 'blocked'"
+              >{{ outcomeLabel(event.outcome) }}</span
+            ><code class="nexa-mono">{{ event.traceId ?? 'Sin traza' }}</code>
+          </article>
+        } @empty {
+          <div class="audit-empty">No hay eventos que coincidan con la búsqueda.</div>
+        }
+      </article>
+      <aside class="audit-side">
+        <article class="nexa-card risk-card" appScrollReveal [revealDelay]="100">
+          <div class="nexa-card__header">
+            <div>
+              <h2>Señales bloqueadas</h2>
+              <p>Eventos cargados</p>
+            </div>
+          </div>
+          <div class="risk-score">
+            <span>{{ blockedCount() }}</span>
+            <div>
+              <strong>{{ blockedCount() === 1 ? 'evento bloqueado' : 'eventos bloqueados' }}</strong
+              ><small>La revisión se realiza sobre evidencia minimizada.</small>
+            </div>
+          </div>
+        </article>
+        <article class="nexa-card retention-card" appScrollReveal [revealDelay]="150">
+          <app-icon name="lock" [size]="20" />
+          <div>
+            <strong>Sin exportación en navegador</strong
+            ><small
+              >Las exportaciones requieren un flujo específico con autorización, retención y
+              auditoría adicional.</small
+            >
+          </div>
+        </article>
+      </aside>
+    </section>
   }
 </div>

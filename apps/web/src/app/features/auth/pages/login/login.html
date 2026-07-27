@@ -1,60 +1,71 @@
 <main class="login-page">
-  <section class="login-story" aria-label="NexaSalud">
-    <div class="login-story__top">
+  <section class="login-assurance" aria-label="NexaSalud">
+    <header class="login-brand">
       <span class="nexa-brand__mark" aria-hidden="true"><i></i><i></i></span>
-      <span><strong>NexaSalud</strong><small>Gestión clínica consciente</small></span>
-    </div>
+      <span><strong>NexaSalud</strong><small>Operación clínica</small></span>
+    </header>
 
-    <div class="login-story__content">
-      <p class="nexa-eyebrow">Tecnología que cuida</p>
-      <h2>Más tiempo para las personas.<br><em>Menos fricción clínica.</em></h2>
+    <div class="login-assurance__content">
+      <p class="nexa-eyebrow">Entorno asistencial protegido</p>
+      <h2>Acceso diseñado para trabajar con rigor.</h2>
       <p>
-        Una agenda serena, rigurosa y segura para coordinar cada encuentro asistencial.
+        Una plataforma de coordinación clínica que reduce fricción operativa sin rebajar la
+        seguridad de pacientes, profesionales ni centros.
       </p>
 
-      <div class="care-ribbon" aria-label="Próximas citas de ejemplo">
-        <div class="care-ribbon__line"><span></span><i></i><i></i><i></i></div>
-        <article>
-          <time>09:30</time>
-          <span class="nexa-avatar">LM</span>
-          <span><strong>Consulta de seguimiento</strong><small>Sala Olivo · 30 min</small></span>
-          <span class="nexa-chip nexa-chip--success">Confirmada</span>
-        </article>
-        <article>
-          <time>10:15</time>
-          <span class="nexa-avatar nexa-avatar--coral">AR</span>
-          <span><strong>Primera valoración</strong><small>Videoconsulta · 45 min</small></span>
-          <span class="nexa-chip nexa-chip--info">En línea</span>
-        </article>
-      </div>
+      <ul class="assurance-list">
+        <li>
+          <app-icon name="shield" [size]="18" /><span
+            ><strong>Identidad verificada</strong
+            ><small>El acceso se completa en el proveedor de identidad del centro.</small></span
+          >
+        </li>
+        <li>
+          <app-icon name="lock" [size]="18" /><span
+            ><strong>Segundo factor obligatorio</strong
+            ><small>La verificación reforzada protege cada inicio de sesión.</small></span
+          >
+        </li>
+        <li>
+          <app-icon name="eye" [size]="18" /><span
+            ><strong>Trazabilidad operativa</strong
+            ><small>Las acciones sensibles quedan registradas por el servidor.</small></span
+          >
+        </li>
+      </ul>
     </div>
 
-    <blockquote>
-      “La tecnología clínica debe sentirse invisible: presente para proteger, ausente para no
-      interrumpir.”
-    </blockquote>
+    <p class="login-assurance__foot">
+      La información clínica se muestra solo dentro del contexto autorizado.
+    </p>
   </section>
 
   <section class="login-panel">
     <div class="login-card">
       <div class="login-card__seal"><app-icon name="shield" [size]="24" /></div>
-      <p class="nexa-eyebrow">Acceso profesional</p>
-      <h1>Bienvenida de nuevo</h1>
+      <p class="nexa-eyebrow">Identificación</p>
+      <h1>Acceso seguro</h1>
       <p class="login-card__lead">
-        Accede con tu DNI y contraseña. Después se solicitará siempre tu código de verificación TOTP.
+        Continúa en el acceso centralizado de NexaSalud. Allí se validarán tus credenciales y el
+        segundo factor requerido para tu perfil.
       </p>
 
       @if (reason() === 'session') {
         <div class="session-notice" role="status">
           <app-icon name="clock" [size]="18" />
-          <span><strong>La sesión no está activa</strong><small>Vuelve a identificarte para continuar.</small></span>
+          <span
+            ><strong>La sesión no está activa</strong
+            ><small>Vuelve a identificarte para continuar de forma segura.</small></span
+          >
         </div>
       }
 
       @if (error()) {
         <div class="session-notice session-notice--error" role="alert">
           <app-icon name="shield" [size]="18" />
-          <span><strong>Acceso no completado</strong><small>{{ errorMessage() }}</small></span>
+          <span
+            ><strong>Acceso no completado</strong><small>{{ errorMessage() }}</small></span
+          >
         </div>
       }
 
@@ -66,9 +77,9 @@
         (click)="startLogin('/inicio')"
       >
         @if (busy()) {
-          Verificando…
+          Abriendo el acceso seguro…
         } @else {
-          Acceder de forma segura <app-icon name="arrow" [size]="18" />
+          Continuar como profesional <app-icon name="arrow" [size]="18" />
         }
       </button>
 
@@ -79,25 +90,14 @@
         [disabled]="busy()"
         (click)="startLogin('/portal')"
       >
-        Soy paciente · entrar en Mi salud
+        Acceder al portal del paciente
       </button>
 
-      <div class="security-points">
-        <span><app-icon name="lock" [size]="16" /> Sesión cifrada y aislada</span>
-        <span><app-icon name="shield" [size]="16" /> 2FA obligatorio en cada acceso</span>
-        <span><app-icon name="eye" [size]="16" /> Accesos trazables</span>
-      </div>
-
       <p class="login-card__privacy">
-        Solo para personal autorizado. El acceso y las acciones clínicas quedan registrados conforme
-        a la política de seguridad del centro.
+        Solo para personas autorizadas. No compartas tu dispositivo ni tus códigos de verificación.
       </p>
     </div>
 
-    <footer>
-      <span>© 2026 NexaSalud</span>
-      <a href="/privacidad">Privacidad</a>
-      <a href="/soporte">Ayuda de acceso</a>
-    </footer>
+    <footer><span>© 2026 NexaSalud</span><span>Sesión cifrada · Acceso auditado</span></footer>
   </section>
 </main>

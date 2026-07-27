@@ -55,6 +55,15 @@ export interface PortalInvoice {
   readonly balanceMinor: number;
 }
 
+export interface PortalMessage {
+  readonly id: string;
+  readonly subject: string;
+  readonly body: string;
+  readonly contentClass: 'administrative' | 'clinical_link';
+  readonly authorDisplayName: string | null;
+  readonly publishedAt: string | null;
+}
+
 export interface PortalOverview {
   readonly patient: PortalPatient;
   readonly appointments: readonly PortalAppointment[];
@@ -148,6 +157,12 @@ export class PortalApiService {
   getOverview(): Observable<PortalOverview> {
     return this.api
       .get<ApiData<PortalOverview>>('/api/v1/portal/overview', { silent: true })
+      .pipe(map((response) => response.data));
+  }
+
+  getMessages(): Observable<readonly PortalMessage[]> {
+    return this.api
+      .get<ApiData<readonly PortalMessage[]>>('/api/v1/portal/messages', { silent: true })
       .pipe(map((response) => response.data));
   }
 

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -32,8 +39,13 @@ export class Audit {
     }
 
     return this.events().filter((event) =>
-      [event.actorDisplayName, event.actionLabel, event.resourceType, event.resourceIdHint ?? '', event.traceId ?? '']
-        .some((value) => value.toLocaleLowerCase('es').includes(query)),
+      [
+        event.actorDisplayName,
+        event.actionLabel,
+        event.resourceType,
+        event.resourceIdHint ?? '',
+        event.traceId ?? '',
+      ].some((value) => value.toLocaleLowerCase('es').includes(query)),
     );
   });
   protected readonly blockedCount = computed(
@@ -51,12 +63,14 @@ export class Audit {
   }
 
   protected eventInitials(event: AuditedEvent): string {
-    return event.actorDisplayName
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.slice(0, 1).toLocaleUpperCase('es'))
-      .join('') || 'SI';
+    return (
+      event.actorDisplayName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.slice(0, 1).toLocaleUpperCase('es'))
+        .join('') || 'SI'
+    );
   }
 
   protected formatDate(value: string | null): string {
@@ -69,7 +83,9 @@ export class Audit {
       return 'Fecha no disponible';
     }
 
-    return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'medium' }).format(date);
+    return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'medium' }).format(
+      date,
+    );
   }
 
   protected outcomeLabel(outcome: AuditedEvent['outcome']): string {
@@ -98,7 +114,10 @@ export class Audit {
           this.events.set(response.events);
           this.total.set(response.total);
         },
-        error: () => this.errorMessage.set('No se pudo recuperar la auditoría. Revisa la sesión y el permiso de auditoría.'),
+        error: () =>
+          this.errorMessage.set(
+            'No se pudo recuperar la auditoría. Revisa la sesión y el permiso de auditoría.',
+          ),
       });
   }
 }

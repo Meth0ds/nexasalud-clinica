@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\CommunicationChannel;
+use App\Enums\CommunicationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CreatePortalBookingRequest;
 use App\Http\Requests\Api\V1\CreateSlotHoldRequest;
 use App\Http\Requests\Api\V1\ReschedulePortalAppointmentRequest;
 use App\Http\Resources\Api\V1\AppointmentResource;
+use App\Http\Resources\Api\V1\PortalMessageResource;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\AppointmentType;
 use App\Models\Clinic;
 use App\Models\Membership;
+use App\Models\PatientCommunication;
 use App\Models\PatientUserLink;
 use App\Models\Room;
 use App\Models\User;
@@ -26,11 +30,15 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Serves patient-owned portal data and mutations through a verified, tenant-scoped patient link.
+ */
 final class PortalController extends Controller
 {
     public function __construct(
@@ -95,6 +103,28 @@ final class PortalController extends Controller
                 'balanceMinor' => $invoice->balance_minor,
             ]),
         ]]);
+    }
+
+    /**
+     * Lists only queued portal communications for the verified patient and audits the sensitive read.
+     */
+    public function messages(Request $request): AnonymousResourceCollection
+    {
+        $link = $this->patientLink($request);
+        $messages = PatientCommunication::query()
+            ->with('author')
+            ->where('patient_id', $link->patient_id)
+            ->where('channel', CommunicationChannel::Portal)
+            ->where('status', CommunicationStatus::Queued)
+            ->latest('queued_at')
+            ->limit(100)
+            ->get();
+
+        $this->audit->record($request, 'portal.messages_viewed', $link->patient, [
+            'result_count' => $messages->count(),
+        ]);
+
+        return PortalMessageResource::collection($messages);
     }
 
     public function availability(Request $request): JsonResponse
@@ -318,7 +348,7 @@ final class PortalController extends Controller
     }
 
     /**
-     * @param Collection<int, Membership> $providers
+     * @param  Collection<int, Membership>  $providers
      * @return list<array<string, mixed>>
      */
     private function generateSlots(
@@ -391,8 +421,7 @@ final class PortalController extends Controller
         CarbonImmutable $start,
         CarbonImmutable $end,
         ?string $excludedHoldId = null,
-    ): void
-    {
+    ): void {
         $appointmentConflict = Appointment::query()
             ->where('starts_at', '<', $end)->where('ends_at', '>', $start)
             ->whereIn('status', array_map(fn (AppointmentStatus $status): string => $status->value, array_filter(AppointmentStatus::cases(), fn (AppointmentStatus $status): bool => $status->blocksAvailability())))

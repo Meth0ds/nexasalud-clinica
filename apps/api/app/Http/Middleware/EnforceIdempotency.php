@@ -15,9 +15,19 @@ use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
+/**
+ * Ensures a tenant-scoped mutation executes at most once for a valid actor and request payload.
+ *
+ * Replayed successful JSON responses are returned verbatim. Failed and non-JSON responses are not
+ * retained so a transient failure cannot permanently consume a caller's idempotency key.
+ */
 final class EnforceIdempotency
 {
-    /** @param Closure(Request): Response $next */
+    /**
+     * Serializes duplicate requests, fingerprints their canonical payload, and safely replays successful responses.
+     *
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $key = $request->header('Idempotency-Key');
@@ -99,7 +109,13 @@ final class EnforceIdempotency
         }
     }
 
-    /** @param array<string, mixed> $payload */
+    /**
+     * Produces a deterministic representation of an allowlisted request payload for conflict detection.
+     *
+     * @param  array<string, mixed>  $payload
+     *
+     * @throws \JsonException When the request data cannot be represented safely as JSON.
+     */
     private function canonicalJson(array $payload): string
     {
         $sort = function (mixed $value) use (&$sort): mixed {

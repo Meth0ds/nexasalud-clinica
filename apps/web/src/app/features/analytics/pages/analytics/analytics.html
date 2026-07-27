@@ -1,7 +1,101 @@
 <div class="nexa-page analytics-page">
-  <header class="nexa-page__heading" appScrollReveal><div><p class="nexa-eyebrow">Decisiones informadas</p><h1>Analítica asistencial</h1><p class="nexa-page__subtitle">Indicadores agregados para mejorar capacidad, acceso y experiencia sin exponer datos individuales.</p></div><div class="nexa-page__actions"><div class="period-switch">@for(item of [{v:'30d',l:'30 días'},{v:'90d',l:'90 días'},{v:'year',l:'Año'}];track item.v){<button [class.is-active]="period() === item.v" (click)="period.set($any(item.v))">{{item.l}}</button>}</div><button mat-stroked-button class="nexa-btn-secondary"><app-icon name="download" [size]="17" /> Informe PDF</button></div></header>
-  <section class="nexa-grid nexa-grid--4 analytics-metrics" appScrollReveal><article class="nexa-card"><div><small>Citas atendidas</small><strong>1.248</strong><p><span>+8,4%</span> frente al periodo anterior</p></div><app-icon name="calendar" /></article><article class="nexa-card"><div><small>Tasa de asistencia</small><strong>93,1%</strong><p><span>+2,1%</span> mejora sostenida</p></div><app-icon name="check" /></article><article class="nexa-card"><div><small>Espera mediana</small><strong>4,8 días</strong><p><span>−1,2</span> días de acceso</p></div><app-icon name="clock" /></article><article class="nexa-card"><div><small>Satisfacción</small><strong>4,8/5</strong><p><span>96%</span> recomendaría el centro</p></div><app-icon name="spark" /></article></section>
-  <section class="analytics-main nexa-section"><article class="nexa-card volume-chart" appScrollReveal><div class="nexa-card__header"><div><h2>Actividad y capacidad</h2><p>Citas programadas, atendidas y disponibles</p></div><div class="chart-legend"><span><i></i> Atendidas</span><span><i></i> Programadas</span></div></div><div class="chart-area"><div class="y-axis"><span>80</span><span>60</span><span>40</span><span>20</span><span>0</span></div><svg viewBox="0 0 800 260" role="img" aria-label="Actividad por día"><defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8b7f" stop-opacity=".22"/><stop offset="1" stop-color="#2f8b7f" stop-opacity="0"/></linearGradient></defs><path class="grid" d="M0 20H800M0 75H800M0 130H800M0 185H800M0 240H800"/><path class="area" d="M0 188C50 172 75 132 120 142S190 184 235 147 300 69 350 88 425 159 480 120 555 55 610 82 695 147 800 71V260H0Z"/><path class="line line--primary" d="M0 188C50 172 75 132 120 142S190 184 235 147 300 69 350 88 425 159 480 120 555 55 610 82 695 147 800 71"/><path class="line line--secondary" d="M0 168C55 147 80 110 125 120S195 162 240 122 310 52 360 65 430 133 486 93 560 38 615 57 705 121 800 48"/></svg><div class="x-axis"><span>1 jul</span><span>6 jul</span><span>12 jul</span><span>18 jul</span><span>24 jul</span><span>30 jul</span></div></div></article><aside class="nexa-card access-card" appScrollReveal [revealDelay]="100"><div class="nexa-card__header"><div><h2>Origen de citas</h2><p>Distribución por canal</p></div></div><div class="donut" aria-label="Portal 42%, teléfono 31%, recepción 19%, otros 8%"><div><strong>1.342</strong><small>solicitudes</small></div></div><ul><li><i></i><span>Portal del paciente</span><strong>42%</strong></li><li><i></i><span>Teléfono</span><strong>31%</strong></li><li><i></i><span>Recepción</span><strong>19%</strong></li><li><i></i><span>Otros</span><strong>8%</strong></li></ul></aside></section>
-  <section class="analytics-bottom nexa-section"><article class="nexa-card" appScrollReveal><div class="nexa-card__header"><div><h2>Ocupación por profesional</h2><p>Horas disponibles frente a reservadas</p></div></div>@for(person of [{n:'Dra. Elena Soler',v:88,h:'35,2 de 40 h'},{n:'Dr. Mateo Vidal',v:82,h:'32,8 de 40 h'},{n:'Dra. Nuria Campos',v:74,h:'29,6 de 40 h'},{n:'Equipo de apoyo',v:68,h:'54,4 de 80 h'}];track person.n){<div class="capacity-row"><span><strong>{{person.n}}</strong><small>{{person.h}}</small></span><div><i [style.width.%]="person.v"></i></div><strong>{{person.v}}%</strong></div>}</article><article class="nexa-card insights" appScrollReveal [revealDelay]="80"><div class="nexa-card__header"><div><h2>Observaciones útiles</h2><p>Patrones calculados sobre datos agregados</p></div></div><div><span><app-icon name="spark" [size]="18" /></span><p><strong>Demanda de mañana</strong><small>Los lunes entre 09:00 y 11:00 concentran un 18% más de solicitudes.</small></p></div><div><span><app-icon name="clock" [size]="18" /></span><p><strong>Menos ausencias</strong><small>El recordatorio a 24 h ha reducido los no-show un 2,7%.</small></p></div><div><span><app-icon name="waitlist" [size]="18" /></span><p><strong>Lista de espera</strong><small>Abrir dos huecos de 30 min cubriría el 42% de las solicitudes prioritarias.</small></p></div></article></section>
-  <p class="analytics-privacy"><app-icon name="shield" [size]="15" /> Indicadores con umbrales mínimos de agregación; no se muestran grupos que permitan reidentificar pacientes.</p>
+  <header class="nexa-page__heading" appScrollReveal>
+    <div>
+      <p class="nexa-eyebrow">Decisiones informadas</p>
+      <h1>Analítica asistencial</h1>
+      <p class="nexa-page__subtitle">
+        Indicadores agregados del centro activo. No se muestran datos de pacientes ni grupos
+        pequeños.
+      </p>
+    </div>
+    <mat-button-toggle-group
+      aria-label="Periodo de analítica"
+      [value]="period()"
+      (change)="setPeriod($event.value)"
+      ><mat-button-toggle value="30d">30 días</mat-button-toggle
+      ><mat-button-toggle value="90d">90 días</mat-button-toggle
+      ><mat-button-toggle value="year">Año</mat-button-toggle></mat-button-toggle-group
+    >
+  </header>
+
+  @if (loading()) {
+    <section class="analytics-state" role="status">
+      <mat-spinner diameter="30" /><span>Calculando indicadores autorizados…</span>
+    </section>
+  } @else if (error(); as message) {
+    <section class="analytics-state analytics-state--error" role="alert">
+      <div>
+        <h2>Analítica no disponible</h2>
+        <p>{{ message }}</p>
+        <button mat-stroked-button type="button" (click)="retry()">Reintentar</button>
+      </div>
+    </section>
+  } @else if (snapshot(); as data) {
+    <section class="nexa-grid nexa-grid--4 analytics-metrics" appScrollReveal>
+      <article class="nexa-card">
+        <app-icon name="calendar" />
+        <div>
+          <small>Citas del periodo</small><strong>{{ data.metrics.appointments }}</strong>
+          <p>Centro activo</p>
+        </div>
+      </article>
+      <article class="nexa-card">
+        <app-icon name="check" />
+        <div>
+          <small>Finalizadas</small><strong>{{ data.metrics.completionRate }}%</strong>
+          <p>Sobre citas registradas</p>
+        </div>
+      </article>
+      <article class="nexa-card">
+        <app-icon name="close" />
+        <div>
+          <small>Canceladas</small><strong>{{ data.metrics.cancellationRate }}%</strong>
+          <p>Sobre citas registradas</p>
+        </div>
+      </article>
+      <article class="nexa-card">
+        <app-icon name="clock" />
+        <div>
+          <small>No presentadas</small><strong>{{ data.metrics.noShowRate }}%</strong>
+          <p>Sobre citas registradas</p>
+        </div>
+      </article>
+    </section>
+    <section class="analytics-detail nexa-section">
+      <article class="nexa-card" appScrollReveal>
+        <div class="nexa-card__header">
+          <div>
+            <h2>Estado de las citas</h2>
+            <p>Distribución agregada en el periodo seleccionado.</p>
+          </div>
+        </div>
+        <div class="status-list">
+          @for (row of statusRows(); track row.status) {
+            <div>
+              <span>{{ row.status }}</span
+              ><strong>{{ row.total }}</strong>
+            </div>
+          } @empty {
+            <div class="nexa-empty">
+              <div>
+                <h2>Sin actividad</h2>
+                <p>No hay citas autorizadas para este periodo.</p>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+      <aside class="nexa-card analytics-privacy" appScrollReveal [revealDelay]="80">
+        <app-icon name="shield" [size]="22" />
+        <div>
+          <h2>Privacidad aplicada</h2>
+          <p>
+            Solo se presentan agregados. Los grupos inferiores a
+            {{ data.privacy.minimumGroupSize }} no deben usarse para inferir información individual.
+          </p>
+          <small>Zona horaria: {{ data.range.timezone }}</small>
+        </div>
+      </aside>
+    </section>
+  }
 </div>

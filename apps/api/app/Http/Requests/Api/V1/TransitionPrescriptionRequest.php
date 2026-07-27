@@ -11,10 +11,14 @@ class TransitionPrescriptionRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $prescription = $this->route('prescription');
-        if (! $prescription instanceof Prescription) { return false; }
+        if (! $prescription instanceof Prescription) {
+            return false;
+        }
         $ability = $this->input('status') === 'signed' ? 'sign' : ($this->input('status') === 'sent' ? 'send' : 'update');
+
         return $this->authenticatedUser()->can($ability, $prescription);
     }
+
     public function rules(): array
     {
         return [

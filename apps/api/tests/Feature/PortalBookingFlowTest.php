@@ -8,6 +8,7 @@ use App\Models\AppointmentType;
 use App\Models\Clinic;
 use App\Models\Membership;
 use App\Models\Patient;
+use App\Models\PatientCommunication;
 use App\Models\PatientUserLink;
 use App\Models\Role;
 use App\Models\Room;
@@ -170,6 +171,50 @@ final class PortalBookingFlowTest extends TestCase
             ]);
         $cancelled->assertOk()->assertJsonPath('data.status', 'cancelled');
         $this->assertDatabaseHas('appointments', ['id' => $appointmentId, 'status' => 'cancelled']);
+    }
+
+    public function test_a_patient_can_read_only_their_queued_portal_messages(): void
+    {
+        app()->instance('currentTenant', $this->tenant);
+        $link = PatientUserLink::query()->where('user_id', $this->patientUser->getKey())->firstOrFail();
+        $visible = PatientCommunication::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'patient_id' => $link->patient_id,
+            'author_user_id' => $this->clinician->getKey(),
+            'channel' => 'portal',
+            'content_class' => 'clinical_link',
+            'subject' => 'Información disponible',
+            'body' => 'Revise la información disponible desde su portal seguro.',
+            'status' => 'queued',
+            'queued_at' => now(),
+        ]);
+        $otherPatient = Patient::factory()->create(['tenant_id' => $this->tenant->getKey()]);
+        $hidden = PatientCommunication::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'patient_id' => $otherPatient->getKey(),
+            'author_user_id' => $this->clinician->getKey(),
+            'channel' => 'portal',
+            'status' => 'queued',
+            'queued_at' => now(),
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $this->actingAs($this->patientUser);
+        $response = $this->withSession($this->sessionContext($this->patientMembership))
+            ->getJson('/api/v1/portal/messages');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.id', $visible->getKey())
+            ->assertJsonPath('data.0.subject', 'Información disponible')
+            ->assertJsonPath('data.0.body', 'Revise la información disponible desde su portal seguro.')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonMissing(['id' => $hidden->getKey()]);
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $this->tenant->getKey(),
+            'event_type' => 'portal.messages_viewed',
+            'actor_user_id' => $this->patientUser->getKey(),
+            'auditable_id' => $link->patient_id,
+        ]);
     }
 
     /** @return array<string, int|string> */

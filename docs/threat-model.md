@@ -3,7 +3,7 @@
 **Estado:** modelo inicial basado en el repositorio  
 **Fecha de corte:** 19 de julio de 2026  
 **Versión:** 0.1  
-**Propietario pendiente:** responsable de seguridad/producto  
+**Propietario pendiente:** responsable de seguridad/producto
 
 > Este documento no certifica la seguridad, el cumplimiento normativo ni la aptitud para tratar datos reales. Distingue controles implementados de requisitos de diseño. Debe actualizarse cuando cambien los flujos, integraciones, exposición o modelo de despliegue.
 
@@ -13,11 +13,11 @@ NexaSalud pretende gestionar citas y datos identificativos y sanitarios en un en
 
 ## Convenciones de evidencia
 
-| Marca | Significado |
-|---|---|
+| Marca | Significado                                                                      |
+| ----- | -------------------------------------------------------------------------------- |
 | **E** | Evidenciado en código o configuración versionada. No implica prueba de eficacia. |
 | **D** | Decisión o requisito de diseño documentado, todavía no demostrable como control. |
-| **P** | Pendiente de implementación, configuración externa o prueba. |
+| **P** | Pendiente de implementación, configuración externa o prueba.                     |
 
 Las referencias a `PLAN_MAESTRO.md` y `PROMPT_INTERNO_IMPLEMENTACION.md` son evidencia de intención (**D**), no de mitigación existente.
 
@@ -60,32 +60,32 @@ Mientras no se respondan, se adopta el escenario conservador de aplicación sani
 
 ### Componentes primarios
 
-| Componente | Función prevista | Estado y evidencia |
-|---|---|---|
-| Navegador + Angular | UI, rutas, formularios y estado visual; nunca autoridad de seguridad | **E:** Angular/Material y proxy local en `apps/web/package.json` y `apps/web/proxy.conf.json`. **P:** flujos de negocio y seguridad verificables. |
-| BFF/API NestJS + Fastify | Terminación de sesión, autorización, validación, negocio, auditoría y acceso a dependencias | **E:** dependencias declaradas en `apps/api/package.json`. **P:** eficacia de guards, rutas y controles. |
-| Proveedor OIDC / Keycloak local | Autenticación, passkeys/MFA, recuperación y step-up | **D:** flujo en `PROMPT_INTERNO_IMPLEMENTACION.md`, sección “Arquitectura de identidad”. **P:** realm y proveedor productivo. |
-| Redis | Sesiones, transacciones OIDC, rate limits y locks breves | **D:** arquitectura en `PLAN_MAESTRO.md` §4.3. **E:** cliente declarado en `apps/api/package.json`. **P:** despliegue/configuración. |
-| PostgreSQL | Fuente de verdad, integridad, tenant y RLS | **D:** `PLAN_MAESTRO.md` §4.4. **E:** cliente declarado en `apps/api/package.json`. **P:** esquema, migraciones y políticas verificadas. |
-| KMS/gestor de secretos | Protección y rotación de claves/secretos | **D:** `PLAN_MAESTRO.md` §4.4 y §5.5. **P:** proveedor, políticas y operación. |
-| Correo/cola | Recordatorios y avisos sin contenido sanitario innecesario | **D:** Mailpit local y adaptador productivo en `PLAN_MAESTRO.md`. **P:** implementación y proveedor. |
-| Logs, auditoría y SIEM | Detección, investigación y trazabilidad sin PHI | **D:** `PLAN_MAESTRO.md` §5.5 y prompt, “Logs/auditoría”. **P:** sink separado, alertas e integridad. |
-| CI/registro de artefactos | Construcción, pruebas, SCA, SBOM y publicación | **D:** gates en `PROMPT_INTERNO_IMPLEMENTACION.md`. **P:** pipeline y attestations. |
+| Componente                      | Función prevista                                                                            | Estado y evidencia                                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Navegador + Angular             | UI, rutas, formularios y estado visual; nunca autoridad de seguridad                        | **E:** Angular/Material y proxy local en `apps/web/package.json` y `apps/web/proxy.conf.json`. **P:** flujos de negocio y seguridad verificables. |
+| BFF/API NestJS + Fastify        | Terminación de sesión, autorización, validación, negocio, auditoría y acceso a dependencias | **E:** dependencias declaradas en `apps/api/package.json`. **P:** eficacia de guards, rutas y controles.                                          |
+| Proveedor OIDC / Keycloak local | Autenticación, passkeys/MFA, recuperación y step-up                                         | **D:** flujo en `PROMPT_INTERNO_IMPLEMENTACION.md`, sección “Arquitectura de identidad”. **P:** realm y proveedor productivo.                     |
+| Redis                           | Sesiones, transacciones OIDC, rate limits y locks breves                                    | **D:** arquitectura en `PLAN_MAESTRO.md` §4.3. **E:** cliente declarado en `apps/api/package.json`. **P:** despliegue/configuración.              |
+| PostgreSQL                      | Fuente de verdad, integridad, tenant y RLS                                                  | **D:** `PLAN_MAESTRO.md` §4.4. **E:** cliente declarado en `apps/api/package.json`. **P:** esquema, migraciones y políticas verificadas.          |
+| KMS/gestor de secretos          | Protección y rotación de claves/secretos                                                    | **D:** `PLAN_MAESTRO.md` §4.4 y §5.5. **P:** proveedor, políticas y operación.                                                                    |
+| Correo/cola                     | Recordatorios y avisos sin contenido sanitario innecesario                                  | **D:** Mailpit local y adaptador productivo en `PLAN_MAESTRO.md`. **P:** implementación y proveedor.                                              |
+| Logs, auditoría y SIEM          | Detección, investigación y trazabilidad sin PHI                                             | **D:** `PLAN_MAESTRO.md` §5.5 y prompt, “Logs/auditoría”. **P:** sink separado, alertas e integridad.                                             |
+| CI/registro de artefactos       | Construcción, pruebas, SCA, SBOM y publicación                                              | **D:** gates en `PROMPT_INTERNO_IMPLEMENTACION.md`. **P:** pipeline y attestations.                                                               |
 
 ### Flujos y límites de confianza
 
-| Límite | Origen → destino | Datos | Canal y garantías requeridas | Validación y fallo seguro |
-|---|---|---|---|---|
-| TB-01 Internet | Navegador → edge/BFF | Cookie opaca, CSRF, DTO, consultas | HTTPS; mismo origen; límites; cabeceras | Esquema estricto, autorización por recurso, `Origin`, rate limit; rechazar por defecto. |
-| TB-02 Código no confiable | API → Angular/DOM | Perfil mínimo, citas, pacientes, errores | JSON; CSP; no cache sensible | Encoding contextual; sin HTML arbitrario; errores estables; nunca tokens/PHI en storage o URL. |
-| TB-03 Federación | BFF ↔ IdP | `state`, `nonce`, PKCE, código, claims, logout | OIDC Authorization Code + PKCE, TLS, issuer exacto | Firma, issuer, audience, `state`, `nonce`, timestamps, `acr/amr`, redirect allowlisted; no login si falla. |
-| TB-04 Sesión | BFF ↔ Redis | Sesión, tenant, actor, permisos, CSRF, revocación | Red privada/TLS o socket controlado, auth | TTL, rotación, clave de namespace, timeouts; sin fallback; 503/401 cerrado. |
-| TB-05 Datos | BFF ↔ PostgreSQL | PII/PHI, citas, permisos, auditoría | Conexión cifrada en producción; cuenta mínima | SQL parametrizado, transacción, `SET LOCAL` de actor/tenant, RLS, constraints; rollback en error. |
-| TB-06 Claves | BFF ↔ KMS/secret manager | KEK, claves versionadas, credenciales | Identidad de workload y TLS | Acceso mínimo, versión y auditoría; lectura/escritura sensible falla cerrada si KMS no responde. |
-| TB-07 Mensajería | BFF/worker → correo | Destino y plantilla minimizada | API/SMTP autenticado y cifrado | Plantillas allowlisted, outbox idempotente; una caída no deshace la cita ni simula entrega. |
-| TB-08 Observabilidad | Servicios → logs/SIEM | Metadatos técnicos y eventos seudonimizados | Transporte autenticado/cifrado | Allowlist/redacción antes del sink; operaciones de alto riesgo fallan si no pueden auditarse de forma durable. |
-| TB-09 Operación | Operador/CI → runtime | Artefactos, config, migraciones, secretos | Canal administrativo separado | MFA, aprobación, artefactos firmados, separación de funciones, rollback; nunca secretos en Git/log. |
-| TB-10 Backup | PostgreSQL/KMS → almacén backup → restore | Copia cifrada y metadatos | Canal cifrado, cuenta separada, inmutabilidad | Cifrado, catálogo, retención, restore aislado y prueba RLS; no restaurar sobre producción sin aprobación. |
+| Límite                    | Origen → destino                          | Datos                                             | Canal y garantías requeridas                       | Validación y fallo seguro                                                                                      |
+| ------------------------- | ----------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| TB-01 Internet            | Navegador → edge/BFF                      | Cookie opaca, CSRF, DTO, consultas                | HTTPS; mismo origen; límites; cabeceras            | Esquema estricto, autorización por recurso, `Origin`, rate limit; rechazar por defecto.                        |
+| TB-02 Código no confiable | API → Angular/DOM                         | Perfil mínimo, citas, pacientes, errores          | JSON; CSP; no cache sensible                       | Encoding contextual; sin HTML arbitrario; errores estables; nunca tokens/PHI en storage o URL.                 |
+| TB-03 Federación          | BFF ↔ IdP                                 | `state`, `nonce`, PKCE, código, claims, logout    | OIDC Authorization Code + PKCE, TLS, issuer exacto | Firma, issuer, audience, `state`, `nonce`, timestamps, `acr/amr`, redirect allowlisted; no login si falla.     |
+| TB-04 Sesión              | BFF ↔ Redis                               | Sesión, tenant, actor, permisos, CSRF, revocación | Red privada/TLS o socket controlado, auth          | TTL, rotación, clave de namespace, timeouts; sin fallback; 503/401 cerrado.                                    |
+| TB-05 Datos               | BFF ↔ PostgreSQL                          | PII/PHI, citas, permisos, auditoría               | Conexión cifrada en producción; cuenta mínima      | SQL parametrizado, transacción, `SET LOCAL` de actor/tenant, RLS, constraints; rollback en error.              |
+| TB-06 Claves              | BFF ↔ KMS/secret manager                  | KEK, claves versionadas, credenciales             | Identidad de workload y TLS                        | Acceso mínimo, versión y auditoría; lectura/escritura sensible falla cerrada si KMS no responde.               |
+| TB-07 Mensajería          | BFF/worker → correo                       | Destino y plantilla minimizada                    | API/SMTP autenticado y cifrado                     | Plantillas allowlisted, outbox idempotente; una caída no deshace la cita ni simula entrega.                    |
+| TB-08 Observabilidad      | Servicios → logs/SIEM                     | Metadatos técnicos y eventos seudonimizados       | Transporte autenticado/cifrado                     | Allowlist/redacción antes del sink; operaciones de alto riesgo fallan si no pueden auditarse de forma durable. |
+| TB-09 Operación           | Operador/CI → runtime                     | Artefactos, config, migraciones, secretos         | Canal administrativo separado                      | MFA, aprobación, artefactos firmados, separación de funciones, rollback; nunca secretos en Git/log.            |
+| TB-10 Backup              | PostgreSQL/KMS → almacén backup → restore | Copia cifrada y metadatos                         | Canal cifrado, cuenta separada, inmutabilidad      | Cifrado, catálogo, retención, restore aislado y prueba RLS; no restaurar sobre producción sin aprobación.      |
 
 #### Diagrama
 
@@ -105,18 +105,18 @@ flowchart LR
 
 ## Activos y objetivos de seguridad
 
-| Activo | Por qué importa | Objetivo C/I/A |
-|---|---|---|
-| Identidad, contacto y datos demográficos | Identifican personas y permiten fraude o daño | C alta, I alta, A media |
-| Motivo, notas y alertas sanitarias | Datos especialmente sensibles; exposición puede causar daño grave | C crítica, I crítica, A alta |
-| Citas, disponibilidad y recursos | Afectan continuidad asistencial y operación de la clínica | C alta, I crítica, A alta |
-| Sesiones, transacciones OIDC y CSRF | Su robo permite actuar como otra persona | C crítica, I crítica, A alta |
-| Roles, permisos, tenant y relación asistencial | Mantienen el aislamiento y el mínimo privilegio | C media, I crítica, A alta |
-| Claves, secretos y recovery material | Compromiso amplifica el acceso a todo el sistema | C crítica, I crítica, A alta |
-| Eventos de auditoría y seguridad | Permiten atribución, detección e investigación | C alta, I crítica, A alta |
-| Exportaciones, backups y restauraciones | Concentraciones masivas de datos | C crítica, I crítica, A alta |
-| Configuración, migraciones y artefactos | Definen comportamiento y confianza del runtime | C alta, I crítica, A alta |
-| Redis, PostgreSQL, IdP y BFF | Dependencias críticas de disponibilidad y control | C/I/A según contenido; A alta |
+| Activo                                         | Por qué importa                                                   | Objetivo C/I/A                |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ----------------------------- |
+| Identidad, contacto y datos demográficos       | Identifican personas y permiten fraude o daño                     | C alta, I alta, A media       |
+| Motivo, notas y alertas sanitarias             | Datos especialmente sensibles; exposición puede causar daño grave | C crítica, I crítica, A alta  |
+| Citas, disponibilidad y recursos               | Afectan continuidad asistencial y operación de la clínica         | C alta, I crítica, A alta     |
+| Sesiones, transacciones OIDC y CSRF            | Su robo permite actuar como otra persona                          | C crítica, I crítica, A alta  |
+| Roles, permisos, tenant y relación asistencial | Mantienen el aislamiento y el mínimo privilegio                   | C media, I crítica, A alta    |
+| Claves, secretos y recovery material           | Compromiso amplifica el acceso a todo el sistema                  | C crítica, I crítica, A alta  |
+| Eventos de auditoría y seguridad               | Permiten atribución, detección e investigación                    | C alta, I crítica, A alta     |
+| Exportaciones, backups y restauraciones        | Concentraciones masivas de datos                                  | C crítica, I crítica, A alta  |
+| Configuración, migraciones y artefactos        | Definen comportamiento y confianza del runtime                    | C alta, I crítica, A alta     |
+| Redis, PostgreSQL, IdP y BFF                   | Dependencias críticas de disponibilidad y control                 | C/I/A según contenido; A alta |
 
 ## Modelo del atacante
 
@@ -138,19 +138,19 @@ flowchart LR
 
 ## Puntos de entrada y superficies
 
-| Superficie | Cómo se alcanza | Límite | Notas | Evidencia |
-|---|---|---|---|---|
-| Rutas Angular | Navegación desde Internet | TB-01/TB-02 | Guards solo mejoran UX; no autorizan | `apps/web/src/app/app.routes.ts`; diseño en `PLAN_MAESTRO.md` §4.2 |
-| `/auth/login`, callback y logout | Redirección BFF/IdP | TB-01/TB-03 | `returnTo`, `state`, `nonce`, PKCE y logout son críticos | Diseño en `PROMPT_INTERNO_IMPLEMENTACION.md` “Flujo” |
-| `/api/session` | Cookie del navegador | TB-01/TB-04 | Perfil mínimo y CSRF; no tokens federados | Diseño en el mismo flujo de identidad |
-| API de citas/pacientes | JSON autenticado | TB-01/TB-05 | BOLA, concurrencia, validación y minimización | Entidades y casos obligatorios en `PLAN_MAESTRO.md` §4.5 y §7.2 |
-| Búsqueda | Consultas autenticadas | TB-01/TB-05 | Enumeración/exfiltración y DoS | `PLAN_MAESTRO.md` §6 y prompt “API” |
-| Exportación | Operación privilegiada y job | TB-01/TB-05/TB-10 | Requiere permiso, step-up, límites y auditoría | `PLAN_MAESTRO.md` §3 y §7.2 |
-| Gestión de roles/tenant | UI/API administrativa | TB-01/TB-05 | Escalada y acceso cruzado | Prompt “Autorización y multi-tenancy” |
-| Break-glass | Acción privilegiada | TB-01/TB-03/TB-08 | Motivo, tiempo, alerta y revisión | Mismo apartado del prompt |
-| Configuración de entorno | Startup/operador | TB-09 | Secretos, orígenes, proxy y límites | `apps/api/.env.example` |
-| Dependencias y build | Registro npm/CI | TB-09 | Scripts, typosquatting, artefactos | `apps/web/package.json`, `apps/api/package.json`, lockfiles |
-| Backup/restore | Tarea operativa | TB-10 | Exfiltración o restauración corrupta | Requisito en `PLAN_MAESTRO.md` §6 |
+| Superficie                       | Cómo se alcanza              | Límite            | Notas                                                    | Evidencia                                                          |
+| -------------------------------- | ---------------------------- | ----------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| Rutas Angular                    | Navegación desde Internet    | TB-01/TB-02       | Guards solo mejoran UX; no autorizan                     | `apps/web/src/app/app.routes.ts`; diseño en `PLAN_MAESTRO.md` §4.2 |
+| `/auth/login`, callback y logout | Redirección BFF/IdP          | TB-01/TB-03       | `returnTo`, `state`, `nonce`, PKCE y logout son críticos | Diseño en `PROMPT_INTERNO_IMPLEMENTACION.md` “Flujo”               |
+| `/api/session`                   | Cookie del navegador         | TB-01/TB-04       | Perfil mínimo y CSRF; no tokens federados                | Diseño en el mismo flujo de identidad                              |
+| API de citas/pacientes           | JSON autenticado             | TB-01/TB-05       | BOLA, concurrencia, validación y minimización            | Entidades y casos obligatorios en `PLAN_MAESTRO.md` §4.5 y §7.2    |
+| Búsqueda                         | Consultas autenticadas       | TB-01/TB-05       | Enumeración/exfiltración y DoS                           | `PLAN_MAESTRO.md` §6 y prompt “API”                                |
+| Exportación                      | Operación privilegiada y job | TB-01/TB-05/TB-10 | Requiere permiso, step-up, límites y auditoría           | `PLAN_MAESTRO.md` §3 y §7.2                                        |
+| Gestión de roles/tenant          | UI/API administrativa        | TB-01/TB-05       | Escalada y acceso cruzado                                | Prompt “Autorización y multi-tenancy”                              |
+| Break-glass                      | Acción privilegiada          | TB-01/TB-03/TB-08 | Motivo, tiempo, alerta y revisión                        | Mismo apartado del prompt                                          |
+| Configuración de entorno         | Startup/operador             | TB-09             | Secretos, orígenes, proxy y límites                      | `apps/api/.env.example`                                            |
+| Dependencias y build             | Registro npm/CI              | TB-09             | Scripts, typosquatting, artefactos                       | `apps/web/package.json`, `apps/api/package.json`, lockfiles        |
+| Backup/restore                   | Tarea operativa              | TB-10             | Exfiltración o restauración corrupta                     | Requisito en `PLAN_MAESTRO.md` §6                                  |
 
 ## Principales caminos de abuso
 
@@ -167,23 +167,23 @@ flowchart LR
 
 ## Tabla del modelo de amenazas
 
-| ID | Fuente | Prerrequisitos | Acción | Impacto y activos | Controles existentes | Brechas | Mitigaciones concretas | Detección | Prob. | Severidad | Prioridad |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| TM-001 | Atacante remoto/phisher | Cuenta objetivo y flujo de identidad expuesto | Toma cuenta mediante phishing, stuffing o recovery | Exfiltración/alteración; identidad, PHI, citas | **D:** OIDC, passkeys/MFA y step-up (`PROMPT_INTERNO_IMPLEMENTACION.md`) | IdP/política/pruebas no evidenciados | MFA obligatorio; passkey preferida; recovery de un uso; rate limit por cuenta+IP; step-up y revocación | Fallos por cuenta/IP, factor degradado, nuevo dispositivo, export tras login | Alta | Alta | **critical** hasta verificar; después alta |
-| TM-002 | Remoto/XSS/red local comprometida | Sesión válida o fijable | Roba, fija o reutiliza sesión | Suplantación; sesión y datos accesibles | **D:** cookie opaca `__Host-`, Redis, rotación/TTL | Ciclo de vida y detección no evidenciados | 256 bits CSPRNG; HttpOnly/Secure/SameSite; rotar login/step-up/tenant; idle+absolute; revocación inmediata; `no-store` | Reuso tras rotación, geovelocidad prudente, sesiones concurrentes, logout fallido | Media | Alta | **high** |
-| TM-003 | Usuario de otro tenant o rol bajo | Sesión legítima y un ID/endpoint | BOLA/IDOR o consulta sin aislamiento | Lectura/modificación cross-tenant; PHI y citas | **D:** tenant de sesión, permisos contextuales y RLS | Esquema/RLS/tests negativos no evidenciados | Guard central + policy por recurso; transacción con `SET LOCAL`; RLS `FORCE`; UUID no enumerable; pruebas A/B por cada repositorio | Evento `cross_tenant_denied`, ratios 403/404, consultas sin contexto | Alta | Alta | **critical** |
-| TM-004 | Usuario autenticado/cliente manipulado | Endpoint administrativo o contexto débil | Inyecta rol, tenant, clínica o nivel MFA | Escalada; autorización y configuración | **D:** deny-by-default RBAC/ABAC | Enforcement server-side no evidenciado | Ignorar autoridad del body; claims mapeados con allowlist; permiso+recurso+relación; step-up; separación admin plataforma/PHI | Cambios de rol, tenant switches, intentos de atributos prohibidos | Media | Alta | **high** |
-| TM-005 | Sitio malicioso | Víctima autenticada con cookie | Fuerza mutación CSRF | Alteración/exportación; citas y datos | **D:** token sincronizador + Origin/SameSite | Middleware/pruebas no evidenciados | Token ligado a sesión; header; Origin exacto; Fetch Metadata; content-type allowlist; nunca mutar por GET | Rechazos CSRF por origen/ruta sin registrar token | Media | Alta | **high** |
-| TM-006 | Paciente/usuario con campo de texto | Contenido se muestra en Angular o plantilla | XSS reflejado/almacenado | Robo de respuestas y acciones como víctima | **D:** sanitización Angular/CSP; **E:** framework Angular | CSP/sinks/pruebas no evidenciados | Sin `innerHTML`/bypass; encoding; CSP header sin unsafe eval/inline; Trusted Types compatible; plantillas de texto | CSP reports sin payload sensible, detección de sinks/SAST | Media | Alta | **high** |
-| TM-007 | Remoto/autenticado | Input llega a SQL/filtro dinámico | Inyección o consulta no acotada | Exfiltración/corrupción/DoS; DB | **D:** SQL parametrizado y schema estricto; **E:** `pg` declarado | Capa de acceso y validación no evidenciadas | Parametrización; no concatenar SQL; DTO allowlist; cuenta DB mínima; timeouts/paginación | Errores SQL agrupados, patrones anómalos, queries lentas | Media | Alta | **high** |
-| TM-008 | Insider/proceso comprometido | Permiso de búsqueda/export/log/backup | Extrae volumen o introduce PHI en canales secundarios | Brecha masiva; export, log, backup | **D:** step-up, auditoría, redacción y backup cifrado | DLP, retención, sink, restore y alertas no evidenciados | Límite y justificación; export cifrada/expirable; allowlist logs; backups separados e inmutables; dual control | Volumen/horario/tenant inusual, export+download, acceso backup | Media | Alta | **critical** para export/backup; alta resto |
-| TM-009 | Cliente concurrente/worker | Dos mutaciones válidas simultáneas | Reserva doble, replay o lost update | Integridad/operación de citas | **D:** idempotencia, exclusion constraint, versionado | Constraints/tests no evidenciados | Constraint temporal en PostgreSQL; transacción; idempotency key por actor+tenant; `If-Match`; 409 estable | Conflictos, replays, violaciones de constraint | Alta | Media | **high** |
-| TM-010 | Proveedor/dependencia/CI | Build consume paquete o secreto | Inserta código o roba artefactos | Compromiso sistémico; todos los activos | **E:** versiones/lockfile web; **D:** SCA/SBOM | Pipeline, provenance y secret scan no evidenciados | Lockfile raíz; scripts allowlist; SCA por reachability; secret scan; SBOM; pin actions; firma/attestation | Cambio de lock, paquete nuevo, advisory explotable, hash de artefacto | Media | Alta | **high** |
-| TM-011 | Remoto/bot/tenant abusivo | Endpoints costosos o auth | Agota CPU, DB, Redis, export/búsqueda | Indisponibilidad | **E:** dependencia rate-limit; **D:** límites diferenciados | Políticas/edge/capacidad no evidenciadas | Rate limit por IP+actor+tenant+operación; body/timeouts; paginación; cuotas jobs; circuit breaker | Saturación, latencia, colas, 429 por dimensión | Alta | Media | **medium** |
-| TM-012 | Personal legítimo | Acceso conforme a rol o break-glass | Curiosidad, abuso o acceso excesivo | Confidencialidad y confianza | **D:** relación asistencial, break-glass temporal, auditoría lectura | Gobierno/revisión/alertas no evidenciados | Mínimo privilegio; masking; reason; step-up; alertar paciente/privacidad según política; revisiones periódicas | Accesos fuera de turno/equipo, pacientes VIP, búsquedas masivas | Media | Alta | **high** |
-| TM-013 | Remoto | Parámetros OIDC/redirect manipulables | Login CSRF, callback confusion u open redirect | Sesión equivocada, phishing, token leak | **D:** validación issuer/aud/state/nonce/PKCE | Implementación exacta no evidenciada | Librería mantenida; discovery fijada; redirect URI exacta; `returnTo` solo ruta relativa allowlisted; transacción corta de un uso | `state` inválido/reusado, issuer inesperado, callback repetido | Media | Alta | **high** |
-| TM-014 | Fallo/atacante de infraestructura | Redis, DB, KMS o auditoría no disponible | Activa fallback inseguro o éxito parcial | Bypass, pérdida de auditoría o datos | **D:** Redis debe fallar seguro; correo usa outbox | Matriz de fallo/pruebas no evidenciadas | Sin MemoryStore/plaintext; 503/rollback; negar export/roles/break-glass sin audit durable; estados idempotentes | Health interno, dependency errors, fallback invariant alerts | Media | Alta | **high** |
-| TM-015 | Operador/atacante con backup | Acceso a copia o restore | Descarga, altera o restaura en destino inseguro | Exfiltración masiva/corrupción | **D:** backup cifrado y restore probado | Proveedor, KMS, inmutabilidad y runbook no evidenciados | Cuenta separada; cifrado con clave separada; immutability; catálogo/hash; restore aislado; dual approval | Lecturas/restore/export de backup, cambio retención o clave | Baja-media | Alta | **high** |
+| ID     | Fuente                                 | Prerrequisitos                                | Acción                                                | Impacto y activos                              | Controles existentes                                                     | Brechas                                                 | Mitigaciones concretas                                                                                                             | Detección                                                                         | Prob.      | Severidad | Prioridad                                   |
+| ------ | -------------------------------------- | --------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------- | --------- | ------------------------------------------- |
+| TM-001 | Atacante remoto/phisher                | Cuenta objetivo y flujo de identidad expuesto | Toma cuenta mediante phishing, stuffing o recovery    | Exfiltración/alteración; identidad, PHI, citas | **D:** OIDC, passkeys/MFA y step-up (`PROMPT_INTERNO_IMPLEMENTACION.md`) | IdP/política/pruebas no evidenciados                    | MFA obligatorio; passkey preferida; recovery de un uso; rate limit por cuenta+IP; step-up y revocación                             | Fallos por cuenta/IP, factor degradado, nuevo dispositivo, export tras login      | Alta       | Alta      | **critical** hasta verificar; después alta  |
+| TM-002 | Remoto/XSS/red local comprometida      | Sesión válida o fijable                       | Roba, fija o reutiliza sesión                         | Suplantación; sesión y datos accesibles        | **D:** cookie opaca `__Host-`, Redis, rotación/TTL                       | Ciclo de vida y detección no evidenciados               | 256 bits CSPRNG; HttpOnly/Secure/SameSite; rotar login/step-up/tenant; idle+absolute; revocación inmediata; `no-store`             | Reuso tras rotación, geovelocidad prudente, sesiones concurrentes, logout fallido | Media      | Alta      | **high**                                    |
+| TM-003 | Usuario de otro tenant o rol bajo      | Sesión legítima y un ID/endpoint              | BOLA/IDOR o consulta sin aislamiento                  | Lectura/modificación cross-tenant; PHI y citas | **D:** tenant de sesión, permisos contextuales y RLS                     | Esquema/RLS/tests negativos no evidenciados             | Guard central + policy por recurso; transacción con `SET LOCAL`; RLS `FORCE`; UUID no enumerable; pruebas A/B por cada repositorio | Evento `cross_tenant_denied`, ratios 403/404, consultas sin contexto              | Alta       | Alta      | **critical**                                |
+| TM-004 | Usuario autenticado/cliente manipulado | Endpoint administrativo o contexto débil      | Inyecta rol, tenant, clínica o nivel MFA              | Escalada; autorización y configuración         | **D:** deny-by-default RBAC/ABAC                                         | Enforcement server-side no evidenciado                  | Ignorar autoridad del body; claims mapeados con allowlist; permiso+recurso+relación; step-up; separación admin plataforma/PHI      | Cambios de rol, tenant switches, intentos de atributos prohibidos                 | Media      | Alta      | **high**                                    |
+| TM-005 | Sitio malicioso                        | Víctima autenticada con cookie                | Fuerza mutación CSRF                                  | Alteración/exportación; citas y datos          | **D:** token sincronizador + Origin/SameSite                             | Middleware/pruebas no evidenciados                      | Token ligado a sesión; header; Origin exacto; Fetch Metadata; content-type allowlist; nunca mutar por GET                          | Rechazos CSRF por origen/ruta sin registrar token                                 | Media      | Alta      | **high**                                    |
+| TM-006 | Paciente/usuario con campo de texto    | Contenido se muestra en Angular o plantilla   | XSS reflejado/almacenado                              | Robo de respuestas y acciones como víctima     | **D:** sanitización Angular/CSP; **E:** framework Angular                | CSP/sinks/pruebas no evidenciados                       | Sin `innerHTML`/bypass; encoding; CSP header sin unsafe eval/inline; Trusted Types compatible; plantillas de texto                 | CSP reports sin payload sensible, detección de sinks/SAST                         | Media      | Alta      | **high**                                    |
+| TM-007 | Remoto/autenticado                     | Input llega a SQL/filtro dinámico             | Inyección o consulta no acotada                       | Exfiltración/corrupción/DoS; DB                | **D:** SQL parametrizado y schema estricto; **E:** `pg` declarado        | Capa de acceso y validación no evidenciadas             | Parametrización; no concatenar SQL; DTO allowlist; cuenta DB mínima; timeouts/paginación                                           | Errores SQL agrupados, patrones anómalos, queries lentas                          | Media      | Alta      | **high**                                    |
+| TM-008 | Insider/proceso comprometido           | Permiso de búsqueda/export/log/backup         | Extrae volumen o introduce PHI en canales secundarios | Brecha masiva; export, log, backup             | **D:** step-up, auditoría, redacción y backup cifrado                    | DLP, retención, sink, restore y alertas no evidenciados | Límite y justificación; export cifrada/expirable; allowlist logs; backups separados e inmutables; dual control                     | Volumen/horario/tenant inusual, export+download, acceso backup                    | Media      | Alta      | **critical** para export/backup; alta resto |
+| TM-009 | Cliente concurrente/worker             | Dos mutaciones válidas simultáneas            | Reserva doble, replay o lost update                   | Integridad/operación de citas                  | **D:** idempotencia, exclusion constraint, versionado                    | Constraints/tests no evidenciados                       | Constraint temporal en PostgreSQL; transacción; idempotency key por actor+tenant; `If-Match`; 409 estable                          | Conflictos, replays, violaciones de constraint                                    | Alta       | Media     | **high**                                    |
+| TM-010 | Proveedor/dependencia/CI               | Build consume paquete o secreto               | Inserta código o roba artefactos                      | Compromiso sistémico; todos los activos        | **E:** versiones/lockfile web; **D:** SCA/SBOM                           | Pipeline, provenance y secret scan no evidenciados      | Lockfile raíz; scripts allowlist; SCA por reachability; secret scan; SBOM; pin actions; firma/attestation                          | Cambio de lock, paquete nuevo, advisory explotable, hash de artefacto             | Media      | Alta      | **high**                                    |
+| TM-011 | Remoto/bot/tenant abusivo              | Endpoints costosos o auth                     | Agota CPU, DB, Redis, export/búsqueda                 | Indisponibilidad                               | **E:** dependencia rate-limit; **D:** límites diferenciados              | Políticas/edge/capacidad no evidenciadas                | Rate limit por IP+actor+tenant+operación; body/timeouts; paginación; cuotas jobs; circuit breaker                                  | Saturación, latencia, colas, 429 por dimensión                                    | Alta       | Media     | **medium**                                  |
+| TM-012 | Personal legítimo                      | Acceso conforme a rol o break-glass           | Curiosidad, abuso o acceso excesivo                   | Confidencialidad y confianza                   | **D:** relación asistencial, break-glass temporal, auditoría lectura     | Gobierno/revisión/alertas no evidenciados               | Mínimo privilegio; masking; reason; step-up; alertar paciente/privacidad según política; revisiones periódicas                     | Accesos fuera de turno/equipo, pacientes VIP, búsquedas masivas                   | Media      | Alta      | **high**                                    |
+| TM-013 | Remoto                                 | Parámetros OIDC/redirect manipulables         | Login CSRF, callback confusion u open redirect        | Sesión equivocada, phishing, token leak        | **D:** validación issuer/aud/state/nonce/PKCE                            | Implementación exacta no evidenciada                    | Librería mantenida; discovery fijada; redirect URI exacta; `returnTo` solo ruta relativa allowlisted; transacción corta de un uso  | `state` inválido/reusado, issuer inesperado, callback repetido                    | Media      | Alta      | **high**                                    |
+| TM-014 | Fallo/atacante de infraestructura      | Redis, DB, KMS o auditoría no disponible      | Activa fallback inseguro o éxito parcial              | Bypass, pérdida de auditoría o datos           | **D:** Redis debe fallar seguro; correo usa outbox                       | Matriz de fallo/pruebas no evidenciadas                 | Sin MemoryStore/plaintext; 503/rollback; negar export/roles/break-glass sin audit durable; estados idempotentes                    | Health interno, dependency errors, fallback invariant alerts                      | Media      | Alta      | **high**                                    |
+| TM-015 | Operador/atacante con backup           | Acceso a copia o restore                      | Descarga, altera o restaura en destino inseguro       | Exfiltración masiva/corrupción                 | **D:** backup cifrado y restore probado                                  | Proveedor, KMS, inmutabilidad y runbook no evidenciados | Cuenta separada; cifrado con clave separada; immutability; catálogo/hash; restore aislado; dual approval                           | Lecturas/restore/export de backup, cambio retención o clave                       | Baja-media | Alta      | **high**                                    |
 
 ## Calibración de criticidad para este sistema
 
@@ -222,40 +222,40 @@ La prioridad combina probabilidad e impacto, pero se eleva cuando el control es 
 
 Esta tabla es una guía de evidencia, no una evaluación ASVS ni una certificación.
 
-| Área ASVS 5.0.0 | Amenazas | Evidencia esperada |
-|---|---|---|
-| V1 Encoding and Sanitization | TM-006, TM-007 | Revisión de sinks, parametrización, tests de payloads y CSP efectiva |
-| V2 Validation and Business Logic | TM-007, TM-009, TM-011 | Esquemas estrictos, constraints, idempotencia, límites y concurrencia |
-| V3 Web Frontend Security | TM-002, TM-005, TM-006 | Storage/caché, CSRF, CSP, Trusted Types y pruebas de navegador |
-| V4 API and Web Service | TM-003, TM-004, TM-007, TM-011 | Inventario de rutas, autorización por recurso, límites, errores y contrato |
-| V6 Authentication | TM-001 | Política IdP, MFA/passkeys, recovery, anti-enumeración y pruebas |
-| V7 Session Management | TM-002, TM-014 | Cookie, Redis, rotación, expiración, revocación y fallos de dependencia |
-| V8 Authorization | TM-003, TM-004, TM-012 | Matriz de permisos/atributos, RLS, break-glass y tests negativos |
-| V9 Self-contained Tokens | TM-002, TM-013 | Evidencia de que tokens OIDC no son sesión del navegador y validación interna |
-| V10 OAuth and OIDC | TM-001, TM-013 | PKCE, state, nonce, issuer/audience, redirect, logout y step-up |
-| V11 Cryptography | TM-008, TM-015 | Diseño AEAD, nonces/AAD, KMS, versionado y pruebas de rotación |
-| V12 Secure Communication | TM-002, TM-008, TM-015 | TLS externo/interno, validación de certificado y topología proxy |
-| V13 Configuration | TM-010, TM-014 | Config tipada, secretos, hardening, fail-closed y separación de entornos |
-| V14 Data Protection | TM-003, TM-006, TM-008, TM-012, TM-015 | Clasificación, minimización, caché, export, logs, backup y retención |
-| V15 Secure Coding and Architecture | Todas | Threat model vivo, gates, separación y defensa en profundidad |
-| V16 Security Logging and Error Handling | TM-008, TM-012, TM-014 | Catálogo de eventos, redacción, integridad, alertas y errores no reveladores |
+| Área ASVS 5.0.0                         | Amenazas                               | Evidencia esperada                                                            |
+| --------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
+| V1 Encoding and Sanitization            | TM-006, TM-007                         | Revisión de sinks, parametrización, tests de payloads y CSP efectiva          |
+| V2 Validation and Business Logic        | TM-007, TM-009, TM-011                 | Esquemas estrictos, constraints, idempotencia, límites y concurrencia         |
+| V3 Web Frontend Security                | TM-002, TM-005, TM-006                 | Storage/caché, CSRF, CSP, Trusted Types y pruebas de navegador                |
+| V4 API and Web Service                  | TM-003, TM-004, TM-007, TM-011         | Inventario de rutas, autorización por recurso, límites, errores y contrato    |
+| V6 Authentication                       | TM-001                                 | Política IdP, MFA/passkeys, recovery, anti-enumeración y pruebas              |
+| V7 Session Management                   | TM-002, TM-014                         | Cookie, Redis, rotación, expiración, revocación y fallos de dependencia       |
+| V8 Authorization                        | TM-003, TM-004, TM-012                 | Matriz de permisos/atributos, RLS, break-glass y tests negativos              |
+| V9 Self-contained Tokens                | TM-002, TM-013                         | Evidencia de que tokens OIDC no son sesión del navegador y validación interna |
+| V10 OAuth and OIDC                      | TM-001, TM-013                         | PKCE, state, nonce, issuer/audience, redirect, logout y step-up               |
+| V11 Cryptography                        | TM-008, TM-015                         | Diseño AEAD, nonces/AAD, KMS, versionado y pruebas de rotación                |
+| V12 Secure Communication                | TM-002, TM-008, TM-015                 | TLS externo/interno, validación de certificado y topología proxy              |
+| V13 Configuration                       | TM-010, TM-014                         | Config tipada, secretos, hardening, fail-closed y separación de entornos      |
+| V14 Data Protection                     | TM-003, TM-006, TM-008, TM-012, TM-015 | Clasificación, minimización, caché, export, logs, backup y retención          |
+| V15 Secure Coding and Architecture      | Todas                                  | Threat model vivo, gates, separación y defensa en profundidad                 |
+| V16 Security Logging and Error Handling | TM-008, TM-012, TM-014                 | Catálogo de eventos, redacción, integridad, alertas y errores no reveladores  |
 
 Referencia estable: [OWASP ASVS 5.0.0](https://github.com/OWASP/ASVS/tree/v5.0.0).
 
 ## Rutas prioritarias para revisión de seguridad
 
-| Ruta | Motivo | Amenazas |
-|---|---|---|
-| `apps/api/src/auth/` | Callback OIDC, sesión, CSRF y logout cuando exista | TM-001, TM-002, TM-005, TM-013 |
-| `apps/api/src/common/` | Guards, contexto, validación, errores y logs transversales | TM-003, TM-004, TM-007, TM-014 |
-| `apps/api/src/database/` | Conexión, transacciones, tenant y migraciones | TM-003, TM-007, TM-009 |
-| `apps/api/src/appointments/` | Autorización de recursos, concurrencia e idempotencia | TM-003, TM-009 |
-| `apps/api/src/patients/` | Minimización y separación básica/sensible | TM-003, TM-006, TM-012 |
-| `apps/api/src/exports/` | Step-up, volumen, archivos y auditoría | TM-008, TM-012, TM-015 |
-| `apps/api/src/audit/` | Redacción, integridad y fallos | TM-008, TM-012, TM-014 |
-| `apps/web/src/app/` | Sinks DOM, almacenamiento, guards y caché | TM-002, TM-005, TM-006 |
-| `infra/` | Red, credenciales, IdP, RLS, backups y health | TM-001, TM-003, TM-014, TM-015 |
-| Lockfiles y CI | Dependencias, scripts, secrets y provenance | TM-010 |
+| Ruta                         | Motivo                                                     | Amenazas                       |
+| ---------------------------- | ---------------------------------------------------------- | ------------------------------ |
+| `apps/api/src/auth/`         | Callback OIDC, sesión, CSRF y logout cuando exista         | TM-001, TM-002, TM-005, TM-013 |
+| `apps/api/src/common/`       | Guards, contexto, validación, errores y logs transversales | TM-003, TM-004, TM-007, TM-014 |
+| `apps/api/src/database/`     | Conexión, transacciones, tenant y migraciones              | TM-003, TM-007, TM-009         |
+| `apps/api/src/appointments/` | Autorización de recursos, concurrencia e idempotencia      | TM-003, TM-009                 |
+| `apps/api/src/patients/`     | Minimización y separación básica/sensible                  | TM-003, TM-006, TM-012         |
+| `apps/api/src/exports/`      | Step-up, volumen, archivos y auditoría                     | TM-008, TM-012, TM-015         |
+| `apps/api/src/audit/`        | Redacción, integridad y fallos                             | TM-008, TM-012, TM-014         |
+| `apps/web/src/app/`          | Sinks DOM, almacenamiento, guards y caché                  | TM-002, TM-005, TM-006         |
+| `infra/`                     | Red, credenciales, IdP, RLS, backups y health              | TM-001, TM-003, TM-014, TM-015 |
+| Lockfiles y CI               | Dependencias, scripts, secrets y provenance                | TM-010                         |
 
 Las rutas inexistentes son **focos de implementación/revisión**, no evidencia de que ya existan.
 

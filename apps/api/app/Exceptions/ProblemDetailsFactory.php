@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -13,15 +14,20 @@ use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use DomainException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Throwable;
 
+/**
+ * Converts expected API failures into non-sensitive RFC 9457 problem responses.
+ */
 final class ProblemDetailsFactory
 {
+    /**
+     * Builds a cache-safe problem response with a correlation trace identifier.
+     */
     public function response(Throwable $exception, Request $request): JsonResponse
     {
         [$status, $slug, $title, $detail] = $this->describe($exception);
@@ -76,6 +82,8 @@ final class ProblemDetailsFactory
     }
 
     /**
+     * Maps an exception to a stable, client-safe problem definition.
+     *
      * @return array{int, string, string, string}
      */
     private function describe(Throwable $exception): array
@@ -111,7 +119,11 @@ final class ProblemDetailsFactory
         };
     }
 
-    /** @return array{int, string, string, string} */
+    /**
+     * Classifies database failures without exposing database topology or query details.
+     *
+     * @return array{int, string, string, string}
+     */
     private function databaseProblem(QueryException $exception): array
     {
         $sqlState = is_string($exception->getCode()) ? $exception->getCode() : '';
@@ -128,6 +140,8 @@ final class ProblemDetailsFactory
     }
 
     /**
+     * Produces a field and rule allowlist for validation failures.
+     *
      * @return array<string, list<string>>
      */
     private function validationErrors(ValidationException $exception): array

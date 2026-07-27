@@ -41,7 +41,7 @@ return new class extends Migration
         });
 
         if (Schema::getConnection()->getDriverName() === 'pgsql') {
-            DB::statement("ALTER TABLE appointment_slot_holds ADD CONSTRAINT appointment_slot_holds_time_order CHECK (ends_at > starts_at)");
+            DB::statement('ALTER TABLE appointment_slot_holds ADD CONSTRAINT appointment_slot_holds_time_order CHECK (ends_at > starts_at)');
             DB::statement("ALTER TABLE appointment_slot_holds ADD CONSTRAINT slot_holds_clinician_no_overlap EXCLUDE USING gist (tenant_id WITH =, clinician_user_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (status = 'active')");
             DB::statement("ALTER TABLE appointment_slot_holds ADD CONSTRAINT slot_holds_patient_no_overlap EXCLUDE USING gist (tenant_id WITH =, patient_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (status = 'active')");
             DB::statement("ALTER TABLE appointment_slot_holds ADD CONSTRAINT slot_holds_room_no_overlap EXCLUDE USING gist (tenant_id WITH =, room_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (room_id IS NOT NULL AND status = 'active')");

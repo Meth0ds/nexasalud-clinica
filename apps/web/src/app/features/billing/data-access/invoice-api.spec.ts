@@ -6,9 +6,20 @@ import { firstValueFrom } from 'rxjs';
 import { InvoiceApiService, InvoiceRecord } from './invoice-api';
 
 const invoice: InvoiceRecord = {
-  id: 'invoice-1', version: 2, number: 'D-202607-0001', patientId: 'patient-1', patientDisplayName: 'Lucía Martín',
-  status: 'issued', currency: 'EUR', subtotalMinor: 8000, taxMinor: 0, totalMinor: 8000, balanceMinor: 8000,
-  issuedOn: '2026-07-26', dueOn: null, items: [],
+  id: 'invoice-1',
+  version: 2,
+  number: 'D-202607-0001',
+  patientId: 'patient-1',
+  patientDisplayName: 'Lucía Martín',
+  status: 'issued',
+  currency: 'EUR',
+  subtotalMinor: 8000,
+  taxMinor: 0,
+  totalMinor: 8000,
+  balanceMinor: 8000,
+  issuedOn: '2026-07-26',
+  dueOn: null,
+  items: [],
 };
 
 describe('InvoiceApiService', () => {
@@ -16,7 +27,9 @@ describe('InvoiceApiService', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(InvoiceApiService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -25,7 +38,10 @@ describe('InvoiceApiService', () => {
 
   it('unwraps the paginated invoice collection returned by Laravel', async () => {
     const result = firstValueFrom(service.list());
-    const request = http.expectOne((candidate) => candidate.url === '/api/v1/invoices' && candidate.params.get('perPage') === '100');
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === '/api/v1/invoices' && candidate.params.get('perPage') === '100',
+    );
     expect(request.request.method).toBe('GET');
     request.flush({ data: [invoice], meta: { total: 1 } });
 
@@ -40,9 +56,20 @@ describe('InvoiceApiService', () => {
     issueRequest.flush({ data: invoice });
     await expect(issue).resolves.toMatchObject({ id: invoice.id });
 
-    const payment = firstValueFrom(service.recordPayment(invoice, { amountMinor: 1200, methodCode: 'insurer', externalReference: 'opaque-ref' }));
+    const payment = firstValueFrom(
+      service.recordPayment(invoice, {
+        amountMinor: 1200,
+        methodCode: 'insurer',
+        externalReference: 'opaque-ref',
+      }),
+    );
     const paymentRequest = http.expectOne(`/api/v1/invoices/${invoice.id}/payments`);
-    expect(paymentRequest.request.body).toEqual({ version: invoice.version, amountMinor: 1200, methodCode: 'insurer', externalReference: 'opaque-ref' });
+    expect(paymentRequest.request.body).toEqual({
+      version: invoice.version,
+      amountMinor: 1200,
+      methodCode: 'insurer',
+      externalReference: 'opaque-ref',
+    });
     expect(paymentRequest.request.headers.has('Idempotency-Key')).toBe(true);
     paymentRequest.flush({ data: invoice });
     await expect(payment).resolves.toMatchObject({ id: invoice.id });

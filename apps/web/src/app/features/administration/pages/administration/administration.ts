@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -28,7 +35,11 @@ interface AdminSection {
   selector: 'app-administration',
   imports: [MatButtonModule, MatCheckboxModule, MatProgressSpinnerModule, AppIcon, ScrollReveal],
   templateUrl: './administration.html',
-  styleUrls: ['./administration.scss', './administration-content.scss', './administration-operations.scss'],
+  styleUrls: [
+    './administration.scss',
+    './administration-content.scss',
+    './administration-operations.scss',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Administration {
@@ -36,7 +47,8 @@ export class Administration {
     {
       id: 'users',
       label: 'Usuarios',
-      description: 'Identidades de trabajo, estado y asignación de roles dentro del contexto actual.',
+      description:
+        'Identidades de trabajo, estado y asignación de roles dentro del contexto actual.',
       icon: 'team',
     },
     {
@@ -62,7 +74,9 @@ export class Administration {
   protected readonly refreshing = signal(false);
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly actionMessage = signal('Datos protegidos: no se muestran secretos ni sesiones activas individuales.');
+  protected readonly actionMessage = signal(
+    'Datos protegidos: no se muestran secretos ni sesiones activas individuales.',
+  );
   protected readonly overview = signal<AdministrationOverview | null>(null);
   protected readonly users = signal<readonly AdministrationUser[]>([]);
   protected readonly roles = signal<readonly AdministrationRole[]>([]);
@@ -82,8 +96,9 @@ export class Administration {
     }
 
     return this.users().filter((user) =>
-      [user.displayName, user.emailHint ?? '', ...user.roles.map((role) => role.name)]
-        .some((value) => value.toLocaleLowerCase('es').includes(query)),
+      [user.displayName, user.emailHint ?? '', ...user.roles.map((role) => role.name)].some(
+        (value) => value.toLocaleLowerCase('es').includes(query),
+      ),
     );
   });
   protected readonly selectedUser = computed(
@@ -92,10 +107,7 @@ export class Administration {
   protected readonly canSubmit = computed(() => {
     const selected = this.selectedUser();
     return Boolean(
-      selected
-      && this.pendingAction()
-      && this.reason().trim().length >= 8
-      && !this.submitting(),
+      selected && this.pendingAction() && this.reason().trim().length >= 8 && !this.submitting(),
     );
   });
   protected readonly hasMembershipChange = computed(() => {
@@ -104,12 +116,13 @@ export class Administration {
       return false;
     }
 
-    const activeChanged = this.requestedActiveState() !== null
-      && this.requestedActiveState() !== selected.active;
+    const activeChanged =
+      this.requestedActiveState() !== null && this.requestedActiveState() !== selected.active;
     const selectedRoles = new Set(selected.roles.map((role) => role.id));
     const draftedRoles = new Set(this.draftRoleIds());
-    const rolesChanged = selectedRoles.size !== draftedRoles.size
-      || [...selectedRoles].some((roleId) => !draftedRoles.has(roleId));
+    const rolesChanged =
+      selectedRoles.size !== draftedRoles.size ||
+      [...selectedRoles].some((roleId) => !draftedRoles.has(roleId));
 
     return activeChanged || rolesChanged;
   });
@@ -150,7 +163,9 @@ export class Administration {
   protected prepareSessionRevocation(user: AdministrationUser): void {
     this.selectUser(user);
     this.pendingAction.set('sessions');
-    this.actionMessage.set('La revocación cierra las sesiones en el siguiente control de servidor. Requiere MFA reciente.');
+    this.actionMessage.set(
+      'La revocación cierra las sesiones en el siguiente control de servidor. Requiere MFA reciente.',
+    );
   }
 
   protected toggleDraftRole(roleId: string, checked: boolean): void {
@@ -197,9 +212,13 @@ export class Administration {
         )
         .subscribe({
           next: (result) => {
-            this.users.update((users) => users.map((user) =>
-              user.userId === selected.userId ? { ...user, sessionsRevokedAt: result.effectiveAt } : user,
-            ));
+            this.users.update((users) =>
+              users.map((user) =>
+                user.userId === selected.userId
+                  ? { ...user, sessionsRevokedAt: result.effectiveAt }
+                  : user,
+              ),
+            );
             this.completeAction(`Sesiones de ${selected.displayName} revocadas por el servidor.`);
           },
           error: () => this.reportActionFailure(),
@@ -209,7 +228,9 @@ export class Administration {
 
     this.administrationApi
       .updateMembership(selected.userId, {
-        ...(this.requestedActiveState() !== null ? { active: this.requestedActiveState() ?? undefined } : {}),
+        ...(this.requestedActiveState() !== null
+          ? { active: this.requestedActiveState() ?? undefined }
+          : {}),
         roleIds: this.draftRoleIds(),
         reason,
       })
@@ -219,9 +240,9 @@ export class Administration {
       )
       .subscribe({
         next: (updatedUser) => {
-          this.users.update((users) => users.map((user) =>
-            user.userId === updatedUser.userId ? updatedUser : user,
-          ));
+          this.users.update((users) =>
+            users.map((user) => (user.userId === updatedUser.userId ? updatedUser : user)),
+          );
           this.completeAction(`Acceso de ${updatedUser.displayName} actualizado y auditado.`);
         },
         error: () => this.reportActionFailure(),
@@ -307,7 +328,9 @@ export class Administration {
           }
         },
         error: () => {
-          this.errorMessage.set('No se pudo cargar la administración. Comprueba la sesión, el contexto y tus permisos.');
+          this.errorMessage.set(
+            'No se pudo cargar la administración. Comprueba la sesión, el contexto y tus permisos.',
+          );
         },
       });
   }
@@ -320,6 +343,8 @@ export class Administration {
   }
 
   private reportActionFailure(): void {
-    this.actionMessage.set('El servidor no aplicó el cambio. Revisa la MFA reciente, el permiso y el motivo.');
+    this.actionMessage.set(
+      'El servidor no aplicó el cambio. Revisa la MFA reciente, el permiso y el motivo.',
+    );
   }
 }

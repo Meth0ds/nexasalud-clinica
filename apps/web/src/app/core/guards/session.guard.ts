@@ -39,28 +39,32 @@ export const anonymousOnlyGuard: CanActivateFn = () => {
 export const contextSelectionGuard: CanActivateFn = () => {
   const session = inject(SessionService);
   const router = inject(Router);
-  return session.ensureLoaded().pipe(
-    map((state) =>
-      state.status === 'context-required'
-        ? true
-        : state.status === 'authenticated'
-          ? router.createUrlTree(['/'])
-          : router.createUrlTree(['/login']),
-    ),
-  );
+  return session
+    .ensureLoaded()
+    .pipe(
+      map((state) =>
+        state.status === 'context-required'
+          ? true
+          : state.status === 'authenticated'
+            ? router.createUrlTree(['/'])
+            : router.createUrlTree(['/login']),
+      ),
+    );
 };
 
 export function permissionGuard(permission: string, fallback = '/inicio'): CanActivateFn {
   return () => {
     const session = inject(SessionService);
     const router = inject(Router);
-    return session.ensureLoaded().pipe(
-      map((state) =>
-        state.status === 'authenticated' && session.hasPermission(permission)
-          ? true
-          : router.createUrlTree([fallback], { queryParams: { reason: 'forbidden' } }),
-      ),
-    );
+    return session
+      .ensureLoaded()
+      .pipe(
+        map((state) =>
+          state.status === 'authenticated' && session.hasPermission(permission)
+            ? true
+            : router.createUrlTree([fallback], { queryParams: { reason: 'forbidden' } }),
+        ),
+      );
   };
 }
 

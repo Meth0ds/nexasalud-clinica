@@ -32,6 +32,7 @@ import {
   PortalBookingCatalog,
   PortalDocument,
   PortalInvoice,
+  PortalMessage,
   PortalOverview,
   PortalPrescription,
   PortalSlotHold,
@@ -142,7 +143,7 @@ export class PatientPortal {
       label: 'Mensajes seguros',
       shortLabel: 'Mensajes',
       icon: 'bell',
-      available: false,
+      available: true,
     },
     {
       id: 'privacidad',
@@ -165,6 +166,10 @@ export class PatientPortal {
   protected readonly overview = signal<PortalOverview | null>(null);
   protected readonly overviewLoading = signal(true);
   protected readonly overviewError = signal<AppError | null>(null);
+  protected readonly messages = signal<readonly PortalMessage[] | null>(null);
+  protected readonly messagesLoading = signal(false);
+  protected readonly messagesError = signal<AppError | null>(null);
+  protected readonly selectedMessageId = signal<string | null>(null);
   protected readonly catalog = signal<PortalBookingCatalog | null>(null);
   protected readonly catalogLoading = signal(true);
   protected readonly catalogError = signal<AppError | null>(null);
@@ -203,6 +208,12 @@ export class PatientPortal {
   protected readonly prescriptions = computed(() => this.overview()?.prescriptions ?? []);
   protected readonly documents = computed(() => this.overview()?.documents ?? []);
   protected readonly invoices = computed(() => this.overview()?.invoices ?? []);
+  protected readonly selectedMessage = computed(
+    () =>
+      this.messages()?.find((message) => message.id === this.selectedMessageId()) ??
+      this.messages()?.[0] ??
+      null,
+  );
   protected readonly outstandingBalance = computed(() =>
     this.invoices().reduce((total, invoice) => total + invoice.balanceMinor, 0),
   );
@@ -286,6 +297,9 @@ export class PatientPortal {
     }
     this.activeSection.set(section);
     this.mobileNavOpen.set(false);
+    if (section === 'mensajes' && this.messages() === null && !this.messagesLoading()) {
+      this.loadMessages();
+    }
     globalThis.scrollTo?.({ top: 0, behavior: 'smooth' });
   }
 
@@ -326,6 +340,28 @@ export class PatientPortal {
         },
         error: (error: unknown) => this.catalogError.set(toAppError(error)),
       });
+  }
+
+  protected loadMessages(): void {
+    this.messagesLoading.set(true);
+    this.messagesError.set(null);
+    this.api
+      .getMessages()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.messagesLoading.set(false)),
+      )
+      .subscribe({
+        next: (messages) => {
+          this.messages.set(messages);
+          this.selectedMessageId.set(messages[0]?.id ?? null);
+        },
+        error: (error: unknown) => this.messagesError.set(toAppError(error)),
+      });
+  }
+
+  protected selectMessage(id: string): void {
+    this.selectedMessageId.set(id);
   }
 
   protected continueBooking(): void {
@@ -515,6 +551,17 @@ export class PatientPortal {
     return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(
       new Date(value),
     );
+  }
+
+  protected formatMessageDate(value: string | null): string {
+    if (!value) return 'Fecha no disponible';
+
+    return new Intl.DateTimeFormat('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
   }
 
   protected modeLabel(mode: PortalAppointmentMode | 'in-person' | 'video' | 'phone'): string {

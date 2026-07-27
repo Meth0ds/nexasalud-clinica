@@ -1,10 +1,6 @@
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
-import {
-  provideHttpClient,
-  withInterceptors,
-  withXsrfConfiguration,
-} from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
 import {
   ApplicationConfig,
   ErrorHandler,

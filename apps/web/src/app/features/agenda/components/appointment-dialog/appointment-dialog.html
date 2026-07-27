@@ -11,7 +11,10 @@
   @if (data.mode === 'reschedule') {
     <div class="reschedule-note" role="status">
       <app-icon name="clock" [size]="18" />
-      <span>Se conservará un historial del cambio. Si lo autorizas, el paciente recibirá la nueva hora.</span>
+      <span
+        >Se conservará un historial del cambio. Si lo autorizas, el paciente recibirá la nueva
+        hora.</span
+      >
     </div>
   }
 
@@ -25,7 +28,9 @@
           }
         </mat-select>
         <mat-hint>Solo se muestran pacientes del centro activo</mat-hint>
-        @if (form.controls.patientId.hasError('required')) { <mat-error>Selecciona un paciente</mat-error> }
+        @if (form.controls.patientId.hasError('required')) {
+          <mat-error>Selecciona un paciente</mat-error>
+        }
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -41,7 +46,9 @@
         <mat-label>Tipo de cita</mat-label>
         <mat-select formControlName="appointmentTypeId">
           @for (type of data.appointmentTypes; track type.id) {
-            <mat-option [value]="type.id">{{ type.label }} · {{ type.durationMinutes }} min</mat-option>
+            <mat-option [value]="type.id"
+              >{{ type.label }} · {{ type.durationMinutes }} min</mat-option
+            >
           }
         </mat-select>
       </mat-form-field>
@@ -103,6 +110,7 @@
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
   <button mat-flat-button class="nexa-btn-primary" type="submit" form="appointment-form">
-    <app-icon name="check" [size]="17" /> {{ data.mode === 'reschedule' ? 'Confirmar cambio' : 'Guardar cita' }}
+    <app-icon name="check" [size]="17" />
+    {{ data.mode === 'reschedule' ? 'Confirmar cambio' : 'Guardar cita' }}
   </button>
 </mat-dialog-actions>

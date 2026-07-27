@@ -110,7 +110,7 @@ button {
   background: rgba(255, 255, 255, 0.07);
 }
 
-.demo-identity {
+.portal-identity {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -120,7 +120,7 @@ button {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.055);
 }
-.demo-identity .nexa-avatar {
+.portal-identity .nexa-avatar {
   width: 37px;
   height: 37px;
   border: 0;
@@ -129,18 +129,18 @@ button {
   background: #9bd2c5;
   font-size: 0.64rem;
 }
-.demo-identity > span:nth-child(2) {
+.portal-identity > span:nth-child(2) {
   min-width: 0;
   flex: 1;
 }
-.demo-identity strong,
-.demo-identity small {
+.portal-identity strong,
+.portal-identity small {
   display: block;
 }
-.demo-identity strong {
+.portal-identity strong {
   font-size: 0.69rem;
 }
-.demo-identity small {
+.portal-identity small {
   overflow: hidden;
   margin-top: 2px;
   color: #8db2ab;
@@ -148,7 +148,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.demo-dot {
+.portal-session-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;

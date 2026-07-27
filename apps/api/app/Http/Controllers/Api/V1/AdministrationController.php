@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditEvent;
 use App\Models\Membership;
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Auditing\AuditRecorder;
 use App\Support\Authorization\PermissionService;
@@ -179,7 +180,7 @@ final class AdministrationController extends Controller
     private function tenantId(): string
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
-        abort_unless($tenant instanceof \App\Models\Tenant, Response::HTTP_FORBIDDEN);
+        abort_unless($tenant instanceof Tenant, Response::HTTP_FORBIDDEN);
 
         return (string) $tenant->getKey();
     }

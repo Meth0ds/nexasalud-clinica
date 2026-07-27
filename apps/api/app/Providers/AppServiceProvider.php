@@ -2,21 +2,33 @@
 
 namespace App\Providers;
 
+use App\Events\CommunicationQueued;
+use App\Listeners\RecordQueuedCommunicationDispatch;
 use App\Services\Identity\Contracts\OidcClient;
 use App\Services\Identity\SocialiteOidcClient;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
 
+/**
+ * Registers application services, operational event listeners, rate limits, and production safety checks.
+ */
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Registers container bindings that are safe to resolve before the application boots.
+     */
     public function register(): void
     {
         $this->app->bind(OidcClient::class, SocialiteOidcClient::class);
     }
 
+    /**
+     * Registers rate limits, asynchronous domain listeners, and fail-closed production configuration checks.
+     */
     public function boot(): void
     {
         RateLimiter::for('oidc-login', fn (Request $request): Limit => Limit::perMinute(10)
@@ -34,9 +46,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('clinical-pdf', fn (Request $request): Limit => Limit::perMinute(30)
             ->by(hash('sha256', (string) ($request->user()?->getAuthIdentifier() ?? $request->ip()))));
 
+        Event::listen(CommunicationQueued::class, RecordQueuedCommunicationDispatch::class);
+
         $this->assertProductionIdentityConfiguration();
     }
 
+    /**
+     * Rejects insecure identity, session, CORS, and debugging configuration when the application is in production.
+     */
     private function assertProductionIdentityConfiguration(): void
     {
         if (! $this->app->isProduction()) {
@@ -99,6 +116,9 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Verifies that a URL is an absolute HTTPS URL without credentials, query data, or control characters.
+     */
     private function isSecureUrl(mixed $url): bool
     {
         if (! is_string($url) || $url === '' || preg_match('/[\x00-\x20\x7F]/', $url) === 1) {
@@ -116,6 +136,9 @@ class AppServiceProvider extends ServiceProvider
             && ! isset($parts['fragment']);
     }
 
+    /**
+     * Verifies that a URL exactly represents an HTTPS origin without a path.
+     */
     private function isExactSecureOrigin(mixed $url): bool
     {
         return $this->isSecureUrl($url)
@@ -123,6 +146,9 @@ class AppServiceProvider extends ServiceProvider
             && $this->origin($url) === $url;
     }
 
+    /**
+     * Normalizes a valid absolute URL to its origin for exact configuration comparisons.
+     */
     private function origin(mixed $url): string
     {
         if (! is_string($url)) {
@@ -138,6 +164,9 @@ class AppServiceProvider extends ServiceProvider
         return $parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
     }
 
+    /**
+     * Returns the URL path used to validate exact callback routes.
+     */
     private function path(mixed $url): string
     {
         if (! is_string($url)) {
@@ -149,6 +178,9 @@ class AppServiceProvider extends ServiceProvider
         return is_string($path) ? $path : '';
     }
 
+    /**
+     * Accepts only numeric assurance values that satisfy the required multi-factor strength.
+     */
     private function isStrongAcrValue(mixed $value): bool
     {
         return is_string($value) && ctype_digit($value) && (int) $value >= 2;

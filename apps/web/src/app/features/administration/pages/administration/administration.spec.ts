@@ -5,54 +5,57 @@ import { AdministrationApiService } from '../../data-access/administration-api';
 import { Administration } from './administration';
 
 const administrationApi = {
-  overview: () => of({
-    users: { total: 2, active: 1, suspended: 1 },
-    roles: 2,
-    auditEventsLast24Hours: 7,
-    mfaPolicy: { required: true, methods: ['totp'], minimumAcr: 2 },
-  }),
-  users: () => of([
-    {
-      membershipId: 'membership-1',
-      userId: 'user-1',
-      displayName: 'Dra. Lara Vega',
-      emailHint: 'l•••@nexasalud.test',
-      active: true,
-      roles: [{ id: 'role-admin', code: 'admin', name: 'Administración clínica' }],
-      lastLoginAt: '2026-07-26T09:26:00+00:00',
-      sessionsRevokedAt: null,
-      mfaPolicy: 'required' as const,
-    },
-    {
-      membershipId: 'membership-2',
-      userId: 'user-2',
-      displayName: 'Nicolás Ortega',
-      emailHint: 'n•••@nexasalud.test',
-      active: false,
-      roles: [{ id: 'role-reception', code: 'reception', name: 'Recepción' }],
-      lastLoginAt: null,
-      sessionsRevokedAt: '2026-07-25T09:26:00+00:00',
-      mfaPolicy: 'required' as const,
-    },
-  ]),
-  roles: () => of([
-    {
-      id: 'role-admin',
-      code: 'admin',
-      name: 'Administración clínica',
-      permissions: ['admin.users.read', 'admin.users.write'],
-      system: true,
-      memberCount: 1,
-    },
-    {
-      id: 'role-reception',
-      code: 'reception',
-      name: 'Recepción',
-      permissions: ['appointments.read'],
-      system: true,
-      memberCount: 1,
-    },
-  ]),
+  overview: () =>
+    of({
+      users: { total: 2, active: 1, suspended: 1 },
+      roles: 2,
+      auditEventsLast24Hours: 7,
+      mfaPolicy: { required: true, methods: ['totp'], minimumAcr: 2 },
+    }),
+  users: () =>
+    of([
+      {
+        membershipId: 'membership-1',
+        userId: 'user-1',
+        displayName: 'Dra. Lara Vega',
+        emailHint: 'l•••@nexasalud.test',
+        active: true,
+        roles: [{ id: 'role-admin', code: 'admin', name: 'Administración clínica' }],
+        lastLoginAt: '2026-07-26T09:26:00+00:00',
+        sessionsRevokedAt: null,
+        mfaPolicy: 'required' as const,
+      },
+      {
+        membershipId: 'membership-2',
+        userId: 'user-2',
+        displayName: 'Nicolás Ortega',
+        emailHint: 'n•••@nexasalud.test',
+        active: false,
+        roles: [{ id: 'role-reception', code: 'reception', name: 'Recepción' }],
+        lastLoginAt: null,
+        sessionsRevokedAt: '2026-07-25T09:26:00+00:00',
+        mfaPolicy: 'required' as const,
+      },
+    ]),
+  roles: () =>
+    of([
+      {
+        id: 'role-admin',
+        code: 'admin',
+        name: 'Administración clínica',
+        permissions: ['admin.users.read', 'admin.users.write'],
+        system: true,
+        memberCount: 1,
+      },
+      {
+        id: 'role-reception',
+        code: 'reception',
+        name: 'Recepción',
+        permissions: ['appointments.read'],
+        system: true,
+        memberCount: 1,
+      },
+    ]),
   updateMembership: () => of({}),
   revokeSessions: () => of({ revoked: true as const, effectiveAt: '2026-07-26T12:00:00+00:00' }),
 };
@@ -72,7 +75,9 @@ describe('Administration', () => {
   });
 
   const findButton = (label: string): HTMLButtonElement => {
-    const button = [...root.querySelectorAll('button')].find((item) => item.textContent?.includes(label));
+    const button = [...root.querySelectorAll('button')].find((item) =>
+      item.textContent?.includes(label),
+    );
     if (!(button instanceof HTMLButtonElement)) {
       throw new Error(`No se encontró el botón: ${label}`);
     }

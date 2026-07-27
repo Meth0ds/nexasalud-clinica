@@ -82,7 +82,11 @@ export class SessionService {
   selectContext(membershipId: string, clinicId: string): Observable<SessionState> {
     const context = new HttpContext().set(SILENT_HTTP_ERROR, true);
     return this.http
-      .post<{ readonly selected: true }>('/api/session/context', { membershipId, clinicId }, { context })
+      .post<{ readonly selected: true }>(
+        '/api/session/context',
+        { membershipId, clinicId },
+        { context },
+      )
       .pipe(switchMap(() => this.ensureLoaded(true)));
   }
 

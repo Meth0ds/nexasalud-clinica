@@ -30,13 +30,22 @@ interface ClinicalNotesCollection {
 export class ClinicalNotesApiService {
   private readonly api = inject(ApiClientService);
 
-  list(patientId: string): Observable<{ readonly notes: readonly ClinicalNoteRecord[]; readonly total: number }> {
+  list(
+    patientId: string,
+  ): Observable<{ readonly notes: readonly ClinicalNoteRecord[]; readonly total: number }> {
     return this.api
-      .get<ClinicalNotesCollection>(`/api/v1/patients/${encodeURIComponent(patientId)}/clinical-notes`, { params: { perPage: 50 } })
+      .get<ClinicalNotesCollection>(
+        `/api/v1/patients/${encodeURIComponent(patientId)}/clinical-notes`,
+        { params: { perPage: 50 } },
+      )
       .pipe(map((response) => ({ notes: response.data, total: response.meta.total })));
   }
 
-  createDraft(patientId: string, content: string, appointmentId?: string): Observable<ClinicalNoteRecord> {
+  createDraft(
+    patientId: string,
+    content: string,
+    appointmentId?: string,
+  ): Observable<ClinicalNoteRecord> {
     return this.create(patientId, '/clinical-notes', content, appointmentId);
   }
 
@@ -44,9 +53,17 @@ export class ClinicalNotesApiService {
     return this.create(patientId, '/clinical-notes/sign', content, appointmentId);
   }
 
-  private create(patientId: string, suffix: string, content: string, appointmentId?: string): Observable<ClinicalNoteRecord> {
+  private create(
+    patientId: string,
+    suffix: string,
+    content: string,
+    appointmentId?: string,
+  ): Observable<ClinicalNoteRecord> {
     return this.api
-      .post<ApiData<ClinicalNoteRecord>, { readonly content: string; readonly appointmentId?: string }>(
+      .post<
+        ApiData<ClinicalNoteRecord>,
+        { readonly content: string; readonly appointmentId?: string }
+      >(
         `/api/v1/patients/${encodeURIComponent(patientId)}${suffix}`,
         { content, ...(appointmentId ? { appointmentId } : {}) },
         { idempotencyKey: idempotencyKey() },

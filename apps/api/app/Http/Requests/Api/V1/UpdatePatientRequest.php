@@ -9,6 +9,7 @@ class UpdatePatientRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $patient = $this->route('patient');
+
         return $patient instanceof Patient && $this->authenticatedUser()->can('update', $patient);
     }
 

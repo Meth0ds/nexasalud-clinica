@@ -5,8 +5,8 @@ namespace Database\Factories;
 use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<AuditEvent>

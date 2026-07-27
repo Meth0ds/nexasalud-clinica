@@ -99,6 +99,7 @@ final class DashboardOperationalDataTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.clinic.id', $this->clinic->getKey())
+            ->assertJsonStructure(['data' => ['generatedAt']])
             ->assertJsonPath('data.metrics.appointments', 1)
             ->assertJsonPath('data.dayAppointments.0.id', $appointment->getKey())
             ->assertJsonPath('data.dayAppointments.0.patientDisplayName', 'Paciente Operativo')

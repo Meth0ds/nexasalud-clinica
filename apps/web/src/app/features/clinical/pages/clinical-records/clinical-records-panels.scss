@@ -1,40 +1,172 @@
-.clinical-side { display: grid; gap: 17px; }
+.clinical-side {
+  display: grid;
+  gap: 17px;
+}
 .vital-card .nexa-card__header,
-.next-actions .nexa-card__header { padding: 17px; }
+.next-actions .nexa-card__header {
+  padding: 17px;
+}
 .vital-card h2,
-.next-actions h2 { font-size: 1.25rem; }
-.vital-card button { font-size: 0.56rem; }
-.vitals-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
-.vitals-grid div { padding: 14px 17px; border-right: 1px solid var(--nexa-border); border-bottom: 1px solid var(--nexa-border); }
-.vitals-grid div:nth-child(even) { border-right: 0; }
+.next-actions h2 {
+  font-size: 1.25rem;
+}
+.vital-card button {
+  font-size: 0.56rem;
+}
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+.vitals-grid div {
+  padding: 14px 17px;
+  border-right: 1px solid var(--nexa-border);
+  border-bottom: 1px solid var(--nexa-border);
+}
+.vitals-grid div:nth-child(even) {
+  border-right: 0;
+}
 .vitals-grid small,
 .vitals-grid strong,
-.vitals-grid span { display: block; }
-.vitals-grid small { color: var(--nexa-ink-soft); font-size: 0.5rem; text-transform: uppercase; }
-.vitals-grid strong { margin: 3px 0 1px; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.25rem; }
-.vitals-grid span { color: var(--nexa-ink-soft); font-size: 0.49rem; }
-.next-actions label { display: flex; align-items: center; gap: 9px; padding: 11px 16px; }
-.next-actions label + label { border-top: 1px solid var(--nexa-border); }
-.next-actions input { accent-color: var(--nexa-primary); }
+.vitals-grid span {
+  display: block;
+}
+.vitals-grid small {
+  color: var(--nexa-ink-soft);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+}
+.vitals-grid strong {
+  margin: 3px 0 1px;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.25rem;
+}
+.vitals-grid span {
+  color: var(--nexa-ink-soft);
+  font-size: 0.49rem;
+}
+.next-actions label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 16px;
+}
+.next-actions label + label {
+  border-top: 1px solid var(--nexa-border);
+}
+.next-actions input {
+  accent-color: var(--nexa-primary);
+}
 .next-actions strong,
-.next-actions small { display: block; }
-.next-actions strong { font-size: 0.61rem; }
-.next-actions small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.51rem; }
-.next-actions > button { width: 100%; border-top: 1px solid var(--nexa-border); color: var(--nexa-primary); font-size: 0.57rem; }
-.clinical-control { display: flex; align-items: flex-start; gap: 9px; padding: 12px 16px; }
-.clinical-control + .clinical-control { border-top: 1px solid var(--nexa-border); }
-.clinical-control > app-icon { color: var(--nexa-primary); }
+.next-actions small {
+  display: block;
+}
+.next-actions strong {
+  font-size: 0.61rem;
+}
+.next-actions small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+}
+.next-actions > button {
+  width: 100%;
+  border-top: 1px solid var(--nexa-border);
+  color: var(--nexa-primary);
+  font-size: 0.57rem;
+}
+.clinical-control {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 16px;
+}
+.clinical-control + .clinical-control {
+  border-top: 1px solid var(--nexa-border);
+}
+.clinical-control > app-icon {
+  color: var(--nexa-primary);
+}
 .clinical-control strong,
-.clinical-control small { display: block; }
-.clinical-control strong { color: var(--nexa-ink); font-size: 0.61rem; }
-.clinical-control small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.51rem; line-height: 1.4; }
-.privacy-access { display: flex; align-items: start; gap: 10px; padding: 14px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
+.clinical-control small {
+  display: block;
+}
+.clinical-control strong {
+  color: var(--nexa-ink);
+  font-size: 0.61rem;
+}
+.clinical-control small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+  line-height: 1.4;
+}
+.privacy-access {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  padding: 14px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+}
 .privacy-access strong,
-.privacy-access small { display: block; }
-.privacy-access strong { color: var(--nexa-ink); font-size: 0.61rem; }
-.privacy-access small { margin-top: 3px; color: var(--nexa-ink-soft); font-size: 0.51rem; line-height: 1.45; }
+.privacy-access small {
+  display: block;
+}
+.privacy-access strong {
+  color: var(--nexa-ink);
+  font-size: 0.61rem;
+}
+.privacy-access small {
+  margin-top: 3px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.51rem;
+  line-height: 1.45;
+}
 
-.notes-loading { display: flex; align-items: center; justify-content: center; gap: 11px; min-height: 220px; color: var(--nexa-ink-soft); font-size: 0.62rem; }
-@media (max-width: 1100px) { .patient-context { grid-template-columns: 1fr auto; } .patient-context dl { grid-column: 1 / -1; } .clinical-layout { grid-template-columns: 1fr; } .clinical-side { grid-template-columns: repeat(2, 1fr); } .privacy-access { grid-column: 1 / -1; } }
-@media (max-width: 720px) { .patient-context { grid-template-columns: 1fr; } .patient-context dl { grid-template-columns: repeat(2, 1fr); grid-column: auto; } .patient-context dl div { border: 0; padding: 8px 0; } .clinical-side,
-.document-grid { grid-template-columns: 1fr; } .signature-summary { grid-template-columns: 1fr; } }
+.notes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 220px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.62rem;
+}
+@media (max-width: 1100px) {
+  .patient-context {
+    grid-template-columns: 1fr auto;
+  }
+  .patient-context dl {
+    grid-column: 1 / -1;
+  }
+  .clinical-layout {
+    grid-template-columns: 1fr;
+  }
+  .clinical-side {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .privacy-access {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 720px) {
+  .patient-context {
+    grid-template-columns: 1fr;
+  }
+  .patient-context dl {
+    grid-template-columns: repeat(2, 1fr);
+    grid-column: auto;
+  }
+  .patient-context dl div {
+    border: 0;
+    padding: 8px 0;
+  }
+  .clinical-side,
+  .document-grid {
+    grid-template-columns: 1fr;
+  }
+  .signature-summary {
+    grid-template-columns: 1fr;
+  }
+}

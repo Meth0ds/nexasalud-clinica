@@ -1,5 +1,12 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -72,21 +79,35 @@ export class Prescriptions {
     }
 
     return this.prescriptions().filter((prescription) =>
-      [prescription.patientDisplayName, prescription.prescriberName ?? '', prescription.id, ...prescription.items.map((item) => item.display)]
-        .some((value) => value.toLocaleLowerCase('es').includes(query)),
+      [
+        prescription.patientDisplayName,
+        prescription.prescriberName ?? '',
+        prescription.id,
+        ...prescription.items.map((item) => item.display),
+      ].some((value) => value.toLocaleLowerCase('es').includes(query)),
     );
   });
   protected readonly counts = computed(() => ({
-    pendingReview: this.prescriptions().filter((prescription) => prescription.status === 'pending_review').length,
+    pendingReview: this.prescriptions().filter(
+      (prescription) => prescription.status === 'pending_review',
+    ).length,
     signed: this.prescriptions().filter((prescription) => prescription.status === 'signed').length,
     sent: this.prescriptions().filter((prescription) => prescription.status === 'sent').length,
-    safetyAlerts: this.prescriptions().reduce((count, prescription) => count + prescription.safetyAlerts.length, 0),
+    safetyAlerts: this.prescriptions().reduce(
+      (count, prescription) => count + prescription.safetyAlerts.length,
+      0,
+    ),
   }));
-  protected readonly selectedClinicId = computed(() => this.referenceData()?.clinics[0]?.id ?? null);
+  protected readonly selectedClinicId = computed(
+    () => this.referenceData()?.clinics[0]?.id ?? null,
+  );
 
   protected readonly headerForm = this.formBuilder.nonNullable.group({
     patientId: ['', Validators.required],
-    clinicalIndication: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(1000)]],
+    clinicalIndication: [
+      '',
+      [Validators.required, Validators.minLength(3), Validators.maxLength(1000)],
+    ],
     validUntil: [''],
   });
 
@@ -131,23 +152,36 @@ export class Prescriptions {
     }
 
     const value = this.medicationForm.getRawValue();
-    this.draftLines.update((lines) => [...lines, {
-      codeSystem: value.codeSystem.trim(),
-      code: value.code.trim(),
-      display: value.display.trim(),
-      doseAmount: Number(value.doseAmount),
-      doseUnitCode: value.doseUnitCode.trim(),
-      routeCode: value.routeCode.trim(),
-      frequencyCode: value.frequencyCode.trim(),
-      durationValue: value.durationValue.trim() === '' ? null : Number(value.durationValue),
-      durationUnit: value.durationValue.trim() === '' ? null : value.durationUnit.trim() || null,
-      quantity: Number(value.quantity),
-      quantityUnitCode: value.quantityUnitCode.trim(),
-      instructions: value.instructions.trim() || null,
-    }]);
+    this.draftLines.update((lines) => [
+      ...lines,
+      {
+        codeSystem: value.codeSystem.trim(),
+        code: value.code.trim(),
+        display: value.display.trim(),
+        doseAmount: Number(value.doseAmount),
+        doseUnitCode: value.doseUnitCode.trim(),
+        routeCode: value.routeCode.trim(),
+        frequencyCode: value.frequencyCode.trim(),
+        durationValue: value.durationValue.trim() === '' ? null : Number(value.durationValue),
+        durationUnit: value.durationValue.trim() === '' ? null : value.durationUnit.trim() || null,
+        quantity: Number(value.quantity),
+        quantityUnitCode: value.quantityUnitCode.trim(),
+        instructions: value.instructions.trim() || null,
+      },
+    ]);
     this.medicationForm.reset({
-      codeSystem: 'CIMA', code: '', display: '', doseAmount: '', doseUnitCode: 'mg', routeCode: 'oral',
-      frequencyCode: 'every-8-hours', durationValue: '7', durationUnit: 'day', quantity: '21', quantityUnitCode: 'tablet', instructions: '',
+      codeSystem: 'CIMA',
+      code: '',
+      display: '',
+      doseAmount: '',
+      doseUnitCode: 'mg',
+      routeCode: 'oral',
+      frequencyCode: 'every-8-hours',
+      durationValue: '7',
+      durationUnit: 'day',
+      quantity: '21',
+      quantityUnitCode: 'tablet',
+      instructions: '',
     });
   }
 
@@ -159,7 +193,9 @@ export class Prescriptions {
     const clinicId = this.selectedClinicId();
     if (!clinicId || this.headerForm.invalid || this.draftLines().length === 0 || this.saving()) {
       this.headerForm.markAllAsTouched();
-      this.notifications.notify(new Error('Completa paciente, indicación y al menos una línea de medicación válida.'));
+      this.notifications.notify(
+        new Error('Completa paciente, indicación y al menos una línea de medicación válida.'),
+      );
       return;
     }
 
@@ -173,7 +209,10 @@ export class Prescriptions {
         ...(header.validUntil ? { validUntil: header.validUntil } : {}),
         items: this.draftLines(),
       })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (prescription) => {
           this.prescriptions.update((items) => [prescription, ...items]);
@@ -191,9 +230,11 @@ export class Prescriptions {
   protected sign(prescription: PrescriptionRecord): void {
     const reasonControl = this.signatureForm.controls.reason;
     reasonControl.reset('');
-    reasonControl.setValidators(prescription.safetyAlerts.length > 0
-      ? [Validators.required, Validators.minLength(8), Validators.maxLength(500)]
-      : [Validators.maxLength(500)]);
+    reasonControl.setValidators(
+      prescription.safetyAlerts.length > 0
+        ? [Validators.required, Validators.minLength(8), Validators.maxLength(500)]
+        : [Validators.maxLength(500)],
+    );
     reasonControl.updateValueAndValidity();
     this.signingPrescription.set(prescription);
   }
@@ -219,19 +260,28 @@ export class Prescriptions {
     this.transitioningId.set(prescription.id);
     this.prescriptionApi
       .transition(prescription.id, prescription.version, 'signed', reason ? { reason } : {})
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.transitioningId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.transitioningId.set(null)),
+      )
       .subscribe({
         next: (updated) => {
-          this.prescriptions.update((items) => items.map((item) => item.id === updated.id ? updated : item));
+          this.prescriptions.update((items) =>
+            items.map((item) => (item.id === updated.id ? updated : item)),
+          );
           this.signingPrescription.set(null);
-          this.notifications.success('Prescripción firmada. La MFA, el permiso y la trazabilidad han sido verificados por el servidor.');
+          this.notifications.success(
+            'Prescripción firmada. La MFA, el permiso y la trazabilidad han sido verificados por el servidor.',
+          );
         },
       });
   }
 
   protected downloadPdf(prescription: PrescriptionRecord): void {
     if (prescription.status !== 'signed' && prescription.status !== 'sent') {
-      this.notifications.notify(new Error('Solo se puede generar el plan PDF de una prescripción firmada o enviada.'));
+      this.notifications.notify(
+        new Error('Solo se puede generar el plan PDF de una prescripción firmada o enviada.'),
+      );
       return;
     }
 
@@ -243,9 +293,10 @@ export class Prescriptions {
         finalize(() => this.pdfId.set(null)),
       )
       .subscribe({
-        next: (document) => this.prescriptionApi.downloadDocument(document.downloadPath).subscribe({
-          next: (download) => this.downloadBlob(download.blob, download.filename),
-        }),
+        next: (document) =>
+          this.prescriptionApi.downloadDocument(document.downloadPath).subscribe({
+            next: (download) => this.downloadBlob(download.blob, download.filename),
+          }),
       });
   }
 
@@ -260,7 +311,13 @@ export class Prescriptions {
   }
 
   protected statusTone(status: PrescriptionStatus): 'info' | 'warning' | 'success' | 'danger' {
-    return status === 'draft' ? 'info' : status === 'pending_review' ? 'warning' : status === 'cancelled' ? 'danger' : 'success';
+    return status === 'draft'
+      ? 'info'
+      : status === 'pending_review'
+        ? 'warning'
+        : status === 'cancelled'
+          ? 'danger'
+          : 'success';
   }
 
   protected formatDate(value: string | null): string {
@@ -268,17 +325,24 @@ export class Prescriptions {
       return 'Sin fecha';
     }
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Sin fecha' : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    return Number.isNaN(date.getTime())
+      ? 'Sin fecha'
+      : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   }
 
   private transition(prescription: PrescriptionRecord, status: PrescriptionStatus): void {
     this.transitioningId.set(prescription.id);
     this.prescriptionApi
       .transition(prescription.id, prescription.version, status)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.transitioningId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.transitioningId.set(null)),
+      )
       .subscribe({
         next: (updated) => {
-          this.prescriptions.update((items) => items.map((item) => item.id === updated.id ? updated : item));
+          this.prescriptions.update((items) =>
+            items.map((item) => (item.id === updated.id ? updated : item)),
+          );
           this.notifications.success('Prescripción enviada a revisión.');
         },
       });
@@ -290,7 +354,10 @@ export class Prescriptions {
       patients: this.patientsApi.search(),
       referenceData: this.referenceDataApi.load(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: ({ prescriptions, patients, referenceData }) => {
           this.prescriptions.set(prescriptions.prescriptions);
@@ -298,7 +365,10 @@ export class Prescriptions {
           this.patients.set(patients.items);
           this.referenceData.set(referenceData);
         },
-        error: () => this.errorMessage.set('No se pudieron cargar las prescripciones. Comprueba tu sesión, el contexto y los permisos clínicos.'),
+        error: () =>
+          this.errorMessage.set(
+            'No se pudieron cargar las prescripciones. Comprueba tu sesión, el contexto y los permisos clínicos.',
+          ),
       });
   }
 

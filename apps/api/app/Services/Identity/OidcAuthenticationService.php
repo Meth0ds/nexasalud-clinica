@@ -9,14 +9,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Coordinates the OIDC BFF session lifecycle without exposing upstream tokens to the frontend.
+ */
 final class OidcAuthenticationService
 {
+    /**
+     * Creates the service with the OIDC client, identity resolver, and safe return-path policy.
+     */
     public function __construct(
         private OidcClient $oidcClient,
         private OidcUserResolver $userResolver,
         private SafeReturnPath $safeReturnPath,
     ) {}
 
+    /**
+     * Starts an OIDC authorization redirect after normalizing the requested local return path.
+     */
     public function redirect(Request $request, ?string $returnPath): RedirectResponse
     {
         return $this->oidcClient->redirect(
@@ -25,6 +34,9 @@ final class OidcAuthenticationService
         );
     }
 
+    /**
+     * Completes a validated OIDC transaction and rotates the local session before redirecting to the frontend.
+     */
     public function complete(Request $request): string
     {
         $absoluteExpiresAt = time() + ($this->absoluteLifetimeMinutes() * 60);
@@ -44,6 +56,9 @@ final class OidcAuthenticationService
         return $this->frontendUrl($this->safeReturnPath->normalize($result->returnPath));
     }
 
+    /**
+     * Ends the local session and rotates its CSRF token.
+     */
     public function invalidate(Request $request): void
     {
         Auth::guard('web')->logout();
@@ -51,6 +66,9 @@ final class OidcAuthenticationService
         $request->session()->regenerateToken();
     }
 
+    /**
+     * Returns the authenticated web user when the current session is valid.
+     */
     public function currentUser(Request $request): ?User
     {
         $user = $request->user('web');
@@ -58,6 +76,9 @@ final class OidcAuthenticationService
         return $user instanceof User ? $user : null;
     }
 
+    /**
+     * Builds a frontend redirect only from a trusted configured origin and normalized local path.
+     */
     public function frontendUrl(string $path): string
     {
         $baseUrl = config('services.keycloak.frontend_url');
@@ -86,6 +107,8 @@ final class OidcAuthenticationService
     }
 
     /**
+     * Allows plain HTTP frontend URLs only for explicitly local development and testing hosts.
+     *
      * @param  array<string, mixed>  $parts
      */
     private function isAllowedLocalFrontend(array $parts): bool
@@ -96,6 +119,9 @@ final class OidcAuthenticationService
         return app()->environment(['local', 'testing']) && $localHost;
     }
 
+    /**
+     * Returns a bounded absolute session lifetime or rejects invalid security configuration.
+     */
     private function absoluteLifetimeMinutes(): int
     {
         $minutes = config('session.absolute_lifetime');

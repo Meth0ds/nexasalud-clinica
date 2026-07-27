@@ -15,8 +15,38 @@ describe('ClinicalRecords', () => {
       imports: [ClinicalRecords],
       providers: [
         provideRouter([]),
-        { provide: PatientsService, useValue: { search: () => of({ total: 1, items: [{ id: 'patient-1', displayName: 'Lucía Martín', initials: 'LM', ageRange: '30–39', phoneHint: '•••', emailHint: 'l•••@test', coverageLabel: 'Privado', lastVisitLabel: 'Sin visitas', consentStatus: 'current', assignedPractitioner: 'Dra. Vega', alertLabels: [] }] }) } },
-        { provide: ClinicalNotesApiService, useValue: { list: () => of({ total: 0, notes: [] }), createDraft: () => of({}), sign: () => of({}) } },
+        {
+          provide: PatientsService,
+          useValue: {
+            search: () =>
+              of({
+                total: 1,
+                items: [
+                  {
+                    id: 'patient-1',
+                    displayName: 'Lucía Martín',
+                    initials: 'LM',
+                    ageRange: '30–39',
+                    phoneHint: '•••',
+                    emailHint: 'l•••@test',
+                    coverageLabel: 'Privado',
+                    lastVisitLabel: 'Sin visitas',
+                    consentStatus: 'current',
+                    assignedPractitioner: 'Dra. Vega',
+                    alertLabels: [],
+                  },
+                ],
+              }),
+          },
+        },
+        {
+          provide: ClinicalNotesApiService,
+          useValue: {
+            list: () => of({ total: 0, notes: [] }),
+            createDraft: () => of({}),
+            sign: () => of({}),
+          },
+        },
       ],
     }).compileComponents();
 

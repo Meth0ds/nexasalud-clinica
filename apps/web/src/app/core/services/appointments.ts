@@ -58,10 +58,13 @@ export class AppointmentsService {
     changes: Partial<CreateAppointmentInput> & { readonly status?: Appointment['status'] },
   ): Observable<Appointment> {
     return this.api
-      .patch<ApiData<Appointment>, typeof changes & { readonly version: number }>(`/api/v1/appointments/${encodeURIComponent(id)}`, {
-        ...changes,
-        version,
-      })
+      .patch<ApiData<Appointment>, typeof changes & { readonly version: number }>(
+        `/api/v1/appointments/${encodeURIComponent(id)}`,
+        {
+          ...changes,
+          version,
+        },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -109,11 +112,18 @@ export class AppointmentsService {
   private downloadDocument(downloadPath: string): Observable<DownloadedClinicalDocument> {
     const context = new HttpContext().set(SILENT_HTTP_ERROR, true);
     return this.http
-      .get(downloadPath, { context, observe: 'response', responseType: 'blob', withCredentials: true })
-      .pipe(map((response: HttpResponse<Blob>) => ({
-        blob: response.body ?? new Blob([], { type: 'application/pdf' }),
-        filename: filenameFromDisposition(response.headers.get('content-disposition')),
-      })));
+      .get(downloadPath, {
+        context,
+        observe: 'response',
+        responseType: 'blob',
+        withCredentials: true,
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) => ({
+          blob: response.body ?? new Blob([], { type: 'application/pdf' }),
+          filename: filenameFromDisposition(response.headers.get('content-disposition')),
+        })),
+      );
   }
 }
 

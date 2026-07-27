@@ -22,10 +22,10 @@ export class Login {
     return this.error() === 'mfa_enrollment_completed'
       ? 'Tu segundo factor ya está configurado. Vuelve a entrar y escribe el código de tu aplicación autenticadora para completar el acceso.'
       : this.error() === 'identity_unavailable'
-      ? 'El servicio de identidad no está disponible temporalmente. No se ha iniciado ninguna sesión.'
-      : this.error() === 'access_denied'
-        ? 'El acceso no se ha autorizado. Revisa tu cuenta con el administrador del centro.'
-        : 'La verificación no se ha podido completar o ha caducado. Iníciala de nuevo.';
+        ? 'El servicio de identidad no está disponible temporalmente. No se ha iniciado ninguna sesión.'
+        : this.error() === 'access_denied'
+          ? 'El acceso no se ha autorizado. Revisa tu cuenta con el administrador del centro.'
+          : 'La verificación no se ha podido completar o ha caducado. Iníciala de nuevo.';
   }
 
   protected startLogin(returnTo = this.returnTo()): void {

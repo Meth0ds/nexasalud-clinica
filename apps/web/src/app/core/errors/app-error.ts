@@ -2,8 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { ApiProblem } from '../models/app.models';
 
-const genericMessage =
-  'No hemos podido completar la operación. Tus datos permanecen protegidos.';
+const genericMessage = 'No hemos podido completar la operación. Tus datos permanecen protegidos.';
 
 const messagesByStatus: Readonly<Record<number, string>> = {
   0: 'No se ha podido contactar con el servicio. Comprueba la conexión e inténtalo de nuevo.',

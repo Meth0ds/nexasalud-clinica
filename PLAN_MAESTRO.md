@@ -25,17 +25,17 @@
 
 La autorización se resolverá en servidor combinando RBAC y reglas contextuales. La interfaz ocultará acciones no permitidas, pero eso será solo una ayuda visual; la API volverá a verificar cada operación.
 
-| Rol | Capacidades principales | Restricciones esenciales |
-|---|---|---|
-| Administrador de plataforma | Configuración técnica y estado del servicio | No accede por defecto al contenido clínico de pacientes |
-| Administrador de clínica | Sedes, equipos, horarios, tipos de cita y políticas | Solo su organización; las acciones sensibles quedan auditadas |
-| Responsable clínico | Agenda global, profesionales, bloqueos y supervisión | Acceso clínico según relación asistencial y política |
-| Profesional sanitario | Agenda propia, pacientes asignados, cita y notas asociadas | Sin acceso masivo ni exportaciones por defecto |
-| Enfermería/auxiliar | Preparación y seguimiento de citas autorizadas | Visibilidad clínica limitada y configurable |
-| Recepción | Alta básica, citas, confirmaciones y lista de espera | Datos clínicos minimizados; campos sensibles enmascarados |
-| Responsable de privacidad/seguridad | Auditoría, accesos, incidentes, retención | Acceso a metadatos; contenido solo mediante elevación justificada |
-| Auditor | Lectura de registros e informes autorizados | Sin edición ni acceso general al contenido clínico |
-| Paciente | Sus propias citas, preferencias y consentimientos | Únicamente su identidad y sus registros permitidos |
+| Rol                                 | Capacidades principales                                    | Restricciones esenciales                                          |
+| ----------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| Administrador de plataforma         | Configuración técnica y estado del servicio                | No accede por defecto al contenido clínico de pacientes           |
+| Administrador de clínica            | Sedes, equipos, horarios, tipos de cita y políticas        | Solo su organización; las acciones sensibles quedan auditadas     |
+| Responsable clínico                 | Agenda global, profesionales, bloqueos y supervisión       | Acceso clínico según relación asistencial y política              |
+| Profesional sanitario               | Agenda propia, pacientes asignados, cita y notas asociadas | Sin acceso masivo ni exportaciones por defecto                    |
+| Enfermería/auxiliar                 | Preparación y seguimiento de citas autorizadas             | Visibilidad clínica limitada y configurable                       |
+| Recepción                           | Alta básica, citas, confirmaciones y lista de espera       | Datos clínicos minimizados; campos sensibles enmascarados         |
+| Responsable de privacidad/seguridad | Auditoría, accesos, incidentes, retención                  | Acceso a metadatos; contenido solo mediante elevación justificada |
+| Auditor                             | Lectura de registros e informes autorizados                | Sin edición ni acceso general al contenido clínico                |
+| Paciente                            | Sus propias citas, preferencias y consentimientos          | Únicamente su identidad y sus registros permitidos                |
 
 ### 2.2 Módulos funcionales
 
@@ -429,26 +429,26 @@ No se instalarán skills de Figma, despliegues alternativos, Sentry o conectores
 
 #### Resultado de la investigación de skills
 
-| Candidata | Fuente/estado | Decisión | Motivo |
-|---|---|---|---|
-| `security-best-practices` | Catálogo curado oficial OpenAI | Instalada | Endurecimiento del stack y revisión de defaults inseguros |
-| `security-threat-model` | Catálogo curado oficial OpenAI | Instalada | Amenazas, activos, trust boundaries y abuso cross-tenant basados en el repositorio |
-| `screenshot` | Catálogo curado oficial OpenAI | Instalada | Evidencia visual de responsive, temas, densidad, motion y estados de error |
-| `frontend-design` | Repositorio oficial `anthropics/skills`, Apache 2.0 | Instalada tras revisar contenido y ausencia de scripts | Dirección estética no genérica, jerarquía, contenido y un gesto visual distintivo |
-| `angular-developer` | Repositorio oficial del equipo Angular/Google, MIT | Instalada | Angular moderno: standalone, signals, DI, routing, accesibilidad, animaciones y tests, con detección de versión |
-| `angular-new-app` | Repositorio oficial del equipo Angular/Google, MIT | Instalada | Scaffold moderno con Angular CLI; se omite su sugerencia de instalación global en favor de CLI local reproducible |
-| `angular-material` | Comunidad Angular Sanctuary, MIT, generado desde `angular/components` 21.2 | Instalada con verificación obligatoria | Índice profundo de Material 3, CDK, theming y component harnesses; snapshot previo a 21.2 estable |
-| Laravel Boost y sus Agent Skills | Laravel oficial, instalado como dependencia `--dev` dentro de la app | Seleccionada; instalar tras el scaffold Laravel | Herramientas, guidelines, skills y búsqueda documental ajustadas a Laravel 13 y a los paquetes Composer realmente instalados; evita guías comunitarias desactualizadas |
-| Skills modulares AnalogJS (`angular-http`, `angular-forms`, `angular-signals`, `angular-testing`) | Comunidad AnalogJS, MIT | No instalar | Duplicación; forms experimentales; ejemplos HTTP con bearer token/logging incompatibles con BFF y privacidad |
-| `playwright` | Ya instalada | Usar | Pruebas E2E reales; evita duplicar tooling |
-| `playwright-interactive` | Catálogo curado OpenAI | Posponer | Exige `js_repl`, no disponible en esta sesión; Browser + Playwright cubren el trabajo actual |
-| `frontend-skill` | Resultado indexado antiguo de OpenAI | Descartada | La carpeta ya no existe en la rama actual; no fijar una skill retirada o renombrada |
-| `webapp-testing` | `anthropics/skills` | Descartada | Duplica Playwright y añade un flujo Python menos integrado que el ya presente |
-| `theme-factory` | `anthropics/skills` | Descartada | Presets orientados a documentos/presentaciones; la app necesita tokens propios, no un tema genérico |
-| Skills Figma | Catálogo OpenAI | Posponer | Útiles solo si el usuario decide trabajar con un archivo/sistema Figma y el conector correspondiente |
-| `sentry` | Catálogo OpenAI | Posponer | Requiere servicio externo, DPA y redacción de datos; observabilidad sanitaria debe decidirse con el hosting |
-| Skills de despliegue | Catálogo OpenAI | Posponer | No elegir proveedor antes de conocer residencia de datos, contratos, KMS, backups y requisitos legales |
-| Skills de terceros sin organización verificable | Internet | No instalar | Una skill puede introducir instrucciones o scripts; la cadena de suministro también es un riesgo |
+| Candidata                                                                                         | Fuente/estado                                                              | Decisión                                               | Motivo                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `security-best-practices`                                                                         | Catálogo curado oficial OpenAI                                             | Instalada                                              | Endurecimiento del stack y revisión de defaults inseguros                                                                                                              |
+| `security-threat-model`                                                                           | Catálogo curado oficial OpenAI                                             | Instalada                                              | Amenazas, activos, trust boundaries y abuso cross-tenant basados en el repositorio                                                                                     |
+| `screenshot`                                                                                      | Catálogo curado oficial OpenAI                                             | Instalada                                              | Evidencia visual de responsive, temas, densidad, motion y estados de error                                                                                             |
+| `frontend-design`                                                                                 | Repositorio oficial `anthropics/skills`, Apache 2.0                        | Instalada tras revisar contenido y ausencia de scripts | Dirección estética no genérica, jerarquía, contenido y un gesto visual distintivo                                                                                      |
+| `angular-developer`                                                                               | Repositorio oficial del equipo Angular/Google, MIT                         | Instalada                                              | Angular moderno: standalone, signals, DI, routing, accesibilidad, animaciones y tests, con detección de versión                                                        |
+| `angular-new-app`                                                                                 | Repositorio oficial del equipo Angular/Google, MIT                         | Instalada                                              | Scaffold moderno con Angular CLI; se omite su sugerencia de instalación global en favor de CLI local reproducible                                                      |
+| `angular-material`                                                                                | Comunidad Angular Sanctuary, MIT, generado desde `angular/components` 21.2 | Instalada con verificación obligatoria                 | Índice profundo de Material 3, CDK, theming y component harnesses; snapshot previo a 21.2 estable                                                                      |
+| Laravel Boost y sus Agent Skills                                                                  | Laravel oficial, instalado como dependencia `--dev` dentro de la app       | Seleccionada; instalar tras el scaffold Laravel        | Herramientas, guidelines, skills y búsqueda documental ajustadas a Laravel 13 y a los paquetes Composer realmente instalados; evita guías comunitarias desactualizadas |
+| Skills modulares AnalogJS (`angular-http`, `angular-forms`, `angular-signals`, `angular-testing`) | Comunidad AnalogJS, MIT                                                    | No instalar                                            | Duplicación; forms experimentales; ejemplos HTTP con bearer token/logging incompatibles con BFF y privacidad                                                           |
+| `playwright`                                                                                      | Ya instalada                                                               | Usar                                                   | Pruebas E2E reales; evita duplicar tooling                                                                                                                             |
+| `playwright-interactive`                                                                          | Catálogo curado OpenAI                                                     | Posponer                                               | Exige `js_repl`, no disponible en esta sesión; Browser + Playwright cubren el trabajo actual                                                                           |
+| `frontend-skill`                                                                                  | Resultado indexado antiguo de OpenAI                                       | Descartada                                             | La carpeta ya no existe en la rama actual; no fijar una skill retirada o renombrada                                                                                    |
+| `webapp-testing`                                                                                  | `anthropics/skills`                                                        | Descartada                                             | Duplica Playwright y añade un flujo Python menos integrado que el ya presente                                                                                          |
+| `theme-factory`                                                                                   | `anthropics/skills`                                                        | Descartada                                             | Presets orientados a documentos/presentaciones; la app necesita tokens propios, no un tema genérico                                                                    |
+| Skills Figma                                                                                      | Catálogo OpenAI                                                            | Posponer                                               | Útiles solo si el usuario decide trabajar con un archivo/sistema Figma y el conector correspondiente                                                                   |
+| `sentry`                                                                                          | Catálogo OpenAI                                                            | Posponer                                               | Requiere servicio externo, DPA y redacción de datos; observabilidad sanitaria debe decidirse con el hosting                                                            |
+| Skills de despliegue                                                                              | Catálogo OpenAI                                                            | Posponer                                               | No elegir proveedor antes de conocer residencia de datos, contratos, KMS, backups y requisitos legales                                                                 |
+| Skills de terceros sin organización verificable                                                   | Internet                                                                   | No instalar                                            | Una skill puede introducir instrucciones o scripts; la cadena de suministro también es un riesgo                                                                       |
 
 Fuentes de esta revisión: catálogo actual de `openai/skills`, contenido y licencias de `anthropics/skills`, requisitos declarados de cada skill y capacidades ya presentes en la sesión. La revisión se repetirá solo si aparece una necesidad concreta que las skills actuales no cubran.
 
@@ -717,6 +717,7 @@ Esta lista convierte la visión de “centro médico completo” en tareas verif
 
 ### 13.7 Disponibilidad y portal profesional de reserva del paciente
 
+- [x] Exponer mensajes de portal ya publicados únicamente al paciente vinculado y verificado, con auditoría, cifrado en reposo, límite de resultados, estados de carga/error/vacío y prueba de aislamiento.
 - [ ] Crear shell separado del portal de paciente con navegación y permisos propios.
 - [ ] Crear inicio del paciente con próximas citas, tareas, avisos y acciones rápidas.
 - [ ] Mostrar especialidades, servicios, sedes y profesionales con información pública permitida.
@@ -885,12 +886,25 @@ Esta lista convierte la visión de “centro médico completo” en tareas verif
 - [ ] Añadir calendarios externos únicamente con consentimiento y contenido minimizado.
 - [ ] Rotar secretos y certificados sin caída y mostrar su caducidad a administradores autorizados.
 
+### 13.17.1 Eventos de dominio y documentación del backend
+
+- [x] Publicar `CommunicationQueued` después de confirmar la transacción, sin cuerpos de mensajes ni PHI en el evento.
+- [x] Registrar un listener en cola para el handoff de comunicaciones con exclusión mutua, backoff, reintentos, log seguro de fallo y auditoría idempotente.
+- [x] Cubrir la emisión y el listener de `CommunicationQueued` dentro de la prueba de seguridad de comunicaciones.
+- [x] Documentar las fronteras de evento, cola, auditoría, errores y depuración segura en `apps/api/docs/BACKEND_CONVENTIONS.md`.
+- [x] Aplicar PHPDoc en inglés con punto final a los middleware críticos de trazabilidad, tenant, no-cache e idempotencia, además del flujo de comunicaciones y OIDC intervenido.
+- [ ] Implementar adaptadores de entrega por canal (portal, SMS, correo y vídeo) que consuman eventos de dominio, validen consentimiento de nuevo, sean idempotentes y dispongan de dead-letter/reproceso.
+- [ ] Añadir métricas, alertas y runbook para listeners fallidos, colas detenidas, reintentos agotados y mensajes en dead-letter.
+- [ ] Documentar con PHPDoc en inglés y punto final todas las clases, métodos públicos no triviales, eventos, listeners, jobs, DTOs, servicios y políticas del backend.
+- [ ] Añadir análisis estático de PHP y una puerta de CI que impida PHPDoc incompleto en los componentes de dominio.
+
 ### 13.18 Manejo absoluto de errores, resiliencia y observabilidad
 
-- [ ] Centralizar excepciones Laravel y responder con problemas seguros, código estable y `traceId`.
-- [ ] Mapear 400/401/403/404/409/412/419/422/429/500/502/503 sin filtrar stack, SQL, rutas ni PHI.
-- [ ] Centralizar errores Angular con mensajes accionables, correlación y recuperación.
-- [ ] Implementar error boundary de ruta, estados inline y página segura de indisponibilidad.
+- [x] Añadir una ruta Angular profesional para 404 y fallo inesperado, con recuperación segura, sin detalles técnicos y con comprobación visual en navegador.
+- [x] Centralizar excepciones Laravel y responder con problemas seguros, código estable y `traceId`.
+- [x] Mapear 400/401/403/404/409/412/419/422/429/500/502/503 sin filtrar stack, SQL, rutas ni PHI.
+- [x] Centralizar errores Angular con mensajes accionables, correlación y recuperación.
+- [x] Implementar error boundary de ruta, estados inline y página segura de indisponibilidad.
 - [ ] Conservar formularios no sensibles ante fallo y limpiar datos cuando expire la sesión.
 - [ ] Implementar retry solo en operaciones idempotentes, con backoff y jitter.
 - [ ] Incorporar claves de idempotencia para reserva, reprogramación, envío, pago y documentos.
@@ -928,6 +942,7 @@ Esta lista convierte la visión de “centro médico completo” en tareas verif
 
 ### 13.20 Accesibilidad, motion y calidad de interacción
 
+- [x] Añadir un skip link visible al foco tanto en el portal como en el shell profesional para llegar al contenido principal sin atravesar la navegación.
 - [ ] Cumplir WCAG 2.2 AA en todas las rutas, incluidos portal, login, PDFs y errores.
 - [ ] Permitir todos los recorridos por teclado, incluida agenda y reordenación.
 - [ ] Añadir foco visible, gestión de foco, skip links y anuncios live moderados.
@@ -938,6 +953,15 @@ Esta lista convierte la visión de “centro médico completo” en tareas verif
 - [ ] Respetar `prefers-reduced-motion` y preferencia interna en toda animación/ScrollFX.
 - [ ] Evitar parallax, scroll-jacking y movimiento sobre información clínica densa.
 - [ ] Probar lector de pantalla, teclado, zoom, contraste, reduced motion y móvil real/simulado.
+
+### 13.21.1 Puerta de calidad automatizada
+
+- [x] Añadir workflow de GitHub Actions para formato Prettier, tipos Angular, pruebas, build de frontend, Pint, pruebas Laravel, auditorías Composer/pnpm y build de imagen de producción.
+- [x] Normalizar el formato global con Prettier y Pint para que los gates comiencen desde una línea base limpia.
+- [x] Añadir actualizaciones semanales de Dependabot para npm, Composer y GitHub Actions.
+- [ ] Conectar el directorio a un repositorio remoto, ejecutar el workflow y conservar los artefactos/resultados de su primera ejecución.
+- [ ] Proteger `main`: revisión obligatoria, workflow `Quality gates` obligatorio, historial lineal, sin force push y despliegue solo desde una revisión aprobada.
+- [ ] Añadir cobertura, artefactos de pruebas, SBOM, escaneo de secretos/SAST/contenedores y regresión visual/axe al workflow.
 
 ### 13.21 Pruebas, rendimiento y entrega operativa
 
@@ -960,3 +984,22 @@ Esta lista convierte la visión de “centro médico completo” en tareas verif
 - [ ] Crear guía de instalación, demo, operación, despliegue, incidencias y mantenimiento.
 - [ ] Realizar smoke test desde checkout limpio y conservar evidencia de la entrega.
 - [ ] No declarar la aplicación terminada hasta que todas las capacidades visibles sean reales o estén explícitamente bloqueadas por una integración externa identificada.
+
+### 13.22 Acabado visual, depuración y mantenibilidad exigidos para la salida
+
+- [x] Conectar la vista de mensajes seguros del portal al endpoint autorizado, sin simular envío ni respuestas; documentar sus límites explícitos.
+- [x] Sustituir el shell de reserva y las vistas de equipo, pacientes, agenda, analítica y preferencias intervenidas por estado y endpoints autorizados; mantener las capacidades aún inexistentes ocultas.
+- [x] Añadir una ruta de recuperación Angular Material, errores HTTP recuperables y un skip link del shell cubierto por prueba unitaria.
+- [x] Ejecutar la pasada local de depuración actual: Prettier, Pint, tipos, build, 45 pruebas Angular, 84 pruebas Laravel/413 aserciones, auditorías de dependencias y revisión visual de login y recuperación sin errores de consola.
+- [ ] Rediseñar cada vista visible con una composición profesional y consistente basada en Angular Material 3, Angular CDK y los tokens del sistema de diseño; no crear controles visuales paralelos cuando Material cubra la necesidad.
+- [ ] Eliminar datos, contadores, filtros, CTA y estados simulados de todas las rutas; conectar cada elemento a una API autorizada o retirar la capacidad del lanzamiento.
+- [ ] Crear patrones Material reutilizables para cabeceras, tablas/listas responsivas, filtros, carga, vacío, error, confirmación destructiva, notificaciones y accesos restringidos.
+- [ ] Añadir animaciones y microinteracciones de propósito con transformación/opacidad, foco y anuncio de estado; respetar `prefers-reduced-motion`, la preferencia interna y evitar movimiento sobre información clínica densa.
+- [ ] Validar el acabado de cada ruta en móvil, tableta, escritorio, dark mode, alto contraste, zoom al 200 % y navegación por teclado; incorporar regresión visual y pruebas axe.
+- [ ] Añadir PHPDoc en inglés, con punto final, a cada servicio, evento, listener, handler, DTO, acción de dominio y método público no trivial del backend; documentar propósito, invariantes, entradas, retornos y excepciones sin repetir el código.
+- [ ] Definir eventos de dominio explícitos para cambios auditables y efectos asíncronos; registrar listeners, reintentos, idempotencia, fallos y observabilidad sin incluir PHI ni secretos.
+- [ ] Centralizar el manejo de errores de Angular y Laravel con RFC 9457, correlation IDs, mensajes recuperables, estados de reintento y telemetría segura; probar timeout, red caída, doble clic, conflicto y fallo de proveedor.
+- [ ] Ejecutar una pasada de depuración antes de cada entrega: formato, tipos, análisis estático, tests, build, auditorías, logs de consola, errores de navegador y trazas de backend; registrar resultados en el informe de preproducción.
+- [ ] Sustituir los valores de reserva del shell (`Clínica Mirador`, usuario profesional, badge de notificaciones, centros y distintivos de navegación) por sesión, permisos y endpoints reales; ocultar los elementos que no estén soportados.
+- [ ] Implementar el contrato y endpoint de analítica agregada antes de mostrar métricas, series, porcentajes, ocupación, recomendaciones o exportación; no reutilizar datos sintéticos ni presentar inferencias clínicas como hechos.
+- [ ] Reemplazar las pestañas de configuración que contienen centros, horarios, recursos, tipos de cita e integraciones estáticos por formularios Angular Material conectados a API, autorización, auditoría, validación y confirmación de guardado.

@@ -11,8 +11,10 @@ class OfferWaitlistRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $entry = $this->route('waitlistEntry');
+
         return $entry instanceof WaitlistEntry && $this->authenticatedUser()->can('update', $entry);
     }
+
     public function rules(): array
     {
         return [

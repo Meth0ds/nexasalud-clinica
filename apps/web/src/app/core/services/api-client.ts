@@ -29,9 +29,7 @@ export class ApiClientService {
   ): Observable<TResponse> {
     return this.http.post<TResponse>(url, body, {
       context: toHttpContext(options),
-      headers: options.idempotencyKey
-        ? { 'Idempotency-Key': options.idempotencyKey }
-        : undefined,
+      headers: options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : undefined,
     });
   }
 
@@ -41,6 +39,14 @@ export class ApiClientService {
     options: RequestOptions = {},
   ): Observable<TResponse> {
     return this.http.patch<TResponse>(url, body, { context: toHttpContext(options) });
+  }
+
+  put<TResponse, TBody = unknown>(
+    url: string,
+    body: TBody,
+    options: RequestOptions = {},
+  ): Observable<TResponse> {
+    return this.http.put<TResponse>(url, body, { context: toHttpContext(options) });
   }
 
   delete<T>(url: string, options: RequestOptions = {}): Observable<T> {

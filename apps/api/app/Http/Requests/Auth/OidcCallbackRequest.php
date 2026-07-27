@@ -4,8 +4,8 @@ namespace App\Http\Requests\Auth;
 
 use App\Exceptions\InvalidOidcTransactionException;
 use App\Services\Identity\SecureKeycloakProvider;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

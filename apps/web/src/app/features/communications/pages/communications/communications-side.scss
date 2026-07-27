@@ -1,15 +1,65 @@
-.automation-panel .nexa-card__header { padding: 16px; }
-.automation-panel h2 { font-size: 1.2rem; }
-.automation-row { display: grid; align-items: center; grid-template-columns: 35px 1fr auto; gap: 9px; padding: 12px 14px; border-bottom: 1px solid var(--nexa-border); }
-.automation-row > span:first-child { display: grid; width: 33px; height: 33px; place-items: center; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
+.automation-panel .nexa-card__header {
+  padding: 16px;
+}
+.automation-panel h2 {
+  font-size: 1.2rem;
+}
+.automation-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 35px 1fr auto;
+  gap: 9px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--nexa-border);
+}
+.automation-row > span:first-child {
+  display: grid;
+  width: 33px;
+  height: 33px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
 .automation-row strong,
-.automation-row small { display: block; }
-.automation-row strong { font-size: 0.58rem; }
-.automation-row small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.49rem; }
-.consent-health { display: flex; gap: 8px; margin: 13px; padding: 10px; border-radius: 10px; color: var(--nexa-primary); background: var(--nexa-primary-pale); }
+.automation-row small {
+  display: block;
+}
+.automation-row strong {
+  font-size: 0.58rem;
+}
+.automation-row small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.49rem;
+}
+.consent-health {
+  display: flex;
+  gap: 8px;
+  margin: 13px;
+  padding: 10px;
+  border-radius: 10px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+}
 .consent-health strong,
-.consent-health small { display: block; }
-.consent-health strong { color: var(--nexa-ink); font-size: 0.57rem; }
-.consent-health small { margin-top: 2px; color: var(--nexa-ink-soft); font-size: 0.48rem; line-height: 1.4; }
-.communication-action { width: calc(100% - 26px); margin: 0 13px 10px; }
-.compact-empty { min-height: 230px; }
+.consent-health small {
+  display: block;
+}
+.consent-health strong {
+  color: var(--nexa-ink);
+  font-size: 0.57rem;
+}
+.consent-health small {
+  margin-top: 2px;
+  color: var(--nexa-ink-soft);
+  font-size: 0.48rem;
+  line-height: 1.4;
+}
+.communication-action {
+  width: calc(100% - 26px);
+  margin: 0 13px 10px;
+}
+.compact-empty {
+  min-height: 230px;
+}

@@ -10,7 +10,9 @@ describe('ClinicalNotesApiService', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(ClinicalNotesApiService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -19,7 +21,11 @@ describe('ClinicalNotesApiService', () => {
 
   it('loads a patient-scoped timeline from the protected API', async () => {
     const result = firstValueFrom(service.list('patient/unsafe'));
-    const request = http.expectOne((candidate) => candidate.url === '/api/v1/patients/patient%2Funsafe/clinical-notes' && candidate.params.get('perPage') === '50');
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === '/api/v1/patients/patient%2Funsafe/clinical-notes' &&
+        candidate.params.get('perPage') === '50',
+    );
     expect(request.request.method).toBe('GET');
     request.flush({ data: [], meta: { total: 0 } });
 
@@ -34,7 +40,9 @@ describe('ClinicalNotesApiService', () => {
     draftRequest.flush({ data: { id: 'note-1', status: 'draft' } });
     await expect(draft).resolves.toMatchObject({ id: 'note-1', status: 'draft' });
 
-    const signed = firstValueFrom(service.sign('patient-1', 'Evolución clínica firmada y relevante.'));
+    const signed = firstValueFrom(
+      service.sign('patient-1', 'Evolución clínica firmada y relevante.'),
+    );
     const signRequest = http.expectOne('/api/v1/patients/patient-1/clinical-notes/sign');
     expect(signRequest.request.headers.has('Idempotency-Key')).toBe(true);
     signRequest.flush({ data: { id: 'note-2', status: 'signed' } });

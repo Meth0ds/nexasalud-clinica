@@ -10,13 +10,28 @@ describe('CommunicationsApiService', () => {
   let http: HttpTestingController;
 
   const record: PatientCommunicationRecord = {
-    id: 'communication-1', version: 1, patientId: 'patient-1', patientDisplayName: 'Paciente autorizado', patientInitials: 'PA',
-    channel: 'portal', contentClass: 'administrative', status: 'draft', subject: 'Mensaje', preview: 'Contenido seguro',
-    templateKey: null, scheduledAt: null, queuedAt: null, cancelledAt: null, authorDisplayName: 'Coordinación', createdAt: null,
+    id: 'communication-1',
+    version: 1,
+    patientId: 'patient-1',
+    patientDisplayName: 'Paciente autorizado',
+    patientInitials: 'PA',
+    channel: 'portal',
+    contentClass: 'administrative',
+    status: 'draft',
+    subject: 'Mensaje',
+    preview: 'Contenido seguro',
+    templateKey: null,
+    scheduledAt: null,
+    queuedAt: null,
+    cancelledAt: null,
+    authorDisplayName: 'Coordinación',
+    createdAt: null,
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(CommunicationsApiService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -25,7 +40,10 @@ describe('CommunicationsApiService', () => {
 
   it('lists the server-authorized communication timeline', async () => {
     const result = firstValueFrom(service.list());
-    const request = http.expectOne((candidate) => candidate.url === '/api/v1/communications' && candidate.params.get('perPage') === '100');
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === '/api/v1/communications' && candidate.params.get('perPage') === '100',
+    );
     expect(request.request.method).toBe('GET');
     request.flush({ data: [record], meta: { total: 1 } });
 
@@ -33,9 +51,16 @@ describe('CommunicationsApiService', () => {
   });
 
   it('uses different idempotency keys for create and state transitions', async () => {
-    const created = firstValueFrom(service.create({
-      patientId: 'patient-1', channel: 'portal', contentClass: 'administrative', mode: 'draft', subject: 'Mensaje', body: 'Contenido seguro',
-    }));
+    const created = firstValueFrom(
+      service.create({
+        patientId: 'patient-1',
+        channel: 'portal',
+        contentClass: 'administrative',
+        mode: 'draft',
+        subject: 'Mensaje',
+        body: 'Contenido seguro',
+      }),
+    );
     const create = http.expectOne('/api/v1/communications');
     expect(create.request.headers.has('Idempotency-Key')).toBe(true);
     create.flush({ data: record });

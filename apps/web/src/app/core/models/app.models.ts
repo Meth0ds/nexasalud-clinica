@@ -1,11 +1,5 @@
 export type AppointmentStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'waiting'
-  | 'in-progress'
-  | 'completed'
-  | 'cancelled'
-  | 'no-show';
+  'pending' | 'confirmed' | 'waiting' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
 
 export type AppointmentMode = 'in-person' | 'video' | 'phone';
 
@@ -150,7 +144,11 @@ export interface ReferenceData {
     readonly displayName: string;
     readonly roles: readonly string[];
   }[];
-  readonly insurers: readonly { readonly id: string; readonly code: string; readonly name: string }[];
+  readonly insurers: readonly {
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+  }[];
 }
 
 export interface WaitlistEntry {

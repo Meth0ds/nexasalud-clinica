@@ -8,16 +8,26 @@ use App\Enums\AppointmentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
+use App\Support\Auditing\AuditRecorder;
 use App\Support\Authorization\PermissionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Provides privacy-preserving, tenant-scoped appointment aggregates.
+ */
 final class AnalyticsController extends Controller
 {
-    public function __construct(private readonly PermissionService $permissions) {}
+    public function __construct(
+        private readonly PermissionService $permissions,
+        private readonly AuditRecorder $audit,
+    ) {}
 
+    /**
+     * Returns authorized appointment aggregates for a bounded time range.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         abort_unless(
@@ -45,6 +55,12 @@ final class AnalyticsController extends Controller
         $noShow = (clone $base)->where('status', AppointmentStatus::NoShow)->count();
         $completed = (clone $base)->where('status', AppointmentStatus::Completed)->count();
         $byStatus = (clone $base)->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status');
+
+        $this->audit->record($request, 'analytics.viewed', metadata: [
+            'clinic_id' => $clinic->getKey(),
+            'range_days' => $from->diffInDays($to) + 1,
+            'appointment_count' => $total,
+        ]);
 
         return response()->json(['data' => [
             'range' => ['from' => $from->toIso8601String(), 'to' => $to->toIso8601String(), 'timezone' => $clinic->timezone],

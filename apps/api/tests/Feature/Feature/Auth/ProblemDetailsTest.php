@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Feature\Auth;
 
-use Illuminate\Auth\Access\AuthorizationException;
 use DomainException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Route;

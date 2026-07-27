@@ -7,7 +7,10 @@ use Closure;
 
 class StorePatientRequest extends TenantFormRequest
 {
-    public function authorize(): bool { return $this->authenticatedUser()->can('create', Patient::class); }
+    public function authorize(): bool
+    {
+        return $this->authenticatedUser()->can('create', Patient::class);
+    }
 
     public function rules(): array
     {

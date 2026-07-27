@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\WaitlistEntry;
 use App\Models\AppointmentType;
 use App\Models\Clinic;
 use App\Models\Patient;
+use App\Models\WaitlistEntry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

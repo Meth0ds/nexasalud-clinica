@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Events\CommunicationQueued;
+use App\Listeners\RecordQueuedCommunicationDispatch;
+use App\Models\AuditEvent;
 use App\Models\Clinic;
 use App\Models\ConsentRecord;
 use App\Models\Membership;
@@ -15,6 +18,7 @@ use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 final class PatientCommunicationSecurityTest extends TestCase
@@ -104,6 +108,7 @@ final class PatientCommunicationSecurityTest extends TestCase
         ]);
         app()->forgetInstance('currentTenant');
 
+        Event::fake([CommunicationQueued::class]);
         $queued = $this->withSession($this->sessionContext())
             ->withHeader('Idempotency-Key', 'communication-portal-queue-01')
             ->postJson('/api/v1/communications', $payload);
@@ -125,6 +130,12 @@ final class PatientCommunicationSecurityTest extends TestCase
             'event_type' => 'communication.queued',
             'actor_user_id' => $this->coordinator->getKey(),
         ]);
+        Event::assertDispatched(CommunicationQueued::class, function (CommunicationQueued $event) use ($communicationId): bool {
+            return $event->communicationId === $communicationId
+                && $event->tenantId === $this->tenant->getKey()
+                && $event->channel === 'portal'
+                && $event->contentClass === 'clinical_link';
+        });
     }
 
     public function test_external_channels_reject_free_text_and_only_accept_consented_generic_templates(): void
@@ -204,6 +215,31 @@ final class PatientCommunicationSecurityTest extends TestCase
             ->withHeader('Idempotency-Key', 'communication-draft-queue-01')
             ->postJson('/api/v1/communications/'.$communication->getKey().'/queue', $payload);
         $replay->assertOk()->assertHeader('Idempotency-Replayed', 'true');
+    }
+
+    public function test_queued_communication_listener_records_one_operational_handoff_without_message_content(): void
+    {
+        $event = new CommunicationQueued(
+            communicationId: 'communication-operational-test',
+            tenantId: $this->tenant->getKey(),
+            actorUserId: $this->coordinator->getKey(),
+            actorSubject: $this->coordinator->oidc_subject,
+            traceId: 'trace-operational-test',
+            channel: 'portal',
+            contentClass: 'clinical_link',
+            usesExternalTemplate: false,
+        );
+
+        $listener = app(RecordQueuedCommunicationDispatch::class);
+        $listener->handle($event);
+        $listener->handle($event);
+
+        $this->assertSame(1, AuditEvent::query()
+            ->withoutGlobalScope('tenant')
+            ->where('tenant_id', $this->tenant->getKey())
+            ->where('event_type', 'communication.dispatch_registered')
+            ->where('auditable_id', $event->communicationId)
+            ->count());
     }
 
     public function test_administrative_users_cannot_list_or_target_clinical_portal_communications(): void

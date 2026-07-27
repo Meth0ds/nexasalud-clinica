@@ -1,5 +1,12 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -75,10 +82,16 @@ export class Agenda implements OnInit {
   private readonly session = inject(SessionService);
 
   protected readonly view = signal<'day' | 'week' | 'month'>('day');
+  protected readonly selectedDate = signal(this.startOfDay(new Date()));
   protected readonly selectedId = signal<string | null>(null);
   protected readonly appointments = signal<readonly AgendaItem[]>([]);
+  protected readonly loading = signal(false);
+  protected readonly agendaError = signal<string | null>(null);
+  protected readonly timezone = signal('Europe/Madrid');
   protected readonly pdfId = signal<string | null>(null);
-  protected readonly practitioners = signal<readonly { id: string; name: string; role: string; initials: string; tone: string }[]>([]);
+  protected readonly practitioners = signal<
+    readonly { id: string; name: string; role: string; initials: string; tone: string }[]
+  >([]);
   protected readonly rooms = signal<readonly { id: string; name: string }[]>([]);
   private readonly appointmentTypes = signal<ReferenceData['appointmentTypes']>([]);
   private readonly patients = signal<readonly Patient[]>([]);
@@ -90,6 +103,113 @@ export class Agenda implements OnInit {
 
   protected setView(value: 'day' | 'week' | 'month'): void {
     this.view.set(value);
+    this.loadAppointments();
+  }
+
+  protected movePeriod(direction: -1 | 1): void {
+    const date = new Date(this.selectedDate());
+    const amount = this.view() === 'day' ? 1 : this.view() === 'week' ? 7 : this.daysInMonth(date);
+    date.setDate(date.getDate() + direction * amount);
+    this.selectedDate.set(this.startOfDay(date));
+    this.loadAppointments();
+  }
+
+  protected goToToday(): void {
+    this.selectedDate.set(this.startOfDay(new Date()));
+    this.loadAppointments();
+  }
+
+  protected retryLoad(): void {
+    this.loadAppointments();
+  }
+
+  protected headingDate(): string {
+    const date = this.selectedDate();
+    if (this.view() === 'day') {
+      return new Intl.DateTimeFormat('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }).format(date);
+    }
+
+    const days = this.visibleDays();
+    const first = days[0]?.date;
+    const last = days[days.length - 1]?.date;
+    if (!first || !last) {
+      return '';
+    }
+    if (this.view() === 'month') {
+      return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(first);
+    }
+    const format = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' });
+    return `${format.format(first)} – ${format.format(last)}`;
+  }
+
+  protected periodSummary(): string {
+    const count = this.appointments().length;
+    const unit = count === 1 ? 'cita programada' : 'citas programadas';
+    return `${count} ${unit} · ${this.timezone()}`;
+  }
+
+  protected visibleDays(): readonly {
+    readonly key: string;
+    readonly date: Date;
+    readonly label: string;
+    readonly count: number;
+  }[] {
+    const selected = this.selectedDate();
+    const start = this.startOfDay(new Date(selected));
+    const days = this.view() === 'day' ? 1 : this.view() === 'week' ? 7 : this.daysInMonth(start);
+    if (this.view() === 'week') {
+      const weekday = (start.getDay() + 6) % 7;
+      start.setDate(start.getDate() - weekday);
+    }
+    if (this.view() === 'month') {
+      start.setDate(1);
+    }
+
+    return Array.from({ length: days }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      const key = this.dateKey(date);
+      return {
+        key,
+        date,
+        label: new Intl.DateTimeFormat('es-ES', {
+          weekday: this.view() === 'month' ? undefined : 'short',
+          day: 'numeric',
+        }).format(date),
+        count: this.appointments().filter(
+          (appointment) => this.dateKey(new Date(appointment.startsAt)) === key,
+        ).length,
+      };
+    });
+  }
+
+  protected isToday(): boolean {
+    return this.dateKey(this.selectedDate()) === this.dateKey(new Date());
+  }
+
+  protected todayKey(): string {
+    return this.dateKey(new Date());
+  }
+
+  protected currentTimeLabel(): string {
+    return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(
+      new Date(),
+    );
+  }
+
+  protected currentTimeTop(): number {
+    const now = new Date();
+    return ((now.getHours() - 8) * 60 + now.getMinutes()) * 1.25;
+  }
+
+  protected appointmentDate(appointment: AgendaItem): string {
+    return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(
+      new Date(appointment.startsAt),
+    );
   }
 
   protected openCreate(): void {
@@ -116,13 +236,15 @@ export class Agenda implements OnInit {
   }
 
   protected cancel(item: AgendaItem): void {
-    this.appointmentApi.cancel(item.id, item.version, 'Cancelación confirmada desde la agenda.').subscribe({
-      next: (appointment) => {
-        this.upsert(appointment);
-        this.selectedId.set(appointment.id);
-        this.notifications.success('Cita cancelada. El cambio ha quedado registrado.');
-      },
-    });
+    this.appointmentApi
+      .cancel(item.id, item.version, 'Cancelación confirmada desde la agenda.')
+      .subscribe({
+        next: (appointment) => {
+          this.upsert(appointment);
+          this.selectedId.set(appointment.id);
+          this.notifications.success('Cita cancelada. El cambio ha quedado registrado.');
+        },
+      });
   }
 
   protected downloadConfirmation(item: AgendaItem): void {
@@ -133,7 +255,10 @@ export class Agenda implements OnInit {
     this.pdfId.set(item.id);
     this.appointmentApi
       .downloadAppointmentConfirmation(item.id)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.pdfId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.pdfId.set(null)),
+      )
       .subscribe({
         next: ({ blob, filename }) => {
           const url = URL.createObjectURL(blob);
@@ -146,7 +271,9 @@ export class Agenda implements OnInit {
           anchor.click();
           anchor.remove();
           globalThis.setTimeout(() => URL.revokeObjectURL(url), 0);
-          this.notifications.success('El justificante se ha generado y descargado de forma segura.');
+          this.notifications.success(
+            'El justificante se ha generado y descargado de forma segura.',
+          );
         },
       });
   }
@@ -186,41 +313,45 @@ export class Agenda implements OnInit {
       });
   }
 
-  private saveDialogResult(result: AppointmentDialogResult, mode: AppointmentDialogData['mode']): void {
+  private saveDialogResult(
+    result: AppointmentDialogResult,
+    mode: AppointmentDialogData['mode'],
+  ): void {
     const startsAt = new Date(`${result.date}T${result.start}:00`);
     const endsAt = new Date(startsAt.getTime() + result.duration * 60_000);
     const current = result.id
       ? this.appointments().find((appointment) => appointment.id === result.id)
       : undefined;
-    const request = mode === 'create'
-      ? this.appointmentApi.create({
-          clinicId: this.session.tenant()?.clinicId ?? '',
-          patientId: result.patientId,
-          practitionerId: result.practitionerId,
-          roomId: result.roomId,
-          startsAt: startsAt.toISOString(),
-          endsAt: endsAt.toISOString(),
-          timezone: 'Europe/Madrid',
-          appointmentTypeId: result.appointmentTypeId,
-          mode: result.mode,
-          reason: result.reason || undefined,
-        })
-      : mode === 'reschedule' && current
-        ? this.appointmentApi.reschedule(current.id, {
-            version: current.version,
+    const request =
+      mode === 'create'
+        ? this.appointmentApi.create({
+            clinicId: this.session.tenant()?.clinicId ?? '',
+            patientId: result.patientId,
+            practitionerId: result.practitionerId,
+            roomId: result.roomId,
             startsAt: startsAt.toISOString(),
             endsAt: endsAt.toISOString(),
-            timezone: 'Europe/Madrid',
-            roomId: result.roomId,
-            practitionerId: result.practitionerId,
-            reason: result.reason || 'Cambio operativo confirmado.',
+            timezone: this.timezone(),
+            appointmentTypeId: result.appointmentTypeId,
+            mode: result.mode,
+            reason: result.reason || undefined,
           })
-        : current
-          ? this.appointmentApi.update(current.id, current.version, {
-              mode: result.mode,
-              reason: result.reason || undefined,
+        : mode === 'reschedule' && current
+          ? this.appointmentApi.reschedule(current.id, {
+              version: current.version,
+              startsAt: startsAt.toISOString(),
+              endsAt: endsAt.toISOString(),
+              timezone: this.timezone(),
+              roomId: result.roomId,
+              practitionerId: result.practitionerId,
+              reason: result.reason || 'Cambio operativo confirmado.',
             })
-          : null;
+          : current
+            ? this.appointmentApi.update(current.id, current.version, {
+                mode: result.mode,
+                reason: result.reason || undefined,
+              })
+            : null;
 
     if (!request) {
       this.notifications.error('La cita ha cambiado. Actualiza la agenda antes de editarla.');
@@ -243,13 +374,15 @@ export class Agenda implements OnInit {
   private loadData(): void {
     this.referenceApi.load().subscribe({
       next: (reference) => {
-        this.practitioners.set(reference.practitioners.map((practitioner, index) => ({
-          id: practitioner.id,
-          name: practitioner.displayName,
-          role: practitioner.roles[0] ?? 'Profesional sanitario',
-          initials: this.initials(practitioner.displayName),
-          tone: ['green', 'blue', 'coral', 'sand'][index % 4] ?? 'green',
-        })));
+        this.practitioners.set(
+          reference.practitioners.map((practitioner, index) => ({
+            id: practitioner.id,
+            name: practitioner.displayName,
+            role: practitioner.roles[0] ?? 'Profesional sanitario',
+            initials: this.initials(practitioner.displayName),
+            tone: ['green', 'blue', 'coral', 'sand'][index % 4] ?? 'green',
+          })),
+        );
         this.rooms.set(reference.rooms.map((room) => ({ id: room.id, name: room.name })));
         this.appointmentTypes.set(reference.appointmentTypes);
         this.loadAppointments();
@@ -259,32 +392,53 @@ export class Agenda implements OnInit {
   }
 
   private loadAppointments(): void {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    const from = date.toISOString();
-    const toDate = new Date(date);
+    const range = this.visibleDays();
+    const firstDate = range[0]?.date;
+    const lastDate = range[range.length - 1]?.date;
+    if (!firstDate || !lastDate) {
+      return;
+    }
+    const from = this.startOfDay(firstDate).toISOString();
+    const toDate = this.startOfDay(lastDate);
     toDate.setDate(toDate.getDate() + 1);
-    this.appointmentApi.list(from, toDate.toISOString()).subscribe({
-      next: (response) => {
-        this.appointments.set(response.items.map((appointment) => this.toAgendaItem(appointment)));
-        this.selectedId.set(response.items[0]?.id ?? null);
-      },
-    });
+    this.loading.set(true);
+    this.agendaError.set(null);
+    this.appointmentApi
+      .list(from, toDate.toISOString())
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.timezone.set(response.timezone);
+          this.appointments.set(
+            response.items.map((appointment) => this.toAgendaItem(appointment)),
+          );
+          this.selectedId.set(response.items[0]?.id ?? null);
+        },
+        error: () =>
+          this.agendaError.set(
+            'No se pudo actualizar la agenda. Comprueba la conexión e inténtalo de nuevo.',
+          ),
+      });
   }
 
   private upsert(appointment: Appointment): void {
     const mapped = this.toAgendaItem(appointment);
     this.appointments.update((appointments) =>
       appointments.some((candidate) => candidate.id === mapped.id)
-        ? appointments.map((candidate) => candidate.id === mapped.id ? mapped : candidate)
-        : [...appointments, mapped].sort((left, right) => left.startsAt.localeCompare(right.startsAt)),
+        ? appointments.map((candidate) => (candidate.id === mapped.id ? mapped : candidate))
+        : [...appointments, mapped].sort((left, right) =>
+            left.startsAt.localeCompare(right.startsAt),
+          ),
     );
   }
 
   private toAgendaItem(appointment: Appointment): AgendaItem {
     const startsAt = new Date(appointment.startsAt);
     const endsAt = new Date(appointment.endsAt);
-    const practitionerIndex = Math.max(0, this.practitioners().findIndex((item) => item.id === appointment.practitionerId));
+    const practitionerIndex = Math.max(
+      0,
+      this.practitioners().findIndex((item) => item.id === appointment.practitionerId),
+    );
     return {
       id: appointment.id,
       version: appointment.version,
@@ -298,39 +452,92 @@ export class Agenda implements OnInit {
       initials: appointment.patientInitials,
       practitioner: appointment.practitionerName,
       practitionerIndex,
-      start: startsAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      start: startsAt.toLocaleTimeString('es-ES', {
+        timeZone: appointment.timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       duration: Math.round((endsAt.getTime() - startsAt.getTime()) / 60_000),
       type: appointment.typeName,
       room: appointment.roomName ?? (appointment.mode === 'video' ? 'Videoconsulta' : 'Sin sala'),
       status: this.statusLabel(appointment.status),
-      tone: appointment.mode === 'video' ? 'blue' : (['green', 'blue', 'coral', 'sand'][practitionerIndex % 4] as AgendaItem['tone']),
+      tone:
+        appointment.mode === 'video'
+          ? 'blue'
+          : (['green', 'blue', 'coral', 'sand'][practitionerIndex % 4] as AgendaItem['tone']),
       mode: appointment.mode,
       alerts: [],
     };
   }
 
-  private dialogOptions(): Pick<AppointmentDialogData, 'patients' | 'practitioners' | 'appointmentTypes' | 'rooms'> {
+  private dialogOptions(): Pick<
+    AppointmentDialogData,
+    'patients' | 'practitioners' | 'appointmentTypes' | 'rooms'
+  > {
     return {
       patients: this.patients().map((patient) => ({ id: patient.id, label: patient.displayName })),
-      practitioners: this.practitioners().map((practitioner) => ({ id: practitioner.id, label: practitioner.name })),
-      appointmentTypes: this.appointmentTypes().map((type) => ({ id: type.id, label: type.name, durationMinutes: type.durationMinutes })),
+      practitioners: this.practitioners().map((practitioner) => ({
+        id: practitioner.id,
+        label: practitioner.name,
+      })),
+      appointmentTypes: this.appointmentTypes().map((type) => ({
+        id: type.id,
+        label: type.name,
+        durationMinutes: type.durationMinutes,
+      })),
       rooms: this.rooms().map((room) => ({ id: room.id, label: room.name })),
     };
   }
 
   private canOpenDialog(): boolean {
-    if (!this.patients().length || !this.practitioners().length || !this.appointmentTypes().length || !this.rooms().length) {
-      this.notifications.error('Aún se están cargando pacientes, profesionales y salas. Inténtalo de nuevo.');
+    if (
+      !this.patients().length ||
+      !this.practitioners().length ||
+      !this.appointmentTypes().length ||
+      !this.rooms().length
+    ) {
+      this.notifications.error(
+        'Aún se están cargando pacientes, profesionales y salas. Inténtalo de nuevo.',
+      );
       return false;
     }
     return true;
   }
 
   private initials(name: string): string {
-    return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
   }
 
   private statusLabel(status: Appointment['status']): string {
-    return ({ pending: 'Por confirmar', confirmed: 'Confirmada', waiting: 'En espera', 'in-progress': 'En curso', completed: 'Completada', cancelled: 'Cancelada', 'no-show': 'No presentada' } as const)[status];
+    return (
+      {
+        pending: 'Por confirmar',
+        confirmed: 'Confirmada',
+        waiting: 'En espera',
+        'in-progress': 'En curso',
+        completed: 'Completada',
+        cancelled: 'Cancelada',
+        'no-show': 'No presentada',
+      } as const
+    )[status];
+  }
+
+  private startOfDay(date: Date): Date {
+    const value = new Date(date);
+    value.setHours(0, 0, 0, 0);
+    return value;
+  }
+
+  private daysInMonth(date: Date): number {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  }
+
+  private dateKey(date: Date): string {
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
 }

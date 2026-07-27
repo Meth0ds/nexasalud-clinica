@@ -47,7 +47,7 @@ return new class extends Migration
 
         if (Schema::getConnection()->getDriverName() === 'pgsql') {
             DB::statement('CREATE EXTENSION IF NOT EXISTS btree_gist');
-            DB::statement("ALTER TABLE appointments ADD CONSTRAINT appointments_time_order CHECK (ends_at > starts_at)");
+            DB::statement('ALTER TABLE appointments ADD CONSTRAINT appointments_time_order CHECK (ends_at > starts_at)');
             DB::statement("ALTER TABLE appointments ADD CONSTRAINT appointments_patient_no_overlap EXCLUDE USING gist (tenant_id WITH =, patient_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (deleted_at IS NULL AND status IN ('scheduled', 'confirmed', 'checked_in', 'in_progress'))");
             DB::statement("ALTER TABLE appointments ADD CONSTRAINT appointments_clinician_no_overlap EXCLUDE USING gist (tenant_id WITH =, clinician_user_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (deleted_at IS NULL AND status IN ('scheduled', 'confirmed', 'checked_in', 'in_progress'))");
             DB::statement("ALTER TABLE appointments ADD CONSTRAINT appointments_room_no_overlap EXCLUDE USING gist (tenant_id WITH =, room_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (room_id IS NOT NULL AND deleted_at IS NULL AND status IN ('scheduled', 'confirmed', 'checked_in', 'in_progress'))");

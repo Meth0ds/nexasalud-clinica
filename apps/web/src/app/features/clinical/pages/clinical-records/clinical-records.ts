@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +22,11 @@ import { ErrorNotificationService } from '../../../../core/services/error-notifi
 import { PatientsService } from '../../../../core/services/patients';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
-import { ClinicalNoteRecord, ClinicalNotesApiService, ClinicalNoteStatus } from '../../data-access/clinical-notes-api';
+import {
+  ClinicalNoteRecord,
+  ClinicalNotesApiService,
+  ClinicalNoteStatus,
+} from '../../data-access/clinical-notes-api';
 
 @Component({
   selector: 'app-clinical-records',
@@ -59,8 +70,12 @@ export class ClinicalRecords {
   protected readonly selectedPatient = computed(
     () => this.patients().find((patient) => patient.id === this.selectedPatientId()) ?? null,
   );
-  protected readonly signedNotes = computed(() => this.notes().filter((note) => note.status === 'signed').length);
-  protected readonly draftNotes = computed(() => this.notes().filter((note) => note.status === 'draft').length);
+  protected readonly signedNotes = computed(
+    () => this.notes().filter((note) => note.status === 'signed').length,
+  );
+  protected readonly draftNotes = computed(
+    () => this.notes().filter((note) => note.status === 'draft').length,
+  );
   protected readonly noteForm = this.formBuilder.nonNullable.group({
     content: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(20_000)]],
   });
@@ -114,7 +129,9 @@ export class ClinicalRecords {
       return 'Sin fecha';
     }
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Sin fecha' : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    return Number.isNaN(date.getTime())
+      ? 'Sin fecha'
+      : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   }
 
   private saveNote(target: ClinicalNoteStatus): void {
@@ -126,28 +143,38 @@ export class ClinicalRecords {
 
     const content = this.noteForm.controls.content.value.trim();
     this.saving.set(true);
-    const request = target === 'signed'
-      ? this.notesApi.sign(patientId, content)
-      : this.notesApi.createDraft(patientId, content);
+    const request =
+      target === 'signed'
+        ? this.notesApi.sign(patientId, content)
+        : this.notesApi.createDraft(patientId, content);
     request
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (note) => {
           this.notes.update((notes) => [note, ...notes]);
           this.editingNote.set(false);
-          this.notifications.success(target === 'signed'
-            ? 'Nota firmada. El servidor ha verificado MFA reciente y ha registrado la trazabilidad.'
-            : 'Borrador clínico guardado como registro inmutable.');
+          this.notifications.success(
+            target === 'signed'
+              ? 'Nota firmada. El servidor ha verificado MFA reciente y ha registrado la trazabilidad.'
+              : 'Borrador clínico guardado como registro inmutable.',
+          );
         },
       });
   }
 
   private loadPatients(): void {
     forkJoin({ patients: this.patientsApi.search() })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: ({ patients }) => this.patients.set(patients.items),
-        error: () => this.errorMessage.set('No se ha podido cargar el directorio de pacientes autorizado.'),
+        error: () =>
+          this.errorMessage.set('No se ha podido cargar el directorio de pacientes autorizado.'),
       });
   }
 
@@ -155,10 +182,16 @@ export class ClinicalRecords {
     this.notesLoading.set(true);
     this.notesApi
       .list(patientId)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.notesLoading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.notesLoading.set(false)),
+      )
       .subscribe({
         next: ({ notes }) => this.notes.set(notes),
-        error: () => this.errorMessage.set('No se ha podido cargar la línea clínica del paciente seleccionado.'),
+        error: () =>
+          this.errorMessage.set(
+            'No se ha podido cargar la línea clínica del paciente seleccionado.',
+          ),
       });
   }
 }

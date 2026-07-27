@@ -39,19 +39,26 @@ class PatientResource extends JsonResource
     private static function ageRange(int $age): string
     {
         $lower = intdiv(max(0, $age), 10) * 10;
+
         return "{$lower}–".($lower + 9).' años';
     }
 
     private static function mask(string $value, int $visible): string
     {
-        if ($value === '') { return 'No disponible'; }
+        if ($value === '') {
+            return 'No disponible';
+        }
+
         return str_repeat('•', max(4, mb_strlen($value) - $visible)).mb_substr($value, -$visible);
     }
 
     private static function maskEmail(string $email): string
     {
-        if (! str_contains($email, '@')) { return 'No disponible'; }
+        if (! str_contains($email, '@')) {
+            return 'No disponible';
+        }
         [$local, $domain] = explode('@', $email, 2);
+
         return mb_substr($local, 0, 1).'•••@'.$domain;
     }
 }

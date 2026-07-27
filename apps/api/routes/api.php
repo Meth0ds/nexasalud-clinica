@@ -134,6 +134,7 @@ Route::prefix('v1')
 
         Route::prefix('portal')->name('portal.')->group(function (): void {
             Route::get('/overview', [PortalController::class, 'overview'])->name('overview');
+            Route::get('/messages', [PortalController::class, 'messages'])->name('messages.index');
             Route::get('/availability', [PortalController::class, 'availability'])->name('availability');
             Route::post('/slot-holds', [PortalController::class, 'hold'])
                 ->middleware(['throttle:clinical-mutation', 'idempotent'])

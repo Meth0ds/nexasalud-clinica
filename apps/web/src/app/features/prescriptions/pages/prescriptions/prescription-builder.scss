@@ -1,15 +1,103 @@
-.builder-backdrop { position: fixed; z-index: 99; inset: 0; background: rgba(8, 31, 30, 0.48); backdrop-filter: blur(5px); animation: fade-in 180ms ease; }
-.prescription-builder { position: fixed; z-index: 100; top: 0; right: 0; display: flex; width: min(780px, 95vw); height: 100dvh; flex-direction: column; color: var(--nexa-ink); background: var(--nexa-surface); box-shadow: -20px 0 60px rgba(6, 29, 27, 0.22); animation: slide-in 300ms cubic-bezier(0.16, 1, 0.3, 1); }
-.prescription-builder > header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--nexa-border); }
-.prescription-builder h2 { margin: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.65rem; font-weight: 560; }
-.builder-scroll { overflow-y: auto; flex: 1; }
-.builder-section { padding: 22px 25px; }
-.builder-section + .builder-section { border-top: 1px solid var(--nexa-border); }
-.builder-section h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 18px; color: var(--nexa-ink-strong); font-size: 0.76rem; }
-.builder-section h3 > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px; color: var(--nexa-primary); background: var(--nexa-primary-soft); font-size: 0.6rem; }
-.builder-section mat-checkbox { grid-column: 1 / -1; font-size: 0.67rem; }
-.prescription-builder > footer { display: flex; align-items: center; gap: 9px; padding: 13px 22px; border-top: 1px solid var(--nexa-border); background: var(--nexa-surface); }
-.prescription-builder > footer > span { display: flex; align-items: center; gap: 6px; margin-right: auto; color: var(--nexa-ink-soft); font-size: 0.57rem; }
-@keyframes fade-in { from { opacity: 0; } }
-@keyframes slide-in { from { transform: translateX(100%); } }
-@media (max-width: 800px) { .prescription-builder > footer { align-items: stretch; flex-wrap: wrap; } .prescription-builder > footer > span { width: 100%; } }
+.builder-backdrop {
+  position: fixed;
+  z-index: 99;
+  inset: 0;
+  background: rgba(8, 31, 30, 0.48);
+  backdrop-filter: blur(5px);
+  animation: fade-in 180ms ease;
+}
+.prescription-builder {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  right: 0;
+  display: flex;
+  width: min(780px, 95vw);
+  height: 100dvh;
+  flex-direction: column;
+  color: var(--nexa-ink);
+  background: var(--nexa-surface);
+  box-shadow: -20px 0 60px rgba(6, 29, 27, 0.22);
+  animation: slide-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.prescription-builder > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--nexa-border);
+}
+.prescription-builder h2 {
+  margin: 0;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 560;
+}
+.builder-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+.builder-section {
+  padding: 22px 25px;
+}
+.builder-section + .builder-section {
+  border-top: 1px solid var(--nexa-border);
+}
+.builder-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 18px;
+  color: var(--nexa-ink-strong);
+  font-size: 0.76rem;
+}
+.builder-section h3 > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+  font-size: 0.6rem;
+}
+.builder-section mat-checkbox {
+  grid-column: 1 / -1;
+  font-size: 0.67rem;
+}
+.prescription-builder > footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 22px;
+  border-top: 1px solid var(--nexa-border);
+  background: var(--nexa-surface);
+}
+.prescription-builder > footer > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  color: var(--nexa-ink-soft);
+  font-size: 0.57rem;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@media (max-width: 800px) {
+  .prescription-builder > footer {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .prescription-builder > footer > span {
+    width: 100%;
+  }
+}

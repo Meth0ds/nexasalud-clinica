@@ -67,11 +67,20 @@ export class AppointmentDialog {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     patientId: [this.data.patientId ?? this.data.patients[0]?.id ?? '', Validators.required],
-    practitionerId: [this.data.practitionerId ?? this.data.practitioners[0]?.id ?? '', Validators.required],
+    practitionerId: [
+      this.data.practitionerId ?? this.data.practitioners[0]?.id ?? '',
+      Validators.required,
+    ],
     date: [this.data.date ?? new Date().toISOString().slice(0, 10), Validators.required],
     start: [this.data.start ?? '12:00', Validators.required],
-    duration: [this.data.duration ?? 30, [Validators.required, Validators.min(10), Validators.max(240)]],
-    appointmentTypeId: [this.data.appointmentTypeId ?? this.data.appointmentTypes[0]?.id ?? '', Validators.required],
+    duration: [
+      this.data.duration ?? 30,
+      [Validators.required, Validators.min(10), Validators.max(240)],
+    ],
+    appointmentTypeId: [
+      this.data.appointmentTypeId ?? this.data.appointmentTypes[0]?.id ?? '',
+      Validators.required,
+    ],
     appointmentMode: this.formBuilder.nonNullable.control<'in-person' | 'video' | 'phone'>(
       this.data.appointmentMode ?? 'in-person',
       Validators.required,

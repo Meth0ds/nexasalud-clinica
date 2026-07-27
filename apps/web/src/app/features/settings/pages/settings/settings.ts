@@ -1,26 +1,96 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
 
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
-import { ThemePreferences } from '../../../../core/services/theme-preferences';
+import {
+  DensityMode,
+  ThemeMode,
+  ThemePreferences,
+} from '../../../../core/services/theme-preferences';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
+import { SettingsApiService, WorkspacePreferences } from '../../data-access/settings-api';
 
-@Component({ selector: 'app-settings', imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatTabsModule, AppIcon, ScrollReveal], templateUrl: './settings.html', styleUrls: ['./settings.scss', './settings-catalog.scss', './settings-advanced.scss', './settings-integrations.scss'], changeDetection: ChangeDetectionStrategy.OnPush })
-export class Settings {
+@Component({
+  selector: 'app-settings',
+  imports: [
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    AppIcon,
+    ScrollReveal,
+  ],
+  templateUrl: './settings.html',
+  styleUrl: './settings.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Settings implements OnInit {
   readonly preferences = inject(ThemePreferences);
+  private readonly api = inject(SettingsApiService);
   private readonly notifications = inject(ErrorNotificationService);
-  protected readonly sessionTimeout = signal(15);
-  protected readonly notificationsEnabled = signal(true);
-  protected readonly appointmentReminders = signal(true);
-  protected readonly waitlistAutomation = signal(true);
-  protected readonly telemedicine = signal(true);
-  protected readonly privacyScreen = signal(true);
-  protected save(): void { this.notifications.success('Configuración guardada y cambio auditado.'); }
+  protected readonly loading = signal(true);
+  protected readonly saving = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly agendaView = signal<'day' | 'week' | 'month'>('day');
+  protected readonly autoMask = signal(true);
+  protected readonly desktopNotifications = signal(false);
+  ngOnInit(): void {
+    this.load();
+  }
+  protected setTheme(mode: ThemeMode): void {
+    this.preferences.setTheme(mode);
+  }
+  protected setDensity(density: DensityMode): void {
+    this.preferences.setDensity(density);
+  }
+  protected save(): void {
+    this.saving.set(true);
+    this.api.save(this.payload()).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.notifications.success('Preferencias guardadas y auditadas.');
+      },
+      error: () => this.saving.set(false),
+    });
+  }
+  protected retry(): void {
+    this.load();
+  }
+  private load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.load().subscribe({
+      next: ({ preferences }) => {
+        this.preferences.setTheme(preferences.theme.mode);
+        this.preferences.setDensity(preferences.theme.density);
+        this.preferences.setReduceMotion(preferences.theme.reduceMotion);
+        this.agendaView.set(preferences.agenda.defaultView);
+        this.autoMask.set(preferences.privacy.autoMask);
+        this.desktopNotifications.set(preferences.notifications.desktop);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('No se han podido cargar tus preferencias.');
+        this.loading.set(false);
+      },
+    });
+  }
+  private payload(): WorkspacePreferences {
+    return {
+      theme: {
+        mode: this.preferences.theme(),
+        density: this.preferences.density(),
+        reduceMotion: this.preferences.reduceMotion(),
+      },
+      agenda: { defaultView: this.agendaView() },
+      privacy: { autoMask: this.autoMask() },
+      notifications: { desktop: this.desktopNotifications() },
+    };
+  }
 }

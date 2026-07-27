@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Resolves one authorized tenant membership and clinic for the request lifetime only.
+ *
+ * The middleware clears container context on every exit to prevent tenant state leaking into a
+ * subsequent request handled by a long-lived worker.
+ */
 class ResolveTenantContext
 {
     private const MEMBERSHIP_SESSION_KEY = 'auth.context.membership_id';
@@ -22,9 +28,9 @@ class ResolveTenantContext
     private const CLINIC_SESSION_KEY = 'auth.context.clinic_id';
 
     /**
-     * Handle an incoming request.
+     * Resolves and registers the active tenant context before protected route execution.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -56,6 +62,9 @@ class ResolveTenantContext
         }
     }
 
+    /**
+     * Selects the user's only active membership or requires an explicit safe session selection.
+     */
     private function resolveMembership(Request $request, User $user): Membership
     {
         $query = Membership::query()
@@ -93,6 +102,9 @@ class ResolveTenantContext
         return $membership;
     }
 
+    /**
+     * Selects an active clinic within the resolved tenant without trusting arbitrary request input.
+     */
     private function resolveClinic(Request $request, Tenant $tenant): Clinic
     {
         $query = Clinic::query()
@@ -128,6 +140,9 @@ class ResolveTenantContext
         return $clinic;
     }
 
+    /**
+     * Removes request-scoped tenant instances from the application container.
+     */
     private function forgetContext(): void
     {
         app()->forgetInstance('currentClinic');

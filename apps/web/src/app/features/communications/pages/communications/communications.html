@@ -1,75 +1,358 @@
 <div class="nexa-page communications-page">
   <header class="nexa-page__heading" appScrollReveal>
-    <div><p class="nexa-eyebrow">Relación con pacientes</p><h1>Comunicaciones</h1><p class="nexa-page__subtitle">Borradores, colas y consentimientos verificados por el servidor. El texto sensible se limita al portal seguro.</p></div>
-    <div class="nexa-page__actions"><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="load()"><app-icon name="arrow" [size]="17" /> Actualizar</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="loading()" (click)="openCompose()"><app-icon name="plus" [size]="17" /> Nueva comunicación</button></div>
+    <div>
+      <p class="nexa-eyebrow">Relación con pacientes</p>
+      <h1>Comunicaciones</h1>
+      <p class="nexa-page__subtitle">
+        Borradores, colas y consentimientos verificados por el servidor. El texto sensible se limita
+        al portal seguro.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="load()">
+        <app-icon name="arrow" [size]="17" /> Actualizar</button
+      ><button
+        mat-flat-button
+        class="nexa-btn-primary"
+        type="button"
+        [disabled]="loading()"
+        (click)="openCompose()"
+      >
+        <app-icon name="plus" [size]="17" /> Nueva comunicación
+      </button>
+    </div>
   </header>
 
   @if (loading()) {
-    <section class="communications-loading nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Cargando comunicaciones autorizadas…</span></section>
+    <section class="communications-loading nexa-card" aria-live="polite">
+      <mat-spinner diameter="34" /><span>Cargando comunicaciones autorizadas…</span>
+    </section>
   } @else if (errorMessage(); as error) {
-    <section class="communications-error nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>Comunicaciones no disponibles</strong><p>{{ error }}</p></div></section>
+    <section class="communications-error nexa-card" role="alert">
+      <app-icon name="shield" [size]="22" />
+      <div>
+        <strong>Comunicaciones no disponibles</strong>
+        <p>{{ error }}</p>
+      </div>
+    </section>
   } @else {
     <section class="nexa-grid nexa-grid--4 message-metrics" appScrollReveal>
-      <article class="nexa-card"><small>Borradores</small><strong>{{ draftCount() }}</strong><p>No se han enviado</p></article>
-      <article class="nexa-card"><small>Cola segura</small><strong>{{ queuedCount() }}</strong><p>Consentimiento validado</p></article>
-      <article class="nexa-card"><small>Programadas</small><strong>{{ scheduledCount() }}</strong><p>Fecha futura</p></article>
-      <article class="nexa-card"><small>Canceladas</small><strong>{{ cancelledCount() }}</strong><p>Trazabilidad conservada</p></article>
+      <article class="nexa-card">
+        <small>Borradores</small><strong>{{ draftCount() }}</strong>
+        <p>No se han enviado</p>
+      </article>
+      <article class="nexa-card">
+        <small>Cola segura</small><strong>{{ queuedCount() }}</strong>
+        <p>Consentimiento validado</p>
+      </article>
+      <article class="nexa-card">
+        <small>Programadas</small><strong>{{ scheduledCount() }}</strong>
+        <p>Fecha futura</p>
+      </article>
+      <article class="nexa-card">
+        <small>Canceladas</small><strong>{{ cancelledCount() }}</strong>
+        <p>Trazabilidad conservada</p>
+      </article>
     </section>
 
     <section class="communications-layout nexa-section">
       <aside class="message-folders nexa-card" appScrollReveal>
-        <button type="button" [class.is-active]="activeFilter() === 'all'" (click)="setFilter('all')"><app-icon name="bell" [size]="17" /> Todas <span>{{ communications().length }}</span></button>
-        <button type="button" [class.is-active]="activeFilter() === 'draft'" (click)="setFilter('draft')"><app-icon name="more" [size]="17" /> Borradores <span>{{ draftCount() }}</span></button>
-        <button type="button" [class.is-active]="activeFilter() === 'queued'" (click)="setFilter('queued')"><app-icon name="clock" [size]="17" /> Cola segura <span>{{ queuedCount() }}</span></button>
-        <button type="button" [class.is-active]="activeFilter() === 'cancelled'" (click)="setFilter('cancelled')"><app-icon name="close" [size]="17" /> Canceladas <span>{{ cancelledCount() }}</span></button>
-        <hr /><p>Controles del canal</p>
-        <label><i class="channel-dot channel-dot--portal"></i> Portal <span>Texto protegido</span></label>
+        <button
+          type="button"
+          [class.is-active]="activeFilter() === 'all'"
+          (click)="setFilter('all')"
+        >
+          <app-icon name="bell" [size]="17" /> Todas <span>{{ communications().length }}</span>
+        </button>
+        <button
+          type="button"
+          [class.is-active]="activeFilter() === 'draft'"
+          (click)="setFilter('draft')"
+        >
+          <app-icon name="more" [size]="17" /> Borradores <span>{{ draftCount() }}</span>
+        </button>
+        <button
+          type="button"
+          [class.is-active]="activeFilter() === 'queued'"
+          (click)="setFilter('queued')"
+        >
+          <app-icon name="clock" [size]="17" /> Cola segura <span>{{ queuedCount() }}</span>
+        </button>
+        <button
+          type="button"
+          [class.is-active]="activeFilter() === 'cancelled'"
+          (click)="setFilter('cancelled')"
+        >
+          <app-icon name="close" [size]="17" /> Canceladas <span>{{ cancelledCount() }}</span>
+        </button>
+        <hr />
+        <p>Controles del canal</p>
+        <label
+          ><i class="channel-dot channel-dot--portal"></i> Portal
+          <span>Texto protegido</span></label
+        >
         <label><i class="channel-dot channel-dot--sms"></i> SMS <span>Solo plantilla</span></label>
-        <label><i class="channel-dot channel-dot--email"></i> Correo <span>Solo plantilla</span></label>
+        <label
+          ><i class="channel-dot channel-dot--email"></i> Correo <span>Solo plantilla</span></label
+        >
       </aside>
 
       <article class="message-list nexa-card" appScrollReveal [revealDelay]="70">
-        <div class="nexa-card__header"><div><h2>Línea de comunicaciones</h2><p>El servidor limita el historial al tenant y permisos actuales.</p></div><label class="nexa-search"><app-icon name="search" [size]="16" /><input type="search" placeholder="Buscar paciente o asunto" [value]="searchTerm()" (input)="setSearch($any($event.target).value)" /></label></div>
+        <div class="nexa-card__header">
+          <div>
+            <h2>Línea de comunicaciones</h2>
+            <p>El servidor limita el historial al tenant y permisos actuales.</p>
+          </div>
+          <label class="nexa-search"
+            ><app-icon name="search" [size]="16" /><input
+              type="search"
+              placeholder="Buscar paciente o asunto"
+              [value]="searchTerm()"
+              (input)="setSearch($any($event.target).value)"
+          /></label>
+        </div>
         @for (record of filteredCommunications(); track record.id) {
-          <button class="conversation" type="button" [class.is-unread]="record.status === 'draft'" [class.is-selected]="selectedId() === record.id" (click)="select(record)">
-            <span class="nexa-avatar">{{ record.patientInitials || 'PA' }}</span><span><strong>{{ record.patientDisplayName }}</strong><small>{{ record.subject ?? 'Notificación del centro' }}</small><p>{{ record.preview }}</p></span><span><time>{{ formatDate(record.queuedAt ?? record.createdAt) }}</time><i>{{ channelLabel(record.channel) }}</i></span>
+          <button
+            class="conversation"
+            type="button"
+            [class.is-unread]="record.status === 'draft'"
+            [class.is-selected]="selectedId() === record.id"
+            (click)="select(record)"
+          >
+            <span class="nexa-avatar">{{ record.patientInitials || 'PA' }}</span
+            ><span
+              ><strong>{{ record.patientDisplayName }}</strong
+              ><small>{{ record.subject ?? 'Notificación del centro' }}</small>
+              <p>{{ record.preview }}</p></span
+            ><span
+              ><time>{{ formatDate(record.queuedAt ?? record.createdAt) }}</time
+              ><i>{{ channelLabel(record.channel) }}</i></span
+            >
           </button>
-        } @empty { <div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="bell" /></span><h2>Sin comunicaciones</h2><p>Los borradores y las colas autorizadas aparecerán aquí.</p><button mat-flat-button class="nexa-btn-primary" type="button" (click)="openCompose()">Crear comunicación</button></div></div> }
+        } @empty {
+          <div class="nexa-empty">
+            <div>
+              <span class="treatment-row__icon"><app-icon name="bell" /></span>
+              <h2>Sin comunicaciones</h2>
+              <p>Los borradores y las colas autorizadas aparecerán aquí.</p>
+              <button
+                mat-flat-button
+                class="nexa-btn-primary"
+                type="button"
+                (click)="openCompose()"
+              >
+                Crear comunicación
+              </button>
+            </div>
+          </div>
+        }
       </article>
 
       <aside class="automation-panel nexa-card" appScrollReveal [revealDelay]="120">
         @if (selected(); as record) {
-          <div class="nexa-card__header"><div><p class="nexa-eyebrow">Registro seleccionado</p><h2>{{ statusLabel(record.status) }}</h2><p>{{ channelLabel(record.channel) }}</p></div><span class="nexa-chip nexa-chip--{{ statusTone(record.status) }}">{{ record.status }}</span></div>
-          <div class="automation-row"><span><app-icon name="shield" [size]="17" /></span><div><strong>Consentimiento</strong><small>{{ record.status === 'queued' ? 'Verificado al entrar en cola' : 'Se verificará antes de encolar' }}</small></div></div>
-          <div class="automation-row"><span><app-icon name="clock" [size]="17" /></span><div><strong>Creada</strong><small>{{ formatDate(record.createdAt) }}</small></div></div>
-          <div class="automation-row"><span><app-icon name="eye" [size]="17" /></span><div><strong>Autor</strong><small>{{ record.authorDisplayName ?? 'No disponible' }}</small></div></div>
-          @if (record.status === 'draft') { <button mat-flat-button class="nexa-btn-primary communication-action" type="button" [disabled]="saving()" (click)="queue(record)">{{ saving() ? 'Validando…' : 'Validar y añadir a cola' }}</button> }
-          @if (record.status !== 'cancelled') { <button mat-button class="communication-action" type="button" [disabled]="saving()" (click)="cancel(record)">Cancelar comunicación</button> }
+          <div class="nexa-card__header">
+            <div>
+              <p class="nexa-eyebrow">Registro seleccionado</p>
+              <h2>{{ statusLabel(record.status) }}</h2>
+              <p>{{ channelLabel(record.channel) }}</p>
+            </div>
+            <span class="nexa-chip nexa-chip--{{ statusTone(record.status) }}">{{
+              record.status
+            }}</span>
+          </div>
+          <div class="automation-row">
+            <span><app-icon name="shield" [size]="17" /></span>
+            <div>
+              <strong>Consentimiento</strong
+              ><small>{{
+                record.status === 'queued'
+                  ? 'Verificado al entrar en cola'
+                  : 'Se verificará antes de encolar'
+              }}</small>
+            </div>
+          </div>
+          <div class="automation-row">
+            <span><app-icon name="clock" [size]="17" /></span>
+            <div>
+              <strong>Creada</strong><small>{{ formatDate(record.createdAt) }}</small>
+            </div>
+          </div>
+          <div class="automation-row">
+            <span><app-icon name="eye" [size]="17" /></span>
+            <div>
+              <strong>Autor</strong><small>{{ record.authorDisplayName ?? 'No disponible' }}</small>
+            </div>
+          </div>
+          @if (record.status === 'draft') {
+            <button
+              mat-flat-button
+              class="nexa-btn-primary communication-action"
+              type="button"
+              [disabled]="saving()"
+              (click)="queue(record)"
+            >
+              {{ saving() ? 'Validando…' : 'Validar y añadir a cola' }}
+            </button>
+          }
+          @if (record.status !== 'cancelled') {
+            <button
+              mat-button
+              class="communication-action"
+              type="button"
+              [disabled]="saving()"
+              (click)="cancel(record)"
+            >
+              Cancelar comunicación
+            </button>
+          }
         } @else {
-          <div class="nexa-empty compact-empty"><div><span class="treatment-row__icon"><app-icon name="shield" /></span><h2>Sin selección</h2><p>Selecciona un registro para revisar su estado de cumplimiento.</p></div></div>
+          <div class="nexa-empty compact-empty">
+            <div>
+              <span class="treatment-row__icon"><app-icon name="shield" /></span>
+              <h2>Sin selección</h2>
+              <p>Selecciona un registro para revisar su estado de cumplimiento.</p>
+            </div>
+          </div>
         }
-        <div class="consent-health"><app-icon name="shield" [size]="18" /><span><strong>Límite de privacidad</strong><small>SMS y correo no admiten texto libre ni enlaces clínicos; se requieren consentimientos vigentes del canal.</small></span></div>
+        <div class="consent-health">
+          <app-icon name="shield" [size]="18" /><span
+            ><strong>Límite de privacidad</strong
+            ><small
+              >SMS y correo no admiten texto libre ni enlaces clínicos; se requieren consentimientos
+              vigentes del canal.</small
+            ></span
+          >
+        </div>
       </aside>
     </section>
   }
 </div>
 
 @if (composeOpen()) {
-  <div class="compose-backdrop" (click)="closeCompose()" (keydown.escape)="closeCompose()" tabindex="-1"></div>
-  <aside class="compose-panel" role="dialog" aria-modal="true" aria-labelledby="compose-title"><header><div><p class="nexa-eyebrow">Canal protegido</p><h2 id="compose-title">Nueva comunicación</h2></div><button mat-icon-button type="button" aria-label="Cerrar" [disabled]="saving()" (click)="closeCompose()"><app-icon name="close" /></button></header>
+  <div
+    class="compose-backdrop"
+    (click)="closeCompose()"
+    (keydown.escape)="closeCompose()"
+    tabindex="-1"
+  ></div>
+  <aside class="compose-panel" role="dialog" aria-modal="true" aria-labelledby="compose-title">
+    <header>
+      <div>
+        <p class="nexa-eyebrow">Canal protegido</p>
+        <h2 id="compose-title">Nueva comunicación</h2>
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Cerrar"
+        [disabled]="saving()"
+        (click)="closeCompose()"
+      >
+        <app-icon name="close" />
+      </button>
+    </header>
     <form [formGroup]="composeForm" class="compose-form">
-      <mat-form-field appearance="outline"><mat-label>Paciente autorizado</mat-label><mat-select formControlName="patientId">@for (patient of patients(); track patient.id) { <mat-option [value]="patient.id">{{ patient.displayName }} · {{ patient.ageRange }}</mat-option> }</mat-select><mat-error>Selecciona el paciente.</mat-error></mat-form-field>
-      <fieldset><legend>Canal</legend><button type="button" [class.is-selected]="currentChannel() === 'portal'" (click)="composeForm.controls.channel.setValue('portal')">Portal seguro</button><button type="button" [class.is-selected]="currentChannel() === 'sms'" (click)="composeForm.controls.channel.setValue('sms')">SMS</button><button type="button" [class.is-selected]="currentChannel() === 'email'" (click)="composeForm.controls.channel.setValue('email')">Correo</button></fieldset>
+      <mat-form-field appearance="outline"
+        ><mat-label>Paciente autorizado</mat-label
+        ><mat-select formControlName="patientId">
+          @for (patient of patients(); track patient.id) {
+            <mat-option [value]="patient.id"
+              >{{ patient.displayName }} · {{ patient.ageRange }}</mat-option
+            >
+          }</mat-select
+        ><mat-error>Selecciona el paciente.</mat-error></mat-form-field
+      >
+      <fieldset>
+        <legend>Canal</legend>
+        <button
+          type="button"
+          [class.is-selected]="currentChannel() === 'portal'"
+          (click)="composeForm.controls.channel.setValue('portal')"
+        >
+          Portal seguro</button
+        ><button
+          type="button"
+          [class.is-selected]="currentChannel() === 'sms'"
+          (click)="composeForm.controls.channel.setValue('sms')"
+        >
+          SMS</button
+        ><button
+          type="button"
+          [class.is-selected]="currentChannel() === 'email'"
+          (click)="composeForm.controls.channel.setValue('email')"
+        >
+          Correo
+        </button>
+      </fieldset>
       @if (!isExternalChannel()) {
-        <mat-form-field appearance="outline"><mat-label>Clasificación</mat-label><mat-select formControlName="contentClass"><mat-option value="administrative">Administrativa</mat-option>@if (canComposeClinical()) { <mat-option value="clinical_link">Enlace o aviso clínico dentro del portal</mat-option> }</mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Asunto</mat-label><input matInput maxlength="160" formControlName="subject" /><mat-error>Indica un asunto de al menos 3 caracteres.</mat-error></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Mensaje protegido</mat-label><textarea matInput rows="8" maxlength="4000" formControlName="body" placeholder="Contenido visible únicamente en el portal seguro…"></textarea><mat-hint>Se cifra antes de persistir y se registra en auditoría.</mat-hint><mat-error>Indica un mensaje de al menos 2 caracteres.</mat-error></mat-form-field>
+        <mat-form-field appearance="outline"
+          ><mat-label>Clasificación</mat-label
+          ><mat-select formControlName="contentClass"
+            ><mat-option value="administrative">Administrativa</mat-option>
+            @if (canComposeClinical()) {
+              <mat-option value="clinical_link"
+                >Enlace o aviso clínico dentro del portal</mat-option
+              >
+            }
+          </mat-select></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Asunto</mat-label
+          ><input matInput maxlength="160" formControlName="subject" /><mat-error
+            >Indica un asunto de al menos 3 caracteres.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Mensaje protegido</mat-label
+          ><textarea
+            matInput
+            rows="8"
+            maxlength="4000"
+            formControlName="body"
+            placeholder="Contenido visible únicamente en el portal seguro…"
+          ></textarea
+          ><mat-hint>Se cifra antes de persistir y se registra en auditoría.</mat-hint
+          ><mat-error>Indica un mensaje de al menos 2 caracteres.</mat-error></mat-form-field
+        >
       } @else {
-        <mat-form-field appearance="outline"><mat-label>Plantilla administrativa</mat-label><mat-select formControlName="templateKey">@for (template of externalTemplates; track template.key) { <mat-option [value]="template.key">{{ template.label }}</mat-option> }</mat-select><mat-error>Selecciona una plantilla.</mat-error></mat-form-field>
-        <div class="template-note"><app-icon name="shield" [size]="16" /> Solo se registrará una notificación genérica que invita a acceder al portal. No se transmite texto libre, resultados, tratamientos ni enlaces clínicos.</div>
+        <mat-form-field appearance="outline"
+          ><mat-label>Plantilla administrativa</mat-label
+          ><mat-select formControlName="templateKey">
+            @for (template of externalTemplates; track template.key) {
+              <mat-option [value]="template.key">{{ template.label }}</mat-option>
+            }</mat-select
+          ><mat-error>Selecciona una plantilla.</mat-error></mat-form-field
+        >
+        <div class="template-note">
+          <app-icon name="shield" [size]="16" /> Solo se registrará una notificación genérica que
+          invita a acceder al portal. No se transmite texto libre, resultados, tratamientos ni
+          enlaces clínicos.
+        </div>
       }
     </form>
-    <div class="channel-warning"><app-icon name="shield" [size]="17" /><span><strong>Verificación de cumplimiento</strong><small>Al añadir a cola, el servidor comprueba paciente activo, consentimiento vigente para este canal, límites de contenido, versión e idempotencia.</small></span></div>
-    <footer><button mat-stroked-button type="button" [disabled]="saving()" (click)="closeCompose()">Cancelar</button><button mat-stroked-button type="button" [disabled]="saving()" (click)="save('draft')">Guardar borrador</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="saving()" (click)="save('queue')">{{ saving() ? 'Validando…' : 'Añadir a cola segura' }}</button></footer>
+    <div class="channel-warning">
+      <app-icon name="shield" [size]="17" /><span
+        ><strong>Verificación de cumplimiento</strong
+        ><small
+          >Al añadir a cola, el servidor comprueba paciente activo, consentimiento vigente para este
+          canal, límites de contenido, versión e idempotencia.</small
+        ></span
+      >
+    </div>
+    <footer>
+      <button mat-stroked-button type="button" [disabled]="saving()" (click)="closeCompose()">
+        Cancelar</button
+      ><button mat-stroked-button type="button" [disabled]="saving()" (click)="save('draft')">
+        Guardar borrador</button
+      ><button
+        mat-flat-button
+        class="nexa-btn-primary"
+        type="button"
+        [disabled]="saving()"
+        (click)="save('queue')"
+      >
+        {{ saving() ? 'Validando…' : 'Añadir a cola segura' }}
+      </button>
+    </footer>
   </aside>
 }

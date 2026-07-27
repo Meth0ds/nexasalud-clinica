@@ -37,7 +37,11 @@ export interface PrescriptionRecord {
   readonly signedAt: string | null;
   readonly sentAt: string | null;
   readonly createdAt: string | null;
-  readonly safetyAlerts: readonly { readonly code: string; readonly label: string; readonly criticality: string }[];
+  readonly safetyAlerts: readonly {
+    readonly code: string;
+    readonly label: string;
+    readonly criticality: string;
+  }[];
   readonly items: readonly PrescriptionMedication[];
 }
 
@@ -83,7 +87,10 @@ export class PrescriptionApiService {
   private readonly api = inject(ApiClientService);
   private readonly http = inject(HttpClient);
 
-  list(): Observable<{ readonly prescriptions: readonly PrescriptionRecord[]; readonly total: number }> {
+  list(): Observable<{
+    readonly prescriptions: readonly PrescriptionRecord[];
+    readonly total: number;
+  }> {
     return this.api
       .get<PrescriptionCollection>('/api/v1/prescriptions', { params: { perPage: 100 } })
       .pipe(map((response) => ({ prescriptions: response.data, total: response.meta.total })));
@@ -104,7 +111,15 @@ export class PrescriptionApiService {
     options: { readonly reason?: string; readonly externalProviderReference?: string } = {},
   ): Observable<PrescriptionRecord> {
     return this.api
-      .post<ApiData<PrescriptionRecord>, { readonly version: number; readonly status: PrescriptionStatus; readonly reason?: string; readonly externalProviderReference?: string }>(
+      .post<
+        ApiData<PrescriptionRecord>,
+        {
+          readonly version: number;
+          readonly status: PrescriptionStatus;
+          readonly reason?: string;
+          readonly externalProviderReference?: string;
+        }
+      >(
         `/api/v1/prescriptions/${encodeURIComponent(id)}/transition`,
         { version, status, ...options },
         { idempotencyKey: idempotencyKey() },
@@ -125,11 +140,18 @@ export class PrescriptionApiService {
   downloadDocument(downloadPath: string): Observable<DownloadedDocument> {
     const context = new HttpContext().set(SILENT_HTTP_ERROR, true);
     return this.http
-      .get(downloadPath, { context, observe: 'response', responseType: 'blob', withCredentials: true })
-      .pipe(map((response: HttpResponse<Blob>) => ({
-        blob: response.body ?? new Blob([], { type: 'application/pdf' }),
-        filename: filenameFromDisposition(response.headers.get('content-disposition')),
-      })));
+      .get(downloadPath, {
+        context,
+        observe: 'response',
+        responseType: 'blob',
+        withCredentials: true,
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) => ({
+          blob: response.body ?? new Blob([], { type: 'application/pdf' }),
+          filename: filenameFromDisposition(response.headers.get('content-disposition')),
+        })),
+      );
   }
 }
 

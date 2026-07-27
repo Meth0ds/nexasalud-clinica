@@ -58,12 +58,17 @@ describe('AppointmentsService', () => {
     expect(request.request.headers.has('Idempotency-Key')).toBe(true);
     request.flush({ data: appointment });
 
-    await expect(result).resolves.toMatchObject({ id: appointment.id, version: appointment.version });
+    await expect(result).resolves.toMatchObject({
+      id: appointment.id,
+      version: appointment.version,
+    });
   });
 
   it('generates and downloads appointment confirmations through protected document endpoints', async () => {
     const result = firstValueFrom(service.downloadAppointmentConfirmation(appointment.id));
-    const generationRequest = http.expectOne(`/api/v1/appointments/${appointment.id}/documents/confirmation`);
+    const generationRequest = http.expectOne(
+      `/api/v1/appointments/${appointment.id}/documents/confirmation`,
+    );
     expect(generationRequest.request.method).toBe('POST');
     expect(generationRequest.request.headers.has('Idempotency-Key')).toBe(true);
     generationRequest.flush({ data: { downloadPath: '/api/v1/documents/document-1/download' } });

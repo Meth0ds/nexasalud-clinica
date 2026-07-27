@@ -11,6 +11,7 @@ class RescheduleAppointmentRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $appointment = $this->route('appointment');
+
         return $appointment instanceof Appointment && $this->authenticatedUser()->can('update', $appointment);
     }
 

@@ -54,7 +54,7 @@
   align-items: center;
   gap: 8px;
 }
-.demo-pill {
+.portal-security-pill {
   display: inline-flex;
   align-items: center;
   min-height: 29px;
@@ -68,7 +68,7 @@
   font-size: 0.57rem;
   font-weight: 700;
 }
-.demo-pill i {
+.portal-security-pill i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -155,7 +155,7 @@
 .view-heading .nexa-btn-secondary {
   flex: 0 0 auto;
 }
-.demo-data-label,
+.portal-data-label,
 .security-grade {
   display: inline-flex;
   align-items: center;

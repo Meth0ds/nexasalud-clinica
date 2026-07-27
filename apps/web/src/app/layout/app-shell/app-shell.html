@@ -1,3 +1,5 @@
+<a class="nexa-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+
 <mat-sidenav-container class="nexa-shell">
   <mat-sidenav
     #drawer
@@ -7,9 +9,7 @@
     [fixedInViewport]="compact()"
   >
     <div class="nexa-brand">
-      <span class="nexa-brand__mark" aria-hidden="true">
-        <i></i><i></i>
-      </span>
+      <span class="nexa-brand__mark" aria-hidden="true"> <i></i><i></i> </span>
       <span>
         <strong>NexaSalud</strong>
         <small>Espacio clínico</small>
@@ -21,19 +21,15 @@
       }
     </div>
 
-    <button class="clinic-switch" type="button" [matMenuTriggerFor]="clinicMenu">
-      <span class="clinic-switch__symbol">CM</span>
+    <div class="clinic-switch" aria-label="Centro activo">
+      <span class="clinic-switch__symbol">{{
+        session.tenant()?.clinicName?.slice(0, 2) ?? '—'
+      }}</span>
       <span>
         <small>Centro activo</small>
-        <strong>{{ session.tenant()?.clinicName ?? 'Clínica Mirador' }}</strong>
+        <strong>{{ session.tenant()?.clinicName ?? 'Contexto no disponible' }}</strong>
       </span>
-      <app-icon name="chevron" [size]="15" />
-    </button>
-    <mat-menu #clinicMenu="matMenu">
-      <button mat-menu-item>Clínica Mirador · Centro</button>
-      <button mat-menu-item>Clínica Mirador · Norte</button>
-      <button mat-menu-item>Gestionar centros</button>
-    </mat-menu>
+    </div>
 
     <nav class="nexa-nav" aria-label="Navegación principal">
       <p class="nexa-nav__label">Asistencia</p>
@@ -46,7 +42,6 @@
         >
           <app-icon [name]="item.icon" [size]="19" />
           <span>{{ item.label }}</span>
-          @if (item.badge) { <small>{{ item.badge }}</small> }
         </a>
       }
 
@@ -73,9 +68,8 @@
       <span class="security-status__icon"><app-icon name="shield" [size]="18" /></span>
       <span>
         <strong>Sesión protegida</strong>
-        <small>MFA · cifrado activo</small>
+        <small>{{ assuranceLabel() }} · cifrado activo</small>
       </span>
-      <i title="Conexión segura"></i>
     </div>
   </mat-sidenav>
 
@@ -87,32 +81,29 @@
             <app-icon name="menu" />
           </button>
         }
-        <button class="command-search" type="button" aria-label="Abrir búsqueda global">
-          <app-icon name="search" [size]="18" />
-          <span>Buscar paciente, cita o acción…</span>
-          <kbd>⌘ K</kbd>
-        </button>
       </div>
 
       <div class="nexa-topbar__actions">
-        <span class="nexa-today">{{ today | date: "EEEE, d 'de' MMMM" : undefined : 'es-ES' }}</span>
+        <span class="nexa-today">{{
+          today | date: "EEEE, d 'de' MMMM" : undefined : 'es-ES'
+        }}</span>
         <button
           mat-icon-button
           class="nexa-icon-button"
-          [matTooltip]="preferences.effectiveTheme() === 'dark' ? 'Usar modo claro' : 'Usar modo oscuro'"
+          [matTooltip]="
+            preferences.effectiveTheme() === 'dark' ? 'Usar modo claro' : 'Usar modo oscuro'
+          "
           (click)="preferences.toggleTheme()"
         >
           <app-icon [name]="preferences.effectiveTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" />
         </button>
-        <button mat-icon-button class="nexa-icon-button notification-button" aria-label="Notificaciones">
-          <app-icon name="bell" [size]="18" />
-          <i aria-label="3 notificaciones nuevas"></i>
-        </button>
         <button class="profile-button" type="button" [matMenuTriggerFor]="profileMenu">
           <span class="nexa-avatar">{{ userInitials() }}</span>
           <span class="profile-button__copy">
-            <strong>{{ session.user()?.displayName ?? 'Dra. Elena Soler' }}</strong>
-            <small>{{ session.user()?.professionalTitle ?? 'Medicina familiar' }}</small>
+            <strong>{{ session.user()?.displayName ?? 'Sesión en verificación' }}</strong>
+            <small>{{
+              session.user()?.professionalTitle ?? 'Contexto profesional no disponible'
+            }}</small>
           </span>
           <app-icon name="chevron" [size]="14" />
         </button>

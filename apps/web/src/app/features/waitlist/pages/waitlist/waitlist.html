@@ -1,39 +1,274 @@
 <div class="nexa-page waitlist-page">
   <header class="nexa-page__heading" appScrollReveal>
-    <div><p class="nexa-eyebrow">Acceso y capacidad</p><h1>Lista de espera</h1><p class="nexa-page__subtitle">Solicitudes reales del centro activo, ordenadas por prioridad clínica y antigüedad. Cada cambio queda auditado.</p></div>
-    <div class="nexa-page__actions"><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="load()"><app-icon name="arrow" [size]="17" /> Actualizar</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="loading()" (click)="openCreate()"><app-icon name="plus" [size]="17" /> Añadir solicitud</button></div>
+    <div>
+      <p class="nexa-eyebrow">Acceso y capacidad</p>
+      <h1>Lista de espera</h1>
+      <p class="nexa-page__subtitle">
+        Solicitudes reales del centro activo, ordenadas por prioridad clínica y antigüedad. Cada
+        cambio queda auditado.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="load()">
+        <app-icon name="arrow" [size]="17" /> Actualizar</button
+      ><button
+        mat-flat-button
+        class="nexa-btn-primary"
+        type="button"
+        [disabled]="loading()"
+        (click)="openCreate()"
+      >
+        <app-icon name="plus" [size]="17" /> Añadir solicitud
+      </button>
+    </div>
   </header>
 
   @if (loading()) {
-    <section class="waitlist-loading nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Cargando lista de espera autorizada…</span></section>
+    <section class="waitlist-loading nexa-card" aria-live="polite">
+      <mat-spinner diameter="34" /><span>Cargando lista de espera autorizada…</span>
+    </section>
   } @else if (errorMessage(); as error) {
-    <section class="waitlist-error nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>Lista de espera no disponible</strong><p>{{ error }}</p></div></section>
+    <section class="waitlist-error nexa-card" role="alert">
+      <app-icon name="shield" [size]="22" />
+      <div>
+        <strong>Lista de espera no disponible</strong>
+        <p>{{ error }}</p>
+      </div>
+    </section>
   } @else {
     <section class="nexa-grid nexa-grid--4 queue-summary" appScrollReveal>
-      <article class="nexa-card"><small>En espera</small><strong>{{ waitingCount() }}</strong><p>Solicitudes pendientes</p></article>
-      <article class="nexa-card"><small>Prioridad clínica</small><strong>{{ clinicalPriorityCount() }}</strong><p>Prioridad 1 o 2</p></article>
-      <article class="nexa-card"><small>Espera mediana</small><strong>{{ medianWaitingDays() }} días</strong><p>Solicitudes pendientes</p></article>
-      <article class="nexa-card"><small>Ofertas temporales</small><strong>{{ offeredCount() }}</strong><p>Requieren seguimiento</p></article>
+      <article class="nexa-card">
+        <small>En espera</small><strong>{{ waitingCount() }}</strong>
+        <p>Solicitudes pendientes</p>
+      </article>
+      <article class="nexa-card">
+        <small>Prioridad clínica</small><strong>{{ clinicalPriorityCount() }}</strong>
+        <p>Prioridad 1 o 2</p>
+      </article>
+      <article class="nexa-card">
+        <small>Espera mediana</small><strong>{{ medianWaitingDays() }} días</strong>
+        <p>Solicitudes pendientes</p>
+      </article>
+      <article class="nexa-card">
+        <small>Ofertas temporales</small><strong>{{ offeredCount() }}</strong>
+        <p>Requieren seguimiento</p>
+      </article>
     </section>
 
     <section class="waitlist-layout nexa-section">
       <article class="nexa-card queue-list" appScrollReveal>
-        <div class="nexa-card__header"><div><h2>Solicitudes activas</h2><p>El servidor limita los resultados al tenant y permisos actuales.</p></div><label class="nexa-search"><app-icon name="search" [size]="16" /><input type="search" placeholder="Buscar paciente autorizado" [value]="searchTerm()" (input)="setSearch($any($event.target).value)" /></label></div>
+        <div class="nexa-card__header">
+          <div>
+            <h2>Solicitudes activas</h2>
+            <p>El servidor limita los resultados al tenant y permisos actuales.</p>
+          </div>
+          <label class="nexa-search"
+            ><app-icon name="search" [size]="16" /><input
+              type="search"
+              placeholder="Buscar paciente autorizado"
+              [value]="searchTerm()"
+              (input)="setSearch($any($event.target).value)"
+          /></label>
+        </div>
         @for (entry of filteredEntries(); track entry.id) {
-          <button class="queue-row" type="button" [class.is-selected]="selectedId() === entry.id" (click)="select(entry)">
-            <span class="priority-line priority-line--{{ priorityTone(entry.priority) }}"></span><span class="nexa-avatar">{{ entry.patientInitials }}</span><span class="queue-person"><strong>{{ entry.patientDisplayName }}</strong><small>{{ entry.requestedType ?? 'Tipo asistencial no disponible' }}</small></span><span class="queue-preference"><app-icon name="calendar" [size]="14" /> {{ windowLabel(entry) }}</span><span><small>En espera</small><strong>{{ waitingLabel(entry.waitingSince) }}</strong></span><span class="nexa-chip nexa-chip--{{ priorityTone(entry.priority) }}">{{ priorityLabel(entry.priority) }}</span><span class="nexa-chip nexa-chip--{{ statusTone(entry.status) }}">{{ statusLabel(entry.status) }}</span><app-icon name="chevron" [size]="15" />
+          <button
+            class="queue-row"
+            type="button"
+            [class.is-selected]="selectedId() === entry.id"
+            (click)="select(entry)"
+          >
+            <span class="priority-line priority-line--{{ priorityTone(entry.priority) }}"></span
+            ><span class="nexa-avatar">{{ entry.patientInitials }}</span
+            ><span class="queue-person"
+              ><strong>{{ entry.patientDisplayName }}</strong
+              ><small>{{ entry.requestedType ?? 'Tipo asistencial no disponible' }}</small></span
+            ><span class="queue-preference"
+              ><app-icon name="calendar" [size]="14" /> {{ windowLabel(entry) }}</span
+            ><span
+              ><small>En espera</small><strong>{{ waitingLabel(entry.waitingSince) }}</strong></span
+            ><span class="nexa-chip nexa-chip--{{ priorityTone(entry.priority) }}">{{
+              priorityLabel(entry.priority)
+            }}</span
+            ><span class="nexa-chip nexa-chip--{{ statusTone(entry.status) }}">{{
+              statusLabel(entry.status)
+            }}</span
+            ><app-icon name="chevron" [size]="15" />
           </button>
-        } @empty { <div class="nexa-empty"><div><span class="treatment-row__icon"><app-icon name="calendar" /></span><h2>Sin solicitudes activas</h2><p>Las nuevas solicitudes autorizadas aparecerán aquí con su prioridad y ventana de atención.</p><button mat-flat-button class="nexa-btn-primary" type="button" (click)="openCreate()">Crear solicitud</button></div></div> }
+        } @empty {
+          <div class="nexa-empty">
+            <div>
+              <span class="treatment-row__icon"><app-icon name="calendar" /></span>
+              <h2>Sin solicitudes activas</h2>
+              <p>
+                Las nuevas solicitudes autorizadas aparecerán aquí con su prioridad y ventana de
+                atención.
+              </p>
+              <button mat-flat-button class="nexa-btn-primary" type="button" (click)="openCreate()">
+                Crear solicitud
+              </button>
+            </div>
+          </div>
+        }
       </article>
 
       @if (selected(); as entry) {
-        <aside class="match-panel nexa-card" appScrollReveal [revealDelay]="90"><div class="match-panel__top"><span><app-icon name="spark" [size]="22" /></span><div><p class="nexa-eyebrow">Solicitud seleccionada</p><h2>{{ entry.requestedType ?? 'Atención pendiente' }}</h2></div></div><p class="match-label">No se muestra ni reserva ningún hueco ficticio: las ofertas son transiciones auditadas del servidor.</p><dl><div><dt>Ventana solicitada</dt><dd>{{ windowLabel(entry) }}</dd></div><div><dt>Prioridad</dt><dd>{{ priorityLabel(entry.priority) }}</dd></div><div><dt>Estado</dt><dd>{{ statusLabel(entry.status) }}</dd></div><div><dt>Referencia</dt><dd>{{ entry.id }}</dd></div></dl><div class="match-reasons"><span><app-icon name="check" [size]="14" /> Permisos del centro verificados</span><span><app-icon name="check" [size]="14" /> Control optimista de versión</span><span><app-icon name="check" [size]="14" /> Operación idempotente</span></div><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="entry.status !== 'waiting' || saving()" (click)="offer(entry)">{{ saving() ? 'Registrando…' : entry.status === 'waiting' ? 'Registrar oferta temporal' : 'Oferta ya registrada' }}</button><p class="hold-note"><app-icon name="clock" [size]="14" /> La oferta vence en 20 minutos. Comunícala solo por el canal autorizado del paciente.</p></aside>
+        <aside class="match-panel nexa-card" appScrollReveal [revealDelay]="90">
+          <div class="match-panel__top">
+            <span><app-icon name="spark" [size]="22" /></span>
+            <div>
+              <p class="nexa-eyebrow">Solicitud seleccionada</p>
+              <h2>{{ entry.requestedType ?? 'Atención pendiente' }}</h2>
+            </div>
+          </div>
+          <p class="match-label">
+            No se muestra ni reserva ningún hueco ficticio: las ofertas son transiciones auditadas
+            del servidor.
+          </p>
+          <dl>
+            <div>
+              <dt>Ventana solicitada</dt>
+              <dd>{{ windowLabel(entry) }}</dd>
+            </div>
+            <div>
+              <dt>Prioridad</dt>
+              <dd>{{ priorityLabel(entry.priority) }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ statusLabel(entry.status) }}</dd>
+            </div>
+            <div>
+              <dt>Referencia</dt>
+              <dd>{{ entry.id }}</dd>
+            </div>
+          </dl>
+          <div class="match-reasons">
+            <span><app-icon name="check" [size]="14" /> Permisos del centro verificados</span
+            ><span><app-icon name="check" [size]="14" /> Control optimista de versión</span
+            ><span><app-icon name="check" [size]="14" /> Operación idempotente</span>
+          </div>
+          <button
+            mat-flat-button
+            class="nexa-btn-primary"
+            type="button"
+            [disabled]="entry.status !== 'waiting' || saving()"
+            (click)="offer(entry)"
+          >
+            {{
+              saving()
+                ? 'Registrando…'
+                : entry.status === 'waiting'
+                  ? 'Registrar oferta temporal'
+                  : 'Oferta ya registrada'
+            }}
+          </button>
+          <p class="hold-note">
+            <app-icon name="clock" [size]="14" /> La oferta vence en 20 minutos. Comunícala solo por
+            el canal autorizado del paciente.
+          </p>
+        </aside>
       }
     </section>
   }
 </div>
 
 @if (creating()) {
-  <div class="waitlist-backdrop" (click)="closeCreate()" (keydown.escape)="closeCreate()" tabindex="-1"></div>
-  <aside class="waitlist-editor" role="dialog" aria-modal="true" aria-labelledby="waitlist-editor-title"><header><div><p class="nexa-eyebrow">Planificación asistencial</p><h2 id="waitlist-editor-title">Nueva solicitud</h2></div><button mat-icon-button type="button" aria-label="Cerrar" [disabled]="saving()" (click)="closeCreate()"><app-icon name="close" /></button></header><p>Se guarda únicamente en el tenant seleccionado y queda disponible para el equipo autorizado.</p><form [formGroup]="createForm"><mat-form-field appearance="outline"><mat-label>Paciente autorizado</mat-label><mat-select formControlName="patientId">@for (patient of patients(); track patient.id) { <mat-option [value]="patient.id">{{ patient.displayName }} · {{ patient.ageRange }}</mat-option> }</mat-select><mat-error>Selecciona un paciente.</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Centro</mat-label><mat-select formControlName="clinicId">@for (clinic of referenceData()?.clinics ?? []; track clinic.id) { <mat-option [value]="clinic.id">{{ clinic.name }}</mat-option> }</mat-select><mat-error>Selecciona el centro.</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Tipo de atención</mat-label><mat-select formControlName="appointmentTypeId">@for (type of referenceData()?.appointmentTypes ?? []; track type.id) { <mat-option [value]="type.id">{{ type.name }}</mat-option> }</mat-select><mat-error>Selecciona el tipo asistencial.</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Prioridad clínica</mat-label><mat-select formControlName="priority"><mat-option [value]="1">1 · Urgente</mat-option><mat-option [value]="2">2 · Prioridad clínica</mat-option><mat-option [value]="3">3 · Ordinaria</mat-option><mat-option [value]="4">4 · Ordinaria diferible</mat-option><mat-option [value]="5">5 · Baja prioridad</mat-option></mat-select></mat-form-field><mat-form-field appearance="outline"><mat-label>Desde</mat-label><input matInput type="datetime-local" formControlName="desiredFrom" /><mat-error>Indica el inicio de la ventana.</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Hasta</mat-label><input matInput type="datetime-local" formControlName="desiredTo" /><mat-error>Indica el fin de la ventana.</mat-error></mat-form-field><mat-form-field class="waitlist-editor__notes" appearance="outline"><mat-label>Nota operativa</mat-label><textarea matInput rows="3" maxlength="500" formControlName="notes" placeholder="Preferencias operativas; no repitas datos clínicos innecesarios."></textarea></mat-form-field></form><footer><button mat-stroked-button type="button" [disabled]="saving()" (click)="closeCreate()">Cancelar</button><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="saving()" (click)="create()">{{ saving() ? 'Guardando…' : 'Guardar solicitud' }}</button></footer></aside>
+  <div
+    class="waitlist-backdrop"
+    (click)="closeCreate()"
+    (keydown.escape)="closeCreate()"
+    tabindex="-1"
+  ></div>
+  <aside
+    class="waitlist-editor"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="waitlist-editor-title"
+  >
+    <header>
+      <div>
+        <p class="nexa-eyebrow">Planificación asistencial</p>
+        <h2 id="waitlist-editor-title">Nueva solicitud</h2>
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Cerrar"
+        [disabled]="saving()"
+        (click)="closeCreate()"
+      >
+        <app-icon name="close" />
+      </button>
+    </header>
+    <p>
+      Se guarda únicamente en el tenant seleccionado y queda disponible para el equipo autorizado.
+    </p>
+    <form [formGroup]="createForm">
+      <mat-form-field appearance="outline"
+        ><mat-label>Paciente autorizado</mat-label
+        ><mat-select formControlName="patientId">
+          @for (patient of patients(); track patient.id) {
+            <mat-option [value]="patient.id"
+              >{{ patient.displayName }} · {{ patient.ageRange }}</mat-option
+            >
+          }</mat-select
+        ><mat-error>Selecciona un paciente.</mat-error></mat-form-field
+      ><mat-form-field appearance="outline"
+        ><mat-label>Centro</mat-label
+        ><mat-select formControlName="clinicId">
+          @for (clinic of referenceData()?.clinics ?? []; track clinic.id) {
+            <mat-option [value]="clinic.id">{{ clinic.name }}</mat-option>
+          }</mat-select
+        ><mat-error>Selecciona el centro.</mat-error></mat-form-field
+      ><mat-form-field appearance="outline"
+        ><mat-label>Tipo de atención</mat-label
+        ><mat-select formControlName="appointmentTypeId">
+          @for (type of referenceData()?.appointmentTypes ?? []; track type.id) {
+            <mat-option [value]="type.id">{{ type.name }}</mat-option>
+          }</mat-select
+        ><mat-error>Selecciona el tipo asistencial.</mat-error></mat-form-field
+      ><mat-form-field appearance="outline"
+        ><mat-label>Prioridad clínica</mat-label
+        ><mat-select formControlName="priority"
+          ><mat-option [value]="1">1 · Urgente</mat-option
+          ><mat-option [value]="2">2 · Prioridad clínica</mat-option
+          ><mat-option [value]="3">3 · Ordinaria</mat-option
+          ><mat-option [value]="4">4 · Ordinaria diferible</mat-option
+          ><mat-option [value]="5">5 · Baja prioridad</mat-option></mat-select
+        ></mat-form-field
+      ><mat-form-field appearance="outline"
+        ><mat-label>Desde</mat-label
+        ><input matInput type="datetime-local" formControlName="desiredFrom" /><mat-error
+          >Indica el inicio de la ventana.</mat-error
+        ></mat-form-field
+      ><mat-form-field appearance="outline"
+        ><mat-label>Hasta</mat-label
+        ><input matInput type="datetime-local" formControlName="desiredTo" /><mat-error
+          >Indica el fin de la ventana.</mat-error
+        ></mat-form-field
+      ><mat-form-field class="waitlist-editor__notes" appearance="outline"
+        ><mat-label>Nota operativa</mat-label
+        ><textarea
+          matInput
+          rows="3"
+          maxlength="500"
+          formControlName="notes"
+          placeholder="Preferencias operativas; no repitas datos clínicos innecesarios."
+        ></textarea>
+      </mat-form-field>
+    </form>
+    <footer>
+      <button mat-stroked-button type="button" [disabled]="saving()" (click)="closeCreate()">
+        Cancelar</button
+      ><button
+        mat-flat-button
+        class="nexa-btn-primary"
+        type="button"
+        [disabled]="saving()"
+        (click)="create()"
+      >
+        {{ saving() ? 'Guardando…' : 'Guardar solicitud' }}
+      </button>
+    </footer>
+  </aside>
 }

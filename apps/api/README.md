@@ -1,58 +1,44 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# NexaSalud API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel API and BFF for the NexaSalud clinical platform. It is tenant-scoped and is designed to protect patient information through server-side authorization, encrypted fields, append-only audit records, idempotent mutations and an OIDC BFF session.
 
-## About Laravel
+## Local development
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The supported local stack is defined at the repository root and includes PostgreSQL, Redis, Keycloak, Mailpit, the API gateway and Angular web application.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```powershell
+docker compose --env-file infra/.env -f infra/compose.yaml up -d --build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The local compose file is for development only. It must not be exposed to the Internet or promoted as a production deployment.
 
-## Contributing
+## Verification
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Run commands inside the API container so that PHP extensions and versions match the application image.
 
-## Code of Conduct
+```powershell
+docker compose --env-file infra/.env -f infra/compose.yaml exec -T api php artisan test
+docker compose --env-file infra/.env -f infra/compose.yaml exec -T api vendor/bin/pint --test
+docker compose --env-file infra/.env -f infra/compose.yaml exec -T api composer audit --locked --no-dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Architecture and safety boundaries
 
-## Security Vulnerabilities
+- OIDC authentication uses PKCE, `state`, nonce validation, token validation and a server-side encrypted session.
+- API resources resolve a fail-closed active tenant and enforce policies server-side.
+- Sensitive mutations use optimistic versions and idempotency keys where applicable.
+- Patient and clinical fields are encrypted; sensitive reads and writes are audited without storing content in audit metadata.
+- Errors use RFC 9457 problem documents and an `X-Trace-Id` correlation value.
+- `CommunicationQueued` is a post-commit event. Its queue listener uses retry, backoff, overlap protection and safe operational logging; it never carries message content or PHI.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Read [backend conventions](docs/BACKEND_CONVENTIONS.md) before adding controllers, services, events, jobs or listeners.
 
-## License
+## Patient portal messages
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`GET /api/v1/portal/messages` returns only queued `portal` communications addressed to the authenticated user's verified patient link. The response is limited to 100 records, includes the encrypted subject and body only after ownership is established, and records `portal.messages_viewed` without message content in audit metadata.
+
+The endpoint is read-only. Reply composition, attachments, staff assignment, delivery confirmation and service-level workflows require a separate approved communications design; they must not be implied by this inbox.
+
+## Production status
+
+The product is not production-ready yet. The authoritative gap analysis and delivery backlog are maintained in the repository-level [preproduction report](../../INFORME_PREPRODUCCION.md) and [master plan](../../PLAN_MAESTRO.md).

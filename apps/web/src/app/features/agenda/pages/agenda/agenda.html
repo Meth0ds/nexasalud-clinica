@@ -3,22 +3,36 @@
     <div>
       <p class="nexa-eyebrow">Coordinación asistencial</p>
       <h1>Agenda clínica</h1>
-      <p class="nexa-page__subtitle">Profesionales, salas y contexto del paciente en una sola cinta de trabajo.</p>
+      <p class="nexa-page__subtitle">
+        Profesionales, salas y contexto del paciente en una sola cinta de trabajo.
+      </p>
     </div>
     <div class="nexa-page__actions">
-      <button mat-stroked-button class="nexa-btn-secondary"><app-icon name="filter" [size]="17" /> Filtros</button>
-      <button mat-flat-button class="nexa-btn-primary" (click)="openCreate()"><app-icon name="plus" [size]="17" /> Nueva cita</button>
+      <button mat-flat-button class="nexa-btn-primary" (click)="openCreate()">
+        <app-icon name="plus" [size]="17" /> Nueva cita
+      </button>
     </div>
   </header>
 
   <section class="agenda-toolbar nexa-card nexa-card--flat" appScrollReveal>
     <div class="date-navigation">
-      <button mat-icon-button aria-label="Día anterior"><app-icon name="chevron" [size]="18" class="rotate-180" /></button>
-      <button mat-stroked-button class="today-button">Hoy</button>
-      <button mat-icon-button aria-label="Día siguiente"><app-icon name="chevron" [size]="18" /></button>
-      <div><strong>Domingo, 19 de julio</strong><small>Semana 29 · {{ appointments().length }} citas programadas</small></div>
+      <button mat-icon-button aria-label="Periodo anterior" (click)="movePeriod(-1)">
+        <app-icon name="chevron" [size]="18" class="rotate-180" />
+      </button>
+      <button mat-stroked-button class="today-button" (click)="goToToday()">Hoy</button>
+      <button mat-icon-button aria-label="Periodo siguiente" (click)="movePeriod(1)">
+        <app-icon name="chevron" [size]="18" />
+      </button>
+      <div>
+        <strong>{{ headingDate() }}</strong
+        ><small>{{ periodSummary() }}</small>
+      </div>
     </div>
-    <mat-button-toggle-group [value]="view()" aria-label="Vista de agenda" hideSingleSelectionIndicator>
+    <mat-button-toggle-group
+      [value]="view()"
+      aria-label="Vista de agenda"
+      hideSingleSelectionIndicator
+    >
       <mat-button-toggle value="day" (click)="setView('day')">Día</mat-button-toggle>
       <mat-button-toggle value="week" (click)="setView('week')">Semana</mat-button-toggle>
       <mat-button-toggle value="month" (click)="setView('month')">Mes</mat-button-toggle>
@@ -28,35 +42,68 @@
   <section class="agenda-workspace nexa-section" [class.has-inspector]="selected()">
     <aside class="agenda-filters nexa-card nexa-card--flat" appScrollReveal>
       <div class="filter-section">
-        <p>Profesionales <span>{{ practitioners().length }}</span></p>
+        <p>
+          Profesionales disponibles <span>{{ practitioners().length }}</span>
+        </p>
         @for (practitioner of practitioners(); track practitioner.id) {
-          <label><input type="checkbox" checked /><span class="filter-dot filter-dot--{{ practitioner.tone }}"></span><span><strong>{{ practitioner.name }}</strong><small>{{ practitioner.role }}</small></span></label>
+          <div class="filter-item">
+            <span class="filter-dot filter-dot--{{ practitioner.tone }}"></span
+            ><span
+              ><strong>{{ practitioner.name }}</strong
+              ><small>{{ practitioner.role }}</small></span
+            >
+          </div>
         }
       </div>
       <div class="filter-section">
-        <p>Salas y recursos</p>
+        <p>Salas registradas</p>
         @for (room of rooms(); track room.id) {
-          <label><input type="checkbox" checked /><app-icon name="location" [size]="15" /><span><strong>{{ room.name }}</strong><small>Disponibilidad calculada en servidor</small></span></label>
+          <div class="filter-item filter-item--room">
+            <app-icon name="location" [size]="15" /><span
+              ><strong>{{ room.name }}</strong
+              ><small>Recurso configurado</small></span
+            >
+          </div>
         }
       </div>
-      <div class="availability-hint"><app-icon name="spark" [size]="17" /><span><strong>Siguiente hueco</strong><small>12:30 · 30 min · Dra. Soler</small></span></div>
     </aside>
 
     <div class="calendar-card nexa-card" appScrollReveal [revealDelay]="80">
+      @if (agendaError(); as message) {
+        <div class="agenda-feedback" role="alert">
+          <span>{{ message }}</span
+          ><button mat-button (click)="retryLoad()">Reintentar</button>
+        </div>
+      }
       @if (view() === 'day') {
         <div class="calendar-header">
-          <div class="timezone">UTC+2</div>
+          <div class="timezone">{{ timezone() }}</div>
           @for (practitioner of practitioners(); track practitioner.id) {
-            <div class="practitioner-head"><span class="nexa-avatar">{{ practitioner.initials }}</span><span><strong>{{ practitioner.name }}</strong><small>{{ practitioner.role }}</small></span><i></i></div>
+            <div class="practitioner-head">
+              <span class="nexa-avatar">{{ practitioner.initials }}</span
+              ><span
+                ><strong>{{ practitioner.name }}</strong
+                ><small>{{ practitioner.role }}</small></span
+              ><i></i>
+            </div>
           }
         </div>
         <div class="calendar-body">
           <div class="time-column">
-            @for (hour of hours; track hour) { <time>{{ hour.toString().padStart(2, '0') }}:00</time> }
+            @for (hour of hours; track hour) {
+              <time>{{ hour.toString().padStart(2, '0') }}:00</time>
+            }
           </div>
           <div class="schedule-grid">
-            @for (hour of hours; track hour) { <div class="hour-line" [style.top.px]="$index * 75"><span></span><i></i></div> }
-            <div class="current-time" [style.top.px]="112"><span>09:30</span><i></i></div>
+            @for (hour of hours; track hour) {
+              <div class="hour-line" [style.top.px]="$index * 75"><span></span><i></i></div>
+            }
+            @if (isToday()) {
+              <div class="current-time" [style.top.px]="currentTimeTop()">
+                <span>{{ currentTimeLabel() }}</span
+                ><i></i>
+              </div>
+            }
             @for (appointment of appointments(); track appointment.id) {
               <article
                 class="calendar-event calendar-event--{{ appointment.tone }}"
@@ -68,15 +115,43 @@
                 (click)="select(appointment)"
                 (keydown.enter)="select(appointment)"
               >
-                <div class="calendar-event__top"><time>{{ appointment.start }}</time><span>{{ appointment.duration }} min</span><button mat-icon-button [matMenuTriggerFor]="eventMenu" aria-label="Acciones de cita" (click)="$event.stopPropagation()"><app-icon name="more" [size]="14" /></button></div>
+                <div class="calendar-event__top">
+                  <time>{{ appointment.start }}</time
+                  ><span>{{ appointment.duration }} min</span
+                  ><button
+                    mat-icon-button
+                    [matMenuTriggerFor]="eventMenu"
+                    aria-label="Acciones de cita"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <app-icon name="more" [size]="14" />
+                  </button>
+                </div>
                 <strong>{{ appointment.patient }}</strong>
                 <small>{{ appointment.type }}</small>
-                @if (appointment.duration >= 30) { <span class="calendar-event__place"><app-icon [name]="appointment.mode === 'video' ? 'video' : appointment.mode === 'phone' ? 'phone' : 'location'" [size]="12" /> {{ appointment.room }}</span> }
-                @if (appointment.alerts.length && appointment.duration >= 40) { <span class="calendar-event__alert">{{ appointment.alerts[0] }}</span> }
+                @if (appointment.duration >= 30) {
+                  <span class="calendar-event__place"
+                    ><app-icon
+                      [name]="
+                        appointment.mode === 'video'
+                          ? 'video'
+                          : appointment.mode === 'phone'
+                            ? 'phone'
+                            : 'location'
+                      "
+                      [size]="12"
+                    />
+                    {{ appointment.room }}</span
+                  >
+                }
                 <mat-menu #eventMenu="matMenu">
                   <button mat-menu-item (click)="openEdit(appointment)">Editar detalles</button>
-                  <button mat-menu-item (click)="openEdit(appointment, 'reschedule')">Cambiar fecha u hora</button>
-                  <button mat-menu-item (click)="downloadConfirmation(appointment)">Descargar justificante PDF</button>
+                  <button mat-menu-item (click)="openEdit(appointment, 'reschedule')">
+                    Cambiar fecha u hora
+                  </button>
+                  <button mat-menu-item (click)="downloadConfirmation(appointment)">
+                    Descargar justificante PDF
+                  </button>
                   <button mat-menu-item (click)="cancel(appointment)">Cancelar cita</button>
                 </mat-menu>
               </article>
@@ -85,36 +160,83 @@
         </div>
       } @else {
         <div class="alternate-view">
-          <span class="alternate-view__icon"><app-icon [name]="view() === 'week' ? 'calendar' : 'chart'" [size]="27" /></span>
+          <span class="alternate-view__icon"
+            ><app-icon [name]="view() === 'week' ? 'calendar' : 'chart'" [size]="27"
+          /></span>
           <h2>Vista de {{ view() === 'week' ? 'semana' : 'mes' }}</h2>
-          <p>Resumen de capacidad, guardias, ausencias y disponibilidad por centro.</p>
+          <p>Resumen basado únicamente en las citas autorizadas para el periodo seleccionado.</p>
           <div class="week-summary">
-            @for (day of ['Lun 13', 'Mar 14', 'Mié 15', 'Jue 16', 'Vie 17', 'Sáb 18', 'Dom 19']; track day) {
-              <div [class.is-today]="$last"><strong>{{ day }}</strong><span [style.height.%]="42 + $index * 7"></span><small>{{ 14 + $index }} citas</small></div>
+            @for (day of visibleDays(); track day.key) {
+              <div [class.is-today]="day.key === todayKey()">
+                <strong>{{ day.label }}</strong
+                ><span [style.height.%]="day.count ? 25 + day.count * 12 : 0"></span
+                ><small>{{ day.count }} {{ day.count === 1 ? 'cita' : 'citas' }}</small>
+              </div>
             }
           </div>
-          <button mat-flat-button class="nexa-btn-primary" (click)="setView('day')">Volver al día</button>
+          <button mat-flat-button class="nexa-btn-primary" (click)="setView('day')">
+            Volver al día
+          </button>
         </div>
       }
     </div>
 
     @if (selected(); as appointment) {
       <aside class="appointment-inspector nexa-card" appScrollReveal>
-        <header><div><p class="nexa-eyebrow">Cita seleccionada</p><h2>{{ appointment.patient }}</h2></div><button mat-icon-button aria-label="Cerrar detalle" (click)="selectedId.set(null)"><app-icon name="close" [size]="18" /></button></header>
-        <div class="inspector-patient"><span class="nexa-avatar">{{ appointment.initials }}</span><span><strong>{{ appointment.type }}</strong><small>ID clínico ·•• 4821</small></span></div>
-        <dl>
-          <div><dt>Fecha y hora</dt><dd>19 jul · {{ appointment.start }} · {{ appointment.duration }} min</dd></div>
-          <div><dt>Profesional</dt><dd>{{ appointment.practitioner }}</dd></div>
-          <div><dt>Modalidad</dt><dd>{{ appointment.room }}</dd></div>
-          <div><dt>Estado</dt><dd><span class="nexa-chip nexa-chip--success">{{ appointment.status }}</span></dd></div>
-        </dl>
-        @if (appointment.alerts.length) { <div class="inspector-alert"><app-icon name="shield" [size]="17" /><span><strong>Atención clínica</strong><small>{{ appointment.alerts[0] }}</small></span></div> }
-        <div class="inspector-actions">
-          <button mat-flat-button class="nexa-btn-primary">Abrir historia clínica</button>
-          <button mat-stroked-button class="nexa-btn-secondary" (click)="openEdit(appointment, 'reschedule')"><app-icon name="clock" [size]="16" /> Cambiar cita</button>
-          <button mat-button (click)="downloadConfirmation(appointment)"><app-icon name="download" [size]="16" /> Justificante PDF</button>
+        <header>
+          <div>
+            <p class="nexa-eyebrow">Cita seleccionada</p>
+            <h2>{{ appointment.patient }}</h2>
+          </div>
+          <button mat-icon-button aria-label="Cerrar detalle" (click)="selectedId.set(null)">
+            <app-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="inspector-patient">
+          <span class="nexa-avatar">{{ appointment.initials }}</span
+          ><span
+            ><strong>{{ appointment.type }}</strong
+            ><small>Datos de la cita autorizada</small></span
+          >
         </div>
-        <p class="inspector-audit"><app-icon name="eye" [size]="13" /> Acceso registrado por seguridad</p>
+        <dl>
+          <div>
+            <dt>Fecha y hora</dt>
+            <dd>
+              {{ appointmentDate(appointment) }} · {{ appointment.start }} ·
+              {{ appointment.duration }} min
+            </dd>
+          </div>
+          <div>
+            <dt>Profesional</dt>
+            <dd>{{ appointment.practitioner }}</dd>
+          </div>
+          <div>
+            <dt>Modalidad</dt>
+            <dd>{{ appointment.room }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <span class="nexa-chip nexa-chip--success">{{ appointment.status }}</span>
+            </dd>
+          </div>
+        </dl>
+        <div class="inspector-actions">
+          <button
+            mat-stroked-button
+            class="nexa-btn-secondary"
+            (click)="openEdit(appointment, 'reschedule')"
+          >
+            <app-icon name="clock" [size]="16" /> Cambiar cita
+          </button>
+          <button mat-button (click)="downloadConfirmation(appointment)">
+            <app-icon name="download" [size]="16" /> Justificante PDF
+          </button>
+        </div>
+        <p class="inspector-audit">
+          <app-icon name="eye" [size]="13" /> Acceso registrado por seguridad
+        </p>
       </aside>
     }
   </section>

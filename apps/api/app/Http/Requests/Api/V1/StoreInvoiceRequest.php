@@ -8,11 +8,16 @@ use Illuminate\Validation\Rule;
 
 class StoreInvoiceRequest extends TenantFormRequest
 {
-    public function authorize(): bool { return $this->authenticatedUser()->can('create', Invoice::class); }
+    public function authorize(): bool
+    {
+        return $this->authenticatedUser()->can('create', Invoice::class);
+    }
+
     public function rules(): array
     {
         $tenant = $this->tenantId();
         $exists = fn (string $table) => Rule::exists($table, 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenant));
+
         return [
             'clinicId' => ['required', 'string', $exists('clinics')],
             'patientId' => ['required', 'string', $exists('patients')],

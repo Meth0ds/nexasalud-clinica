@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\PatientCoverage;
 use App\Models\Insurer;
 use App\Models\Patient;
+use App\Models\PatientCoverage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

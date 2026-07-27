@@ -23,9 +23,7 @@ export class ContextSelection {
       null,
   );
   protected readonly selectedMembership = computed(() =>
-    this.session.contextOptions()?.items.find(
-      (item) => item.membershipId === this.membershipId(),
-    ),
+    this.session.contextOptions()?.items.find((item) => item.membershipId === this.membershipId()),
   );
   protected readonly clinicId = signal<string | null>(
     this.session.contextOptions()?.selected.clinicId ??
@@ -35,9 +33,9 @@ export class ContextSelection {
 
   protected chooseMembership(id: string): void {
     this.membershipId.set(id);
-    const membership = this.session.contextOptions()?.items.find(
-      (item) => item.membershipId === id,
-    );
+    const membership = this.session
+      .contextOptions()
+      ?.items.find((item) => item.membershipId === id);
     this.clinicId.set(membership?.clinics[0]?.id ?? null);
     this.error.set(false);
   }

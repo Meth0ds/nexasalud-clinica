@@ -11,6 +11,7 @@ class WaitlistEntryResource extends JsonResource
     public function toArray(Request $request): array
     {
         $patient = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);
+
         return [
             'id' => $this->getKey(),
             'version' => $this->lock_version,

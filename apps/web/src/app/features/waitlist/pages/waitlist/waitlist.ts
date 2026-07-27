@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,11 +21,25 @@ import { PatientsService } from '../../../../core/services/patients';
 import { ReferenceDataService } from '../../../../core/services/reference-data';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
-import { CreateWaitlistEntryInput, WaitlistApiService, WaitlistEntryRecord, WaitlistStatus } from '../../data-access/waitlist-api';
+import {
+  CreateWaitlistEntryInput,
+  WaitlistApiService,
+  WaitlistEntryRecord,
+  WaitlistStatus,
+} from '../../data-access/waitlist-api';
 
 @Component({
   selector: 'app-waitlist',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSelectModule, AppIcon, ScrollReveal],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    AppIcon,
+    ScrollReveal,
+  ],
   templateUrl: './waitlist.html',
   styleUrls: ['./waitlist.scss', './waitlist-editor.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,16 +64,31 @@ export class Waitlist {
   protected readonly filteredEntries = computed(() => {
     const term = this.searchTerm().trim().toLocaleLowerCase('es-ES');
     return term
-      ? this.entries().filter((entry) => entry.patientDisplayName.toLocaleLowerCase('es-ES').includes(term))
+      ? this.entries().filter((entry) =>
+          entry.patientDisplayName.toLocaleLowerCase('es-ES').includes(term),
+        )
       : this.entries();
   });
-  protected readonly selected = computed(() => this.entries().find((entry) => entry.id === this.selectedId()) ?? null);
-  protected readonly waitingCount = computed(() => this.entries().filter((entry) => entry.status === 'waiting').length);
-  protected readonly offeredCount = computed(() => this.entries().filter((entry) => entry.status === 'offered').length);
-  protected readonly clinicalPriorityCount = computed(() => this.entries().filter((entry) => entry.status === 'waiting' && entry.priority <= 2).length);
-  protected readonly medianWaitingDays = computed(() => median(this.entries()
-    .filter((entry) => entry.status === 'waiting')
-    .map((entry) => daysSince(entry.waitingSince))));
+  protected readonly selected = computed(
+    () => this.entries().find((entry) => entry.id === this.selectedId()) ?? null,
+  );
+  protected readonly waitingCount = computed(
+    () => this.entries().filter((entry) => entry.status === 'waiting').length,
+  );
+  protected readonly offeredCount = computed(
+    () => this.entries().filter((entry) => entry.status === 'offered').length,
+  );
+  protected readonly clinicalPriorityCount = computed(
+    () =>
+      this.entries().filter((entry) => entry.status === 'waiting' && entry.priority <= 2).length,
+  );
+  protected readonly medianWaitingDays = computed(() =>
+    median(
+      this.entries()
+        .filter((entry) => entry.status === 'waiting')
+        .map((entry) => daysSince(entry.waitingSince)),
+    ),
+  );
   protected readonly createForm = this.formBuilder.nonNullable.group({
     patientId: ['', Validators.required],
     clinicId: ['', Validators.required],
@@ -78,7 +114,9 @@ export class Waitlist {
   protected openCreate(): void {
     const referenceData = this.referenceData();
     if (!referenceData || this.patients().length === 0) {
-      this.notifications.error('No se ha podido cargar el contexto autorizado para crear la solicitud.');
+      this.notifications.error(
+        'No se ha podido cargar el contexto autorizado para crear la solicitud.',
+      );
       return;
     }
 
@@ -124,14 +162,20 @@ export class Waitlist {
       ...(value.notes.trim() ? { notes: value.notes.trim() } : {}),
     };
     this.saving.set(true);
-    this.waitlistApi.create(input)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+    this.waitlistApi
+      .create(input)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (entry) => {
           this.entries.update((entries) => [...entries, entry].sort(compareEntries));
           this.selectedId.set(entry.id);
           this.creating.set(false);
-          this.notifications.success('Solicitud incorporada a la lista de espera y auditada en el centro activo.');
+          this.notifications.success(
+            'Solicitud incorporada a la lista de espera y auditada en el centro activo.',
+          );
         },
       });
   }
@@ -142,19 +186,33 @@ export class Waitlist {
     }
 
     this.saving.set(true);
-    this.waitlistApi.offer(entry)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+    this.waitlistApi
+      .offer(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (updated) => {
-          this.entries.update((entries) => entries.map((item) => item.id === updated.id ? updated : item));
+          this.entries.update((entries) =>
+            entries.map((item) => (item.id === updated.id ? updated : item)),
+          );
           this.selectedId.set(updated.id);
-          this.notifications.success('Oferta temporal registrada durante 20 minutos. Confirma el canal autorizado antes de comunicarla al paciente.');
+          this.notifications.success(
+            'Oferta temporal registrada durante 20 minutos. Confirma el canal autorizado antes de comunicarla al paciente.',
+          );
         },
       });
   }
 
   protected statusLabel(status: WaitlistStatus): string {
-    return ({ waiting: 'En espera', offered: 'Oferta temporal', booked: 'Reservada', expired: 'Caducada', cancelled: 'Cancelada' })[status];
+    return {
+      waiting: 'En espera',
+      offered: 'Oferta temporal',
+      booked: 'Reservada',
+      expired: 'Caducada',
+      cancelled: 'Cancelada',
+    }[status];
   }
 
   protected statusTone(status: WaitlistStatus): 'info' | 'warning' | 'success' | 'danger' {
@@ -199,7 +257,10 @@ export class Waitlist {
       patients: this.patientsApi.search(),
       referenceData: this.referenceDataApi.load(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: ({ queue, patients, referenceData }) => {
           const entries = [...queue.entries].sort(compareEntries);
@@ -214,7 +275,10 @@ export class Waitlist {
 }
 
 function compareEntries(left: WaitlistEntryRecord, right: WaitlistEntryRecord): number {
-  return left.priority - right.priority || String(left.waitingSince).localeCompare(String(right.waitingSince));
+  return (
+    left.priority - right.priority ||
+    String(left.waitingSince).localeCompare(String(right.waitingSince))
+  );
 }
 
 function asIso(value: string): string | null {
@@ -227,7 +291,9 @@ function daysSince(value: string | null): number {
     return 0;
   }
   const timestamp = new Date(value).getTime();
-  return Number.isNaN(timestamp) ? 0 : Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
+  return Number.isNaN(timestamp)
+    ? 0
+    : Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
 }
 
 function median(values: readonly number[]): number {
@@ -236,5 +302,7 @@ function median(values: readonly number[]): number {
   }
   const sorted = [...values].sort((left, right) => left - right);
   const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? Math.round((sorted[middle - 1] + sorted[middle]) / 2) : sorted[middle];
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[middle - 1] + sorted[middle]) / 2)
+    : sorted[middle];
 }

@@ -10,7 +10,9 @@ describe('WaitlistApiService', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(WaitlistApiService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -19,7 +21,10 @@ describe('WaitlistApiService', () => {
 
   it('loads the protected operational queue', async () => {
     const result = firstValueFrom(service.list());
-    const request = http.expectOne((candidate) => candidate.url === '/api/v1/waitlist-entries' && candidate.params.get('perPage') === '100');
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === '/api/v1/waitlist-entries' && candidate.params.get('perPage') === '100',
+    );
     expect(request.request.method).toBe('GET');
     request.flush({ data: [], meta: { total: 0 } });
 
@@ -27,24 +32,38 @@ describe('WaitlistApiService', () => {
   });
 
   it('creates and offers requests with separate idempotency keys', async () => {
-    const created = firstValueFrom(service.create({
-      clinicId: 'clinic-1',
-      patientId: 'patient-1',
-      appointmentTypeId: 'type-1',
-      desiredFrom: '2026-07-27T09:00:00.000Z',
-      desiredTo: '2026-07-27T12:00:00.000Z',
-      priority: 3,
-    }));
+    const created = firstValueFrom(
+      service.create({
+        clinicId: 'clinic-1',
+        patientId: 'patient-1',
+        appointmentTypeId: 'type-1',
+        desiredFrom: '2026-07-27T09:00:00.000Z',
+        desiredTo: '2026-07-27T12:00:00.000Z',
+        priority: 3,
+      }),
+    );
     const createRequest = http.expectOne('/api/v1/waitlist-entries');
     expect(createRequest.request.headers.has('Idempotency-Key')).toBe(true);
     createRequest.flush({ data: { id: 'wait-1', version: 1, status: 'waiting' } });
     await expect(created).resolves.toMatchObject({ id: 'wait-1', status: 'waiting' });
 
-    const offered = firstValueFrom(service.offer({
-      id: 'wait-1', version: 1, patientId: 'patient-1', patientDisplayName: 'Paciente autorizado', patientInitials: 'PA',
-      requestedType: 'Revisión', preferredWindow: [null, null], preferredDays: [], priority: 3,
-      status: 'waiting', waitingSince: null, offeredAt: null, offerExpiresAt: null,
-    }));
+    const offered = firstValueFrom(
+      service.offer({
+        id: 'wait-1',
+        version: 1,
+        patientId: 'patient-1',
+        patientDisplayName: 'Paciente autorizado',
+        patientInitials: 'PA',
+        requestedType: 'Revisión',
+        preferredWindow: [null, null],
+        preferredDays: [],
+        priority: 3,
+        status: 'waiting',
+        waitingSince: null,
+        offeredAt: null,
+        offerExpiresAt: null,
+      }),
+    );
     const offerRequest = http.expectOne('/api/v1/waitlist-entries/wait-1/offer');
     expect(offerRequest.request.headers.has('Idempotency-Key')).toBe(true);
     expect(offerRequest.request.body).toEqual({ version: 1, expiresInMinutes: 20 });

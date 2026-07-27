@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\PatientAllergy;
 use App\Models\Patient;
+use App\Models\PatientAllergy;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

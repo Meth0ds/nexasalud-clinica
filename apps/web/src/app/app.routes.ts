@@ -12,8 +12,7 @@ export const routes: Routes = [
   {
     path: 'login',
     canActivate: [anonymousOnlyGuard],
-    loadComponent: () =>
-      import('./features/auth/pages/login/login').then((module) => module.Login),
+    loadComponent: () => import('./features/auth/pages/login/login').then((module) => module.Login),
     title: 'Acceso seguro · NexaSalud',
   },
   {
@@ -37,8 +36,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [sessionGuard, staffWorkspaceGuard],
-    loadComponent: () =>
-      import('./layout/app-shell/app-shell').then((module) => module.AppShell),
+    loadComponent: () => import('./layout/app-shell/app-shell').then((module) => module.AppShell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
       {
@@ -58,9 +56,7 @@ export const routes: Routes = [
       {
         path: 'pacientes',
         loadComponent: () =>
-          import('./features/patients/pages/patients/patients').then(
-            (module) => module.Patients,
-          ),
+          import('./features/patients/pages/patients/patients').then((module) => module.Patients),
         title: 'Pacientes · NexaSalud',
       },
       {
@@ -82,9 +78,7 @@ export const routes: Routes = [
       {
         path: 'lista-espera',
         loadComponent: () =>
-          import('./features/waitlist/pages/waitlist/waitlist').then(
-            (module) => module.Waitlist,
-          ),
+          import('./features/waitlist/pages/waitlist/waitlist').then((module) => module.Waitlist),
         title: 'Lista de espera · NexaSalud',
       },
       {
@@ -124,9 +118,7 @@ export const routes: Routes = [
       {
         path: 'configuracion',
         loadComponent: () =>
-          import('./features/settings/pages/settings/settings').then(
-            (module) => module.Settings,
-          ),
+          import('./features/settings/pages/settings/settings').then((module) => module.Settings),
         title: 'Configuración · NexaSalud',
       },
       {
@@ -140,5 +132,18 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'indisponible',
+    loadComponent: () =>
+      import('./features/status/pages/status-page/status-page').then((module) => module.StatusPage),
+    data: { kind: 'unavailable' },
+    title: 'Servicio no disponible · NexaSalud',
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/status/pages/status-page/status-page').then((module) => module.StatusPage),
+    data: { kind: 'not-found' },
+    title: 'Página no disponible · NexaSalud',
+  },
 ];

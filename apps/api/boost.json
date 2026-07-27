@@ -4,8 +4,5 @@
     "mcp": true,
     "nightwatch": false,
     "sail": false,
-    "skills": [
-        "laravel-best-practices",
-        "socialite-development"
-    ]
+    "skills": ["laravel-best-practices", "socialite-development"]
 }

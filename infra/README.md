@@ -36,12 +36,12 @@ Laravel recibe `OIDC_ISSUER=http://keycloak.localhost:8080/realms/nexasalud-dev`
 
 Realm: `nexasalud-dev`. Tenant sintético: `01KXVSN5BZK269J2HZCD53EVZ0`.
 
-| DNI sintético (no válido) | Roles |
-| --- | --- |
-| `00000000T-DEMO` | `clinician`, `tenant_admin` |
-| `11111111H-DEMO` | `receptionist` |
-| `22222222J-DEMO` | `auditor` |
-| `33333333P-DEMO` | `patient` |
+| DNI sintético (no válido) | Roles                       |
+| ------------------------- | --------------------------- |
+| `00000000T-DEMO`          | `clinician`, `tenant_admin` |
+| `11111111H-DEMO`          | `receptionist`              |
+| `22222222J-DEMO`          | `auditor`                   |
+| `33333333P-DEMO`          | `patient`                   |
 
 Todos los identificadores incluyen el sufijo `-DEMO`: no son DNI válidos ni deben sustituirse por identidades reales. Cada perfil recibe una contraseña inicial aleatoria distinta en las variables `KEYCLOAK_DEMO_*_PASSWORD` de `infra/.env`; no están versionadas ni se imprimen durante la inicialización. Para consultar la del perfil que vayas a probar, léela directamente desde ese archivo protegido. Son temporales: Keycloak exige cambiarlas y configurar TOTP en el primer acceso. Los correos usan el dominio reservado `.test` y Mailpit nunca entrega mensajes a Internet.
 

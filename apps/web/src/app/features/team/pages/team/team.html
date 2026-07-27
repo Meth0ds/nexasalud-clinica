@@ -1,12 +1,159 @@
-<div class="nexa-page team-page">
-  <header class="nexa-page__heading" appScrollReveal><div><p class="nexa-eyebrow">Organización clínica</p><h1>Equipo y turnos</h1><p class="nexa-page__subtitle">Personas, disponibilidad, competencias y permisos con mínimo privilegio.</p></div><div class="nexa-page__actions"><button mat-stroked-button class="nexa-btn-secondary"><app-icon name="download" [size]="17" /> Exportar cuadrante</button><button mat-flat-button class="nexa-btn-primary"><app-icon name="plus" [size]="17" /> Invitar profesional</button></div></header>
-  <nav class="team-tabs nexa-card nexa-card--flat" aria-label="Secciones del equipo" appScrollReveal><button [class.is-active]="tab() === 'people'" (click)="tab.set('people')">Directorio <span>12</span></button><button [class.is-active]="tab() === 'shifts'" (click)="tab.set('shifts')">Turnos y ausencias <span>3</span></button><button [class.is-active]="tab() === 'permissions'" (click)="tab.set('permissions')">Roles y permisos</button></nav>
-  @if (tab() === 'people') {
-    <section class="nexa-grid nexa-grid--4 team-summary nexa-section" appScrollReveal><article class="nexa-card"><small>Profesionales activos</small><strong>12</strong><p>8 clínicos · 4 gestión</p></article><article class="nexa-card"><small>En consulta ahora</small><strong>04</strong><p>3 centros y teleconsulta</p></article><article class="nexa-card"><small>Ausencias próximas</small><strong>03</strong><p>Próximos 14 días</p></article><article class="nexa-card"><small>Cobertura de turnos</small><strong>96%</strong><p>2 huecos por resolver</p></article></section>
-    <section class="nexa-card nexa-section" appScrollReveal><div class="nexa-card__header"><div><h2>Directorio profesional</h2><p>Estado de cuenta, función y centro principal</p></div><label class="nexa-search"><app-icon name="search" [size]="16" /><input placeholder="Buscar profesional" /></label></div><div class="nexa-table-wrap"><table class="nexa-table"><thead><tr><th>Profesional</th><th>Rol</th><th>Centro</th><th>Próximo turno</th><th>Seguridad</th><th>Estado</th></tr></thead><tbody>@for (person of [{i:'ES',n:'Dra. Elena Soler',mail:'e••••@nexasalud.test',role:'Médica · Administradora clínica',center:'Mirador · Centro',shift:'Hoy · 08:00–15:00',security:'Passkey + MFA',status:'En consulta',tone:'success'},{i:'MV',n:'Dr. Mateo Vidal',mail:'m••••@nexasalud.test',role:'Medicina interna',center:'Mirador · Centro',shift:'Hoy · 08:30–16:00',security:'MFA',status:'Disponible',tone:'info'},{i:'NC',n:'Dra. Nuria Campos',mail:'n••••@nexasalud.test',role:'Enfermería clínica',center:'Mirador · Norte',shift:'Hoy · 09:00–17:00',security:'Passkey + MFA',status:'En consulta',tone:'success'},{i:'AM',n:'Andrea M.',mail:'a••••@nexasalud.test',role:'Recepción',center:'Mirador · Centro',shift:'Hoy · 08:00–14:00',security:'MFA',status:'Disponible',tone:'info'},{i:'JR',n:'Javier R.',mail:'j••••@nexasalud.test',role:'Facturación',center:'Todos los centros',shift:'Lun · 08:00–15:00',security:'MFA',status:'Fuera de turno',tone:''}]; track person.n) { <tr><td><div class="nexa-person"><span class="nexa-avatar">{{ person.i }}</span><span><strong>{{ person.n }}</strong><small>{{ person.mail }}</small></span></div></td><td>{{ person.role }}</td><td>{{ person.center }}</td><td>{{ person.shift }}</td><td><span class="security-level"><app-icon name="shield" [size]="14" /> {{ person.security }}</span></td><td><span class="nexa-chip nexa-chip--{{ person.tone }}">{{ person.status }}</span></td></tr> }</tbody></table></div></section>
-  } @else if (tab() === 'shifts') {
-    <section class="shift-layout nexa-section"><article class="nexa-card" appScrollReveal><div class="nexa-card__header"><div><h2>Cuadrante semanal</h2><p>13–19 de julio · Clínica Mirador</p></div><div class="nexa-inline-actions"><button mat-button>Semana anterior</button><button mat-button>Semana siguiente</button></div></div><div class="shift-grid"><div></div>@for(day of ['Lun 13','Mar 14','Mié 15','Jue 16','Vie 17','Sáb 18','Dom 19']; track day){<strong>{{day}}</strong>}@for(person of ['Elena Soler','Mateo Vidal','Nuria Campos','Andrea M.'];track person){<span class="shift-person">{{person}}</span>@for(day of [1,2,3,4,5,6,7];track day){<div class="shift-cell" [class.is-off]="day > 5"><i></i><small>{{day > 5 ? 'Descanso' : '08:00–15:00'}}</small></div>}}</div></article><aside class="nexa-card absence-card" appScrollReveal><div class="nexa-card__header"><div><h2>Ausencias</h2><p>Por cubrir o aprobadas</p></div></div><div><span class="nexa-avatar">NC</span><span><strong>Nuria Campos</strong><small>24–26 jul · formación</small></span><span class="nexa-chip nexa-chip--warning">Por cubrir</span></div><div><span class="nexa-avatar">MV</span><span><strong>Mateo Vidal</strong><small>3–7 ago · vacaciones</small></span><span class="nexa-chip nexa-chip--success">Cubierta</span></div><button mat-flat-button class="nexa-btn-primary">Registrar ausencia</button></aside></section>
-  } @else {
-    <section class="permissions-layout nexa-section"><article class="nexa-card" appScrollReveal><div class="nexa-card__header"><div><h2>Matriz de acceso</h2><p>Los permisos se conceden por función y centro</p></div><button mat-stroked-button class="nexa-btn-secondary">Crear rol</button></div><div class="nexa-table-wrap"><table class="nexa-table"><thead><tr><th>Rol</th><th>Historia clínica</th><th>Agenda</th><th>Prescribir</th><th>Facturación</th><th>Administración</th></tr></thead><tbody>@for(role of [{n:'Profesional médico',clinical:'Lectura y firma',agenda:'Completo',rx:'Sí',billing:'Lectura',admin:'No'},{n:'Enfermería',clinical:'Lectura y evolución',agenda:'Completo',rx:'No',billing:'No',admin:'No'},{n:'Recepción',clinical:'Mínimo',agenda:'Completo',rx:'No',billing:'Lectura',admin:'No'},{n:'Facturación',clinical:'No',agenda:'Lectura mínima',rx:'No',billing:'Completo',admin:'No'},{n:'Administrador clínico',clinical:'Por necesidad',agenda:'Completo',rx:'Según profesión',billing:'Completo',admin:'Sí'}];track role.n){<tr><td><strong>{{role.n}}</strong></td><td>{{role.clinical}}</td><td>{{role.agenda}}</td><td>{{role.rx}}</td><td>{{role.billing}}</td><td>{{role.admin}}</td></tr>}</tbody></table></div></article><aside class="permission-principles nexa-card" appScrollReveal><app-icon name="shield" [size]="24" /><h2>Privilegio mínimo</h2><p>Cada acceso se limita al trabajo necesario, centro activo y relación asistencial. Los cambios de rol requieren autorización y quedan auditados.</p><ul><li>MFA obligatorio para todo el equipo</li><li>Reautenticación para acciones sensibles</li><li>Revisión trimestral de accesos</li><li>Revocación inmediata al causar baja</li></ul><button mat-button>Revisar accesos actuales</button></aside></section>
-  }
-</div>
+<main class="nexa-page team-page">
+  <header class="nexa-page__heading" appScrollReveal>
+    <div>
+      <p class="nexa-eyebrow">Organización clínica</p>
+      <h1>Equipo autorizado</h1>
+      <p class="nexa-page__subtitle">
+        Directorio del contexto activo. La información y los estados se obtienen del servidor y se
+        limitan a los permisos vigentes.
+      </p>
+    </div>
+    <div class="nexa-page__actions">
+      <button
+        mat-stroked-button
+        class="nexa-btn-secondary"
+        type="button"
+        [disabled]="loading()"
+        (click)="refresh()"
+      >
+        <app-icon name="refresh" [size]="17" />
+        {{ loading() ? 'Actualizando…' : 'Actualizar directorio' }}
+      </button>
+    </div>
+  </header>
+
+  <section class="team-metrics nexa-section" aria-label="Resumen del directorio" appScrollReveal>
+    <article class="nexa-card team-metric">
+      <small>Miembros autorizados</small>
+      <strong>{{ members().length }}</strong>
+      <p>En el contexto seleccionado</p>
+    </article>
+    <article class="nexa-card team-metric">
+      <small>Cuentas activas</small>
+      <strong>{{ activeMembers() }}</strong>
+      <p>Disponibles para operar</p>
+    </article>
+    <article class="nexa-card team-metric">
+      <small>Cuentas suspendidas</small>
+      <strong>{{ inactiveMembers() }}</strong>
+      <p>No pueden acceder al sistema</p>
+    </article>
+    <article class="nexa-card team-metric">
+      <small>Con acceso registrado</small>
+      <strong>{{ recentAccessCount() }}</strong>
+      <p>Sin exponer sesiones ni credenciales</p>
+    </article>
+  </section>
+
+  <section
+    class="nexa-card team-directory nexa-section"
+    appScrollReveal
+    aria-labelledby="team-directory-title"
+  >
+    <header class="nexa-card__header team-directory__header">
+      <div>
+        <h2 id="team-directory-title">Directorio profesional</h2>
+        <p>Nombre, función asignada, estado de cuenta y último acceso registrado.</p>
+      </div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="team-search">
+        <mat-label>Buscar por nombre o rol</mat-label>
+        <input
+          matInput
+          type="search"
+          [value]="query()"
+          (input)="updateQuery($any($event.target).value)"
+        />
+        <app-icon matSuffix name="search" [size]="17" />
+      </mat-form-field>
+    </header>
+
+    @if (loading()) {
+      <div class="team-state" aria-busy="true" role="status">
+        <mat-progress-spinner diameter="32" mode="indeterminate" />
+        <div>
+          <strong>Actualizando el directorio</strong>
+          <p>Comprobamos el contexto y los permisos actuales.</p>
+        </div>
+      </div>
+    } @else if (error(); as requestError) {
+      <div class="team-state team-state--error" role="alert">
+        <app-icon name="shield" [size]="25" />
+        <div>
+          <strong>No se ha podido cargar el equipo</strong>
+          <p>{{ requestError.message }}</p>
+          @if (requestError.correlationId) {
+            <small>Referencia: {{ requestError.correlationId }}</small>
+          }
+        </div>
+        <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (filteredMembers().length === 0) {
+      <div class="team-state" role="status">
+        <app-icon name="team" [size]="25" />
+        <div>
+          <strong>No hay coincidencias</strong>
+          <p>
+            Prueba con otro nombre o función; no se muestran resultados fuera del contexto
+            autorizado.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="nexa-table-wrap">
+        <table class="nexa-table team-table">
+          <caption class="sr-only">
+            Directorio de miembros autorizados del contexto actual
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Profesional</th>
+              <th scope="col">Función</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Último acceso</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (member of filteredMembers(); track member.membershipId) {
+              <tr>
+                <td>
+                  <div class="nexa-person">
+                    <span class="nexa-avatar">{{ member.initials || '—' }}</span
+                    ><span
+                      ><strong>{{ member.displayName ?? 'Cuenta sin nombre' }}</strong
+                      ><small>Identidad autorizada</small></span
+                    >
+                  </div>
+                </td>
+                <td>
+                  <span class="team-role">{{ roleSummary(member) }}</span>
+                </td>
+                <td>
+                  <span
+                    class="nexa-chip"
+                    [class.nexa-chip--success]="member.active"
+                    [class.nexa-chip--warning]="!member.active"
+                    ><app-icon [name]="member.active ? 'shield' : 'lock'" [size]="13" />{{
+                      member.active ? 'Activa' : 'Suspendida'
+                    }}</span
+                  >
+                </td>
+                <td>{{ formatTimestamp(member.lastLoginAt) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <aside class="team-boundary" appScrollReveal>
+    <app-icon name="shield" [size]="19" />
+    <p>
+      <strong>Gobierno de accesos.</strong> Las altas, suspensiones, asignaciones de roles y
+      revocaciones se realizan desde Administración con motivo, MFA reciente y registro de
+      auditoría.
+    </p>
+  </aside>
+</main>

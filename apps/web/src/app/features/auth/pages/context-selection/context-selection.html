@@ -4,7 +4,9 @@
       <span class="nexa-brand__mark" aria-hidden="true"><i></i><i></i></span>
       <span><strong>NexaSalud</strong><small>Contexto asistencial seguro</small></span>
     </a>
-    <span class="assurance"><app-icon name="shield" [size]="17" /> Identidad verificada con 2FA</span>
+    <span class="assurance"
+      ><app-icon name="shield" [size]="17" /> Identidad verificada con 2FA</span
+    >
   </header>
 
   <section class="context-layout" aria-labelledby="context-title">
@@ -12,12 +14,15 @@
       <p class="nexa-eyebrow">Antes de continuar</p>
       <h1 id="context-title">Elige dónde vas a trabajar</h1>
       <p>
-        La clínica seleccionada determina los pacientes, agendas y permisos disponibles durante
-        esta sesión. Podrás cambiarla después desde la navegación.
+        La clínica seleccionada determina los pacientes, agendas y permisos disponibles durante esta
+        sesión. Podrás cambiarla después desde la navegación.
       </p>
       <div class="privacy-note">
         <app-icon name="lock" [size]="19" />
-        <span><strong>Aislamiento por centro</strong><small>Nunca se mezclan datos entre organizaciones.</small></span>
+        <span
+          ><strong>Aislamiento por centro</strong
+          ><small>Nunca se mezclan datos entre organizaciones.</small></span
+        >
       </div>
     </aside>
 
@@ -36,7 +41,10 @@
             (click)="chooseMembership(option.membershipId)"
           >
             <span class="choice-mark">{{ option.tenant.name.slice(0, 2).toUpperCase() }}</span>
-            <span><strong>{{ option.tenant.name }}</strong><small>{{ option.clinics.length }} centros disponibles</small></span>
+            <span
+              ><strong>{{ option.tenant.name }}</strong
+              ><small>{{ option.clinics.length }} centros disponibles</small></span
+            >
             <i aria-hidden="true"></i>
           </button>
         }
@@ -44,7 +52,10 @@
 
       <div class="context-step context-step--clinic">
         <span>02</span>
-        <div><strong>Centro activo</strong><small>El contexto se valida de nuevo en el servidor.</small></div>
+        <div>
+          <strong>Centro activo</strong
+          ><small>El contexto se valida de nuevo en el servidor.</small>
+        </div>
       </div>
       <div class="clinic-grid" role="radiogroup" aria-label="Centros disponibles">
         @for (clinic of selectedMembership()?.clinics ?? []; track clinic.id) {
@@ -56,7 +67,10 @@
             (click)="chooseClinic(clinic.id)"
           >
             <app-icon name="home" [size]="19" />
-            <span><strong>{{ clinic.name }}</strong><small>Acceso según tu rol</small></span>
+            <span
+              ><strong>{{ clinic.name }}</strong
+              ><small>Acceso según tu rol</small></span
+            >
             <i aria-hidden="true"></i>
           </button>
         }
@@ -76,7 +90,9 @@
         (click)="continue()"
       >
         {{ busy() ? 'Activando contexto…' : 'Entrar en el espacio clínico' }}
-        @if (!busy()) { <app-icon name="arrow" [size]="18" /> }
+        @if (!busy()) {
+          <app-icon name="arrow" [size]="18" />
+        }
       </button>
     </div>
   </section>

@@ -35,6 +35,28 @@ describe('PortalApiService', () => {
     await expect(result).resolves.toMatchObject({ patient: { id: 'patient-1' } });
   });
 
+  it('loads secure messages through the patient-owned portal endpoint', async () => {
+    const result = firstValueFrom(service.getMessages());
+    const request = http.expectOne('/api/v1/portal/messages');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      data: [
+        {
+          id: 'message-1',
+          subject: 'Información disponible',
+          body: 'Revise la información desde su portal seguro.',
+          contentClass: 'clinical_link',
+          authorDisplayName: 'Equipo asistencial',
+          publishedAt: '2026-07-26T09:15:00.000Z',
+        },
+      ],
+    });
+
+    await expect(result).resolves.toMatchObject([
+      { id: 'message-1', subject: 'Información disponible' },
+    ]);
+  });
+
   it('sends availability filters as query parameters', async () => {
     const result = firstValueFrom(
       service.getAvailability({

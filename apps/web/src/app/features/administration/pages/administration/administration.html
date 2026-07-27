@@ -4,12 +4,19 @@
       <p class="nexa-eyebrow">Gobierno clínico</p>
       <h1>Centro de control</h1>
       <p class="nexa-page__subtitle">
-        Administración de acceso por mínimo privilegio, con MFA obligatoria, trazabilidad y operaciones verificadas por el servidor.
+        Administración de acceso por mínimo privilegio, con MFA obligatoria, trazabilidad y
+        operaciones verificadas por el servidor.
       </p>
     </div>
     <div class="nexa-page__actions">
       <span class="live-badge"><i></i> Datos protegidos</span>
-      <button mat-stroked-button class="nexa-btn-secondary" type="button" [disabled]="refreshing() || submitting()" (click)="refresh()">
+      <button
+        mat-stroked-button
+        class="nexa-btn-secondary"
+        type="button"
+        [disabled]="refreshing() || submitting()"
+        (click)="refresh()"
+      >
         <app-icon name="spark" [size]="16" />
         {{ refreshing() ? 'Actualizando…' : 'Actualizar' }}
       </button>
@@ -17,80 +24,273 @@
   </header>
 
   @if (loading()) {
-    <section class="loading-card nexa-card" aria-live="polite"><mat-spinner diameter="34" /><span>Cargando controles de administración…</span></section>
+    <section class="loading-card nexa-card" aria-live="polite">
+      <mat-spinner diameter="34" /><span>Cargando controles de administración…</span>
+    </section>
   } @else if (errorMessage(); as error) {
-    <section class="error-card nexa-card" role="alert"><app-icon name="shield" [size]="22" /><div><strong>No se pudo cargar el centro de control</strong><p>{{ error }}</p></div><button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">Reintentar</button></section>
+    <section class="error-card nexa-card" role="alert">
+      <app-icon name="shield" [size]="22" />
+      <div>
+        <strong>No se pudo cargar el centro de control</strong>
+        <p>{{ error }}</p>
+      </div>
+      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
+        Reintentar
+      </button>
+    </section>
   } @else {
-    <section class="posture-strip nexa-card nexa-card--flat" aria-label="Controles de acceso activos" appScrollReveal>
-      <div class="posture-score" aria-label="Autenticación multifactor obligatoria"><app-icon name="shield" [size]="24" /></div>
-      <div class="posture-copy"><strong>MFA obligatoria</strong><small>ACR mínimo {{ overview()?.mfaPolicy?.minimumAcr }} · {{ overview()?.mfaPolicy?.methods?.join(', ') }}</small></div>
-      <div class="posture-proof"><strong>{{ overview()?.users?.active ?? 0 }}</strong><small>cuentas activas</small></div>
-      <div class="posture-proof"><strong>{{ overview()?.users?.suspended ?? 0 }}</strong><small>suspendidas</small></div>
-      <div class="posture-proof"><strong>{{ overview()?.auditEventsLast24Hours ?? 0 }}</strong><small>eventos / 24 h</small></div>
+    <section
+      class="posture-strip nexa-card nexa-card--flat"
+      aria-label="Controles de acceso activos"
+      appScrollReveal
+    >
+      <div class="posture-score" aria-label="Autenticación multifactor obligatoria">
+        <app-icon name="shield" [size]="24" />
+      </div>
+      <div class="posture-copy">
+        <strong>MFA obligatoria</strong
+        ><small
+          >ACR mínimo {{ overview()?.mfaPolicy?.minimumAcr }} ·
+          {{ overview()?.mfaPolicy?.methods?.join(', ') }}</small
+        >
+      </div>
+      <div class="posture-proof">
+        <strong>{{ overview()?.users?.active ?? 0 }}</strong
+        ><small>cuentas activas</small>
+      </div>
+      <div class="posture-proof">
+        <strong>{{ overview()?.users?.suspended ?? 0 }}</strong
+        ><small>suspendidas</small>
+      </div>
+      <div class="posture-proof">
+        <strong>{{ overview()?.auditEventsLast24Hours ?? 0 }}</strong
+        ><small>eventos / 24 h</small>
+      </div>
     </section>
 
     <div class="control-shell nexa-section">
       <aside class="control-nav nexa-card nexa-card--flat" appScrollReveal>
-        <div class="control-nav__head"><span>Ámbitos de control</span><small>{{ sections.length }} módulos</small></div>
+        <div class="control-nav__head">
+          <span>Ámbitos de control</span><small>{{ sections.length }} módulos</small>
+        </div>
         <nav aria-label="Secciones de administración">
           @for (section of sections; track section.id) {
-            <button type="button" [class.is-active]="activeSection() === section.id" [attr.aria-current]="activeSection() === section.id ? 'page' : null" (click)="selectSection(section.id)">
+            <button
+              type="button"
+              [class.is-active]="activeSection() === section.id"
+              [attr.aria-current]="activeSection() === section.id ? 'page' : null"
+              (click)="selectSection(section.id)"
+            >
               <span class="nav-icon"><app-icon [name]="section.icon" [size]="18" /></span>
-              <span><strong>{{ section.label }}</strong><small>Control protegido</small></span>
+              <span
+                ><strong>{{ section.label }}</strong
+                ><small>Control protegido</small></span
+              >
               <app-icon class="nav-arrow" name="chevron" [size]="14" />
             </button>
           }
         </nav>
-        <div class="control-nav__foot"><app-icon name="lock" [size]="17" /><span><strong>Acciones sensibles</strong><small>Motivo y MFA reciente obligatorios.</small></span></div>
+        <div class="control-nav__foot">
+          <app-icon name="lock" [size]="17" /><span
+            ><strong>Acciones sensibles</strong
+            ><small>Motivo y MFA reciente obligatorios.</small></span
+          >
+        </div>
       </aside>
 
       <main class="control-stage" tabindex="-1">
         <header class="stage-heading" appScrollReveal>
-          <div><p class="stage-index">CONTROL / {{ activeSectionDetails().label }}</p><h2>{{ activeSectionDetails().label }}</h2><p>{{ activeSectionDetails().description }}</p></div>
+          <div>
+            <p class="stage-index">CONTROL / {{ activeSectionDetails().label }}</p>
+            <h2>{{ activeSectionDetails().label }}</h2>
+            <p>{{ activeSectionDetails().description }}</p>
+          </div>
           <span class="stage-state"><i></i> API verificada</span>
         </header>
 
         @switch (activeSection()) {
           @case ('users') {
             <section class="metric-line" aria-label="Resumen de cuentas" appScrollReveal>
-              <article><small>Cuentas activas</small><strong>{{ overview()?.users?.active ?? 0 }}</strong><span>del contexto actual</span></article>
-              <article><small>Cuentas suspendidas</small><strong>{{ overview()?.users?.suspended ?? 0 }}</strong><span>sin acceso al sistema</span></article>
-              <article><small>Roles definidos</small><strong>{{ overview()?.roles ?? 0 }}</strong><span>mínimo privilegio</span></article>
+              <article>
+                <small>Cuentas activas</small><strong>{{ overview()?.users?.active ?? 0 }}</strong
+                ><span>del contexto actual</span>
+              </article>
+              <article>
+                <small>Cuentas suspendidas</small
+                ><strong>{{ overview()?.users?.suspended ?? 0 }}</strong
+                ><span>sin acceso al sistema</span>
+              </article>
+              <article>
+                <small>Roles definidos</small><strong>{{ overview()?.roles ?? 0 }}</strong
+                ><span>mínimo privilegio</span>
+              </article>
             </section>
             <section class="nexa-card stage-card" appScrollReveal [revealDelay]="80">
               <div class="nexa-card__header compact-head">
-                <div><h2>Directorio de acceso</h2><p>Datos del tenant activo. Las direcciones se muestran parcialmente enmascaradas.</p></div>
-                <label class="nexa-search"><app-icon name="search" [size]="16" /><span class="sr-only">Buscar cuenta</span><input type="search" placeholder="nombre, correo o rol" [value]="userQuery()" (input)="userQuery.set($any($event.target).value)" /></label>
+                <div>
+                  <h2>Directorio de acceso</h2>
+                  <p>
+                    Datos del tenant activo. Las direcciones se muestran parcialmente enmascaradas.
+                  </p>
+                </div>
+                <label class="nexa-search"
+                  ><app-icon name="search" [size]="16" /><span class="sr-only">Buscar cuenta</span
+                  ><input
+                    type="search"
+                    placeholder="nombre, correo o rol"
+                    [value]="userQuery()"
+                    (input)="userQuery.set($any($event.target).value)"
+                /></label>
               </div>
               <div class="nexa-table-wrap">
                 <table class="nexa-table account-table">
-                  <thead><tr><th>Cuenta</th><th>Roles efectivos</th><th>Último acceso</th><th>Estado</th><th><span class="sr-only">Acción</span></th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Cuenta</th>
+                      <th>Roles efectivos</th>
+                      <th>Último acceso</th>
+                      <th>Estado</th>
+                      <th><span class="sr-only">Acción</span></th>
+                    </tr>
+                  </thead>
                   <tbody>
                     @for (user of filteredUsers(); track user.userId) {
                       <tr [class.is-selected]="selectedUserId() === user.userId">
-                        <td><div class="nexa-person"><span class="nexa-avatar">{{ initials(user.displayName) }}</span><span><strong>{{ user.displayName }}</strong><small>{{ user.emailHint ?? 'Correo no disponible' }}</small></span></div></td>
-                        <td><span class="roles-list">@for (role of user.roles; track role.id) { <span>{{ role.name }}</span> } @empty { <small>Sin rol asignado</small> }</span></td>
+                        <td>
+                          <div class="nexa-person">
+                            <span class="nexa-avatar">{{ initials(user.displayName) }}</span
+                            ><span
+                              ><strong>{{ user.displayName }}</strong
+                              ><small>{{ user.emailHint ?? 'Correo no disponible' }}</small></span
+                            >
+                          </div>
+                        </td>
+                        <td>
+                          <span class="roles-list">
+                            @for (role of user.roles; track role.id) {
+                              <span>{{ role.name }}</span>
+                            } @empty {
+                              <small>Sin rol asignado</small>
+                            }
+                          </span>
+                        </td>
                         <td>{{ formatTimestamp(user.lastLoginAt) }}</td>
-                        <td><span class="nexa-chip" [class.nexa-chip--success]="user.active" [class.nexa-chip--warning]="!user.active">{{ user.active ? 'Activa' : 'Suspendida' }}</span></td>
-                        <td><button mat-button type="button" (click)="selectUser(user)">Gestionar</button></td>
+                        <td>
+                          <span
+                            class="nexa-chip"
+                            [class.nexa-chip--success]="user.active"
+                            [class.nexa-chip--warning]="!user.active"
+                            >{{ user.active ? 'Activa' : 'Suspendida' }}</span
+                          >
+                        </td>
+                        <td>
+                          <button mat-button type="button" (click)="selectUser(user)">
+                            Gestionar
+                          </button>
+                        </td>
                       </tr>
-                    } @empty { <tr><td colspan="5" class="empty-cell">No hay cuentas que coincidan con la búsqueda.</td></tr> }
+                    } @empty {
+                      <tr>
+                        <td colspan="5" class="empty-cell">
+                          No hay cuentas que coincidan con la búsqueda.
+                        </td>
+                      </tr>
+                    }
                   </tbody>
                 </table>
               </div>
             </section>
 
             @if (selectedUser(); as user) {
-              <section class="nexa-card action-card" appScrollReveal [revealDelay]="100" aria-labelledby="access-action-title">
-                <div class="nexa-card__header"><div><p class="nexa-eyebrow">Cambio protegido</p><h2 id="access-action-title">{{ user.displayName }}</h2><p>Los cambios se registran con tu identidad y el motivo indicado.</p></div><button mat-button type="button" (click)="cancelAction()">Cancelar</button></div>
-                <div class="action-grid">
-                  <div class="action-options"><strong>Estado de la cuenta</strong><div><button mat-stroked-button type="button" [disabled]="!user.active || submitting()" (click)="prepareStatusChange(user, false)"><app-icon name="lock" [size]="16" /> Suspender</button><button mat-stroked-button type="button" [disabled]="user.active || submitting()" (click)="prepareStatusChange(user, true)"><app-icon name="check" [size]="16" /> Reactivar</button></div><button mat-stroked-button type="button" [disabled]="submitting()" (click)="prepareSessionRevocation(user)"><app-icon name="shield" [size]="16" /> Revocar sesiones</button><small>Última revocación: {{ formatTimestamp(user.sessionsRevokedAt) }}</small></div>
-                  <fieldset class="role-selection"><legend>Roles asignados</legend>@for (role of roles(); track role.id) { <mat-checkbox [checked]="hasRole(role.id)" [disabled]="submitting()" (change)="toggleDraftRole(role.id, $event.checked)">{{ role.name }}</mat-checkbox> }</fieldset>
+              <section
+                class="nexa-card action-card"
+                appScrollReveal
+                [revealDelay]="100"
+                aria-labelledby="access-action-title"
+              >
+                <div class="nexa-card__header">
+                  <div>
+                    <p class="nexa-eyebrow">Cambio protegido</p>
+                    <h2 id="access-action-title">{{ user.displayName }}</h2>
+                    <p>Los cambios se registran con tu identidad y el motivo indicado.</p>
+                  </div>
+                  <button mat-button type="button" (click)="cancelAction()">Cancelar</button>
                 </div>
-                @if (pendingAction() === 'membership' && !hasMembershipChange()) { <p class="action-help">Selecciona un cambio de estado o rol antes de aplicar.</p> }
+                <div class="action-grid">
+                  <div class="action-options">
+                    <strong>Estado de la cuenta</strong>
+                    <div>
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="!user.active || submitting()"
+                        (click)="prepareStatusChange(user, false)"
+                      >
+                        <app-icon name="lock" [size]="16" /> Suspender</button
+                      ><button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="user.active || submitting()"
+                        (click)="prepareStatusChange(user, true)"
+                      >
+                        <app-icon name="check" [size]="16" /> Reactivar
+                      </button>
+                    </div>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="submitting()"
+                      (click)="prepareSessionRevocation(user)"
+                    >
+                      <app-icon name="shield" [size]="16" /> Revocar sesiones</button
+                    ><small>Última revocación: {{ formatTimestamp(user.sessionsRevokedAt) }}</small>
+                  </div>
+                  <fieldset class="role-selection">
+                    <legend>Roles asignados</legend>
+                    @for (role of roles(); track role.id) {
+                      <mat-checkbox
+                        [checked]="hasRole(role.id)"
+                        [disabled]="submitting()"
+                        (change)="toggleDraftRole(role.id, $event.checked)"
+                        >{{ role.name }}</mat-checkbox
+                      >
+                    }
+                  </fieldset>
+                </div>
+                @if (pendingAction() === 'membership' && !hasMembershipChange()) {
+                  <p class="action-help">Selecciona un cambio de estado o rol antes de aplicar.</p>
+                }
                 @if (pendingAction()) {
-                  <div class="reason-row"><label for="change-reason">Motivo de seguridad <span>(mínimo 8 caracteres)</span></label><textarea id="change-reason" rows="3" maxlength="500" [value]="reason()" [disabled]="submitting()" (input)="reason.set($any($event.target).value)" placeholder="Ej.: cambio de función aprobado por dirección clínica"></textarea><small>Se comprobará MFA reciente en el servidor antes de aplicar el cambio.</small></div>
-                  <div class="action-submit"><button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="!canSubmit() || (pendingAction() === 'membership' && !hasMembershipChange())" (click)="submitAction()"><app-icon name="shield" [size]="16" /> {{ submitting() ? 'Verificando…' : 'Aplicar cambio protegido' }}</button></div>
+                  <div class="reason-row">
+                    <label for="change-reason"
+                      >Motivo de seguridad <span>(mínimo 8 caracteres)</span></label
+                    ><textarea
+                      id="change-reason"
+                      rows="3"
+                      maxlength="500"
+                      [value]="reason()"
+                      [disabled]="submitting()"
+                      (input)="reason.set($any($event.target).value)"
+                      placeholder="Ej.: cambio de función aprobado por dirección clínica"
+                    ></textarea
+                    ><small
+                      >Se comprobará MFA reciente en el servidor antes de aplicar el cambio.</small
+                    >
+                  </div>
+                  <div class="action-submit">
+                    <button
+                      mat-flat-button
+                      class="nexa-btn-primary"
+                      type="button"
+                      [disabled]="
+                        !canSubmit() || (pendingAction() === 'membership' && !hasMembershipChange())
+                      "
+                      (click)="submitAction()"
+                    >
+                      <app-icon name="shield" [size]="16" />
+                      {{ submitting() ? 'Verificando…' : 'Aplicar cambio protegido' }}
+                    </button>
+                  </div>
                 }
               </section>
             }
@@ -98,25 +298,132 @@
 
           @case ('roles') {
             <section class="nexa-card stage-card" appScrollReveal>
-              <div class="nexa-card__header"><div><h2>Matriz de privilegio mínimo</h2><p>Los permisos son el estado efectivo del servidor y no pueden editarse sin un flujo de gobierno explícito.</p></div><span class="nexa-chip nexa-chip--info">Solo lectura</span></div>
+              <div class="nexa-card__header">
+                <div>
+                  <h2>Matriz de privilegio mínimo</h2>
+                  <p>
+                    Los permisos son el estado efectivo del servidor y no pueden editarse sin un
+                    flujo de gobierno explícito.
+                  </p>
+                </div>
+                <span class="nexa-chip nexa-chip--info">Solo lectura</span>
+              </div>
               <div class="role-cards">
                 @for (role of roles(); track role.id) {
-                  <article class="role-card"><div><span class="role-code">{{ role.code }}</span><span class="nexa-chip" [class.nexa-chip--success]="role.system" [class.nexa-chip--info]="!role.system">{{ role.system ? 'Sistema' : 'Personalizado' }}</span></div><h3>{{ role.name }}</h3><p>{{ role.memberCount }} {{ role.memberCount === 1 ? 'miembro asignado' : 'miembros asignados' }}</p><ul>@for (permission of role.permissions; track permission) { <li><app-icon name="check" [size]="14" /> {{ permissionLabel(permission) }}</li> } @empty { <li><app-icon name="lock" [size]="14" /> Sin permisos operativos</li> }</ul></article>
-                } @empty { <p class="empty-cell">No hay roles disponibles para este tenant.</p> }
+                  <article class="role-card">
+                    <div>
+                      <span class="role-code">{{ role.code }}</span
+                      ><span
+                        class="nexa-chip"
+                        [class.nexa-chip--success]="role.system"
+                        [class.nexa-chip--info]="!role.system"
+                        >{{ role.system ? 'Sistema' : 'Personalizado' }}</span
+                      >
+                    </div>
+                    <h3>{{ role.name }}</h3>
+                    <p>
+                      {{ role.memberCount }}
+                      {{ role.memberCount === 1 ? 'miembro asignado' : 'miembros asignados' }}
+                    </p>
+                    <ul>
+                      @for (permission of role.permissions; track permission) {
+                        <li>
+                          <app-icon name="check" [size]="14" /> {{ permissionLabel(permission) }}
+                        </li>
+                      } @empty {
+                        <li><app-icon name="lock" [size]="14" /> Sin permisos operativos</li>
+                      }
+                    </ul>
+                  </article>
+                } @empty {
+                  <p class="empty-cell">No hay roles disponibles para este tenant.</p>
+                }
               </div>
             </section>
           }
 
           @case ('security') {
             <section class="split-layout security-layout">
-              <article class="nexa-card security-hero" appScrollReveal><span class="security-mark"><app-icon name="shield" [size]="26" /></span><div><p class="nexa-eyebrow">Política aplicada</p><h2>MFA obligatoria antes de toda sesión</h2><p>Las operaciones de administración exigen segundo factor y una autenticación reciente de menos de quince minutos.</p></div><dl><div><dt>ACR mínimo</dt><dd>{{ overview()?.mfaPolicy?.minimumAcr }}</dd></div><div><dt>Métodos</dt><dd>{{ overview()?.mfaPolicy?.methods?.join(', ') }}</dd></div></dl></article>
-              <aside class="nexa-card review-card" appScrollReveal [revealDelay]="90"><app-icon name="eye" [size]="21" /><div><strong>Revisión operacional</strong><p>{{ overview()?.auditEventsLast24Hours ?? 0 }} eventos administrativos registrados en las últimas 24 horas.</p></div><button mat-stroked-button type="button" (click)="selectSection('users')">Revisar usuarios</button></aside>
+              <article class="nexa-card security-hero" appScrollReveal>
+                <span class="security-mark"><app-icon name="shield" [size]="26" /></span>
+                <div>
+                  <p class="nexa-eyebrow">Política aplicada</p>
+                  <h2>MFA obligatoria antes de toda sesión</h2>
+                  <p>
+                    Las operaciones de administración exigen segundo factor y una autenticación
+                    reciente de menos de quince minutos.
+                  </p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>ACR mínimo</dt>
+                    <dd>{{ overview()?.mfaPolicy?.minimumAcr }}</dd>
+                  </div>
+                  <div>
+                    <dt>Métodos</dt>
+                    <dd>{{ overview()?.mfaPolicy?.methods?.join(', ') }}</dd>
+                  </div>
+                </dl>
+              </article>
+              <aside class="nexa-card review-card" appScrollReveal [revealDelay]="90">
+                <app-icon name="eye" [size]="21" />
+                <div>
+                  <strong>Revisión operacional</strong>
+                  <p>
+                    {{ overview()?.auditEventsLast24Hours ?? 0 }} eventos administrativos
+                    registrados en las últimas 24 horas.
+                  </p>
+                </div>
+                <button mat-stroked-button type="button" (click)="selectSection('users')">
+                  Revisar usuarios
+                </button>
+              </aside>
             </section>
-            <section class="nexa-card session-card" appScrollReveal [revealDelay]="110"><div class="nexa-card__header"><div><h2>Revocación de sesiones</h2><p>No se expone telemetría de dispositivos. Selecciona una cuenta para invalidar sesiones mediante el servidor.</p></div><span class="nexa-chip nexa-chip--success">Auditable</span></div><div class="session-table">@for (user of users(); track user.userId) { <article><span class="nexa-avatar">{{ initials(user.displayName) }}</span><div><strong>{{ user.displayName }}</strong><small>Última revocación: {{ formatTimestamp(user.sessionsRevokedAt) }}</small></div><span class="nexa-chip" [class.nexa-chip--success]="user.active" [class.nexa-chip--warning]="!user.active">{{ user.active ? 'Activa' : 'Suspendida' }}</span><button mat-stroked-button type="button" (click)="prepareSessionRevocation(user)">Revocar</button></article> } @empty { <p class="empty-cell">No hay cuentas disponibles.</p> }</div></section>
+            <section class="nexa-card session-card" appScrollReveal [revealDelay]="110">
+              <div class="nexa-card__header">
+                <div>
+                  <h2>Revocación de sesiones</h2>
+                  <p>
+                    No se expone telemetría de dispositivos. Selecciona una cuenta para invalidar
+                    sesiones mediante el servidor.
+                  </p>
+                </div>
+                <span class="nexa-chip nexa-chip--success">Auditable</span>
+              </div>
+              <div class="session-table">
+                @for (user of users(); track user.userId) {
+                  <article>
+                    <span class="nexa-avatar">{{ initials(user.displayName) }}</span>
+                    <div>
+                      <strong>{{ user.displayName }}</strong
+                      ><small
+                        >Última revocación: {{ formatTimestamp(user.sessionsRevokedAt) }}</small
+                      >
+                    </div>
+                    <span
+                      class="nexa-chip"
+                      [class.nexa-chip--success]="user.active"
+                      [class.nexa-chip--warning]="!user.active"
+                      >{{ user.active ? 'Activa' : 'Suspendida' }}</span
+                    ><button
+                      mat-stroked-button
+                      type="button"
+                      (click)="prepareSessionRevocation(user)"
+                    >
+                      Revocar
+                    </button>
+                  </article>
+                } @empty {
+                  <p class="empty-cell">No hay cuentas disponibles.</p>
+                }
+              </div>
+            </section>
           }
         }
 
-        <p class="local-notice" role="status" aria-live="polite"><app-icon name="shield" [size]="14" /> {{ actionMessage() }}</p>
+        <p class="local-notice" role="status" aria-live="polite">
+          <app-icon name="shield" [size]="14" /> {{ actionMessage() }}
+        </p>
       </main>
     </div>
   }

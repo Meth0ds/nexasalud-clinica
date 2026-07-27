@@ -5,8 +5,8 @@ namespace Database\Factories;
 use App\Models\Appointment;
 use App\Models\IdempotencyKey;
 use App\Models\Tenant;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<IdempotencyKey>

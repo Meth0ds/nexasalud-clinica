@@ -15,7 +15,15 @@ describe('Communications', () => {
     await TestBed.configureTestingModule({
       imports: [Communications],
       providers: [
-        { provide: CommunicationsApiService, useValue: { list: () => of({ total: 0, communications: [] }), create: () => of({}), queue: () => of({}), cancel: () => of({}) } },
+        {
+          provide: CommunicationsApiService,
+          useValue: {
+            list: () => of({ total: 0, communications: [] }),
+            create: () => of({}),
+            queue: () => of({}),
+            cancel: () => of({}),
+          },
+        },
         { provide: PatientsService, useValue: { search: () => of({ total: 0, items: [] }) } },
         { provide: SessionService, useValue: { hasPermission: () => false } },
       ],

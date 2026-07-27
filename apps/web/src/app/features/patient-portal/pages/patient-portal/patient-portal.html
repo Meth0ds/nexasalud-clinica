@@ -19,7 +19,7 @@
       </button>
     </div>
 
-    <div class="demo-identity">
+    <div class="portal-identity">
       <span class="nexa-avatar">{{ patientInitials() }}</span>
       <span>
         <strong>{{ patientName() }}</strong>
@@ -27,7 +27,7 @@
           overview()?.patient?.relationship === 'self' ? 'Acceso personal' : 'Acceso autorizado'
         }}</small>
       </span>
-      <span class="demo-dot" title="Sesión protegida"></span>
+      <span class="portal-session-dot" title="Sesión protegida"></span>
     </div>
 
     <nav class="portal-nav">
@@ -87,13 +87,12 @@
         <small>Portal personal</small><strong>{{ currentSectionTitle() }}</strong>
       </div>
       <div class="topbar-actions">
-        <span class="demo-pill"><i></i> Conexión segura</span>
+        <span class="portal-security-pill"><i></i> Conexión segura</span>
         <button
           type="button"
           class="topbar-action"
-          aria-label="Mensajes no disponibles"
-          aria-disabled="true"
-          (click)="announceUnavailable('Mensajes seguros')"
+          aria-label="Abrir mensajes seguros"
+          (click)="activateSection('mensajes')"
         >
           <app-icon name="bell" [size]="19" />
         </button>
@@ -436,7 +435,7 @@
                     confirmar.
                   </p>
                 </div>
-                <span class="demo-data-label"
+                <span class="portal-data-label"
                   ><app-icon name="shield" [size]="15" /> Reserva protegida</span
                 >
               </header>
@@ -1287,24 +1286,119 @@
             </section>
           }
           @case ('mensajes') {
-            <section class="portal-view unavailable-view">
-              <div class="portal-empty">
-                <span><app-icon name="bell" [size]="28" /></span>
-                <p class="nexa-eyebrow">No disponible</p>
-                <h1>Mensajes seguros</h1>
-                <p>
-                  La mensajería aún no está conectada al backend. Ningún mensaje se enviará desde
-                  esta pantalla.
-                </p>
+            <section class="portal-view" aria-labelledby="portal-messages-title">
+              <header class="portal-section-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Canal personal</p>
+                  <h1 id="portal-messages-title">Mensajes seguros</h1>
+                  <p>
+                    Comunicaciones disponibles únicamente para tu acceso verificado en este portal.
+                  </p>
+                </div>
                 <button
                   mat-stroked-button
                   class="nexa-btn-secondary"
                   type="button"
-                  (click)="activateSection('inicio')"
+                  (click)="loadMessages()"
                 >
-                  Volver a Mi salud
+                  <app-icon name="arrow" [size]="16" /> Actualizar
                 </button>
+              </header>
+
+              <div class="message-boundary">
+                <app-icon name="shield" [size]="18" />
+                <p>
+                  Los mensajes se muestran cifrados en tránsito y no incluyen enlaces de acceso
+                  compartible.
+                </p>
               </div>
+
+              @if (messagesLoading()) {
+                <section class="portal-state" aria-live="polite" aria-busy="true">
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  <p>Cargando tus mensajes seguros…</p>
+                </section>
+              } @else if (messagesError(); as error) {
+                <section class="portal-state portal-state--error" role="alert">
+                  <app-icon name="shield" [size]="22" />
+                  <div>
+                    <strong>Los mensajes no están disponibles</strong>
+                    <p>{{ error.message }}</p>
+                  </div>
+                  <button
+                    mat-stroked-button
+                    class="nexa-btn-secondary"
+                    type="button"
+                    (click)="loadMessages()"
+                  >
+                    Reintentar
+                  </button>
+                </section>
+              } @else if (messages(); as records) {
+                @if (records.length) {
+                  <div class="message-workspace">
+                    <div class="message-list" aria-label="Lista de mensajes">
+                      <header>
+                        <strong>Mensajes disponibles</strong><span>{{ records.length }}</span>
+                      </header>
+                      @for (message of records; track message.id) {
+                        <button
+                          type="button"
+                          [class.is-active]="selectedMessage()?.id === message.id"
+                          (click)="selectMessage(message.id)"
+                        >
+                          <span class="message-avatar">NS</span>
+                          <div>
+                            <span
+                              ><strong>{{
+                                message.authorDisplayName ?? 'Equipo asistencial'
+                              }}</strong
+                              ><small>{{ formatMessageDate(message.publishedAt) }}</small></span
+                            >
+                            <b>{{ message.subject }}</b>
+                            <p>{{ message.body }}</p>
+                          </div>
+                        </button>
+                      }
+                    </div>
+                    @if (selectedMessage(); as message) {
+                      <article class="message-reader" aria-live="polite">
+                        <header>
+                          <div>
+                            <span class="message-avatar">NS</span
+                            ><span
+                              ><strong>{{
+                                message.authorDisplayName ?? 'Equipo asistencial'
+                              }}</strong
+                              ><small>{{ formatMessageDate(message.publishedAt) }}</small></span
+                            >
+                          </div>
+                          <span class="nexa-chip nexa-chip--success">Portal seguro</span>
+                        </header>
+                        <div>
+                          <p class="nexa-eyebrow">Comunicación del centro</p>
+                          <h2>{{ message.subject }}</h2>
+                          <p>{{ message.body }}</p>
+                        </div>
+                        <footer>
+                          <app-icon name="shield" [size]="15" /><span
+                            >Consulta auditada y protegida por tu sesión.</span
+                          >
+                        </footer>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <section class="portal-empty" aria-live="polite">
+                    <span><app-icon name="bell" [size]="28" /></span>
+                    <h2>No tienes mensajes disponibles</h2>
+                    <p>
+                      Las comunicaciones seguras del centro aparecerán aquí cuando estén publicadas
+                      para tu portal.
+                    </p>
+                  </section>
+                }
+              }
             </section>
           }
           @case ('privacidad') {

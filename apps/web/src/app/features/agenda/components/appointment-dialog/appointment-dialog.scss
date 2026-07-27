@@ -1,14 +1,78 @@
-:host { display: block; width: min(720px, 92vw); color: var(--nexa-ink); }
-.dialog-header { display: flex; align-items: center; gap: 13px; padding: 22px 24px 9px; }
-.dialog-header__icon { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 13px; color: var(--nexa-primary); background: var(--nexa-primary-soft); }
-.dialog-header > div { min-width: 0; flex: 1; }
-.dialog-header .nexa-eyebrow { margin-bottom: 1px; }
-.dialog-header h2 { margin: 0; padding: 0; color: var(--nexa-ink-strong); font-family: 'Newsreader Variable', Georgia, serif; font-size: 1.65rem; font-weight: 560; }
-mat-dialog-content { padding-top: 10px !important; }
-.nexa-field-grid { padding-top: 5px; }
-.field-wide { grid-column: 1 / -1; }
-.time-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.reschedule-note { display: flex; align-items: start; gap: 9px; margin: 0 0 18px; padding: 11px 12px; border: 1px solid var(--nexa-border); border-radius: 12px; color: var(--nexa-primary); background: var(--nexa-primary-pale); font-size: 0.68rem; line-height: 1.5; }
-mat-checkbox { color: var(--nexa-ink-soft); font-size: 0.72rem; }
-mat-dialog-actions { padding: 12px 24px 22px; border-top: 1px solid var(--nexa-border); }
-@media (max-width: 600px) { .field-wide { grid-column: auto; } .time-pair { grid-template-columns: 1fr; } }
+:host {
+  display: block;
+  width: min(720px, 92vw);
+  color: var(--nexa-ink);
+}
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 22px 24px 9px;
+}
+.dialog-header__icon {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+.dialog-header > div {
+  min-width: 0;
+  flex: 1;
+}
+.dialog-header .nexa-eyebrow {
+  margin-bottom: 1px;
+}
+.dialog-header h2 {
+  margin: 0;
+  padding: 0;
+  color: var(--nexa-ink-strong);
+  font-family: 'Newsreader Variable', Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 560;
+}
+mat-dialog-content {
+  padding-top: 10px !important;
+}
+.nexa-field-grid {
+  padding-top: 5px;
+}
+.field-wide {
+  grid-column: 1 / -1;
+}
+.time-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.reschedule-note {
+  display: flex;
+  align-items: start;
+  gap: 9px;
+  margin: 0 0 18px;
+  padding: 11px 12px;
+  border: 1px solid var(--nexa-border);
+  border-radius: 12px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-pale);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+mat-checkbox {
+  color: var(--nexa-ink-soft);
+  font-size: 0.72rem;
+}
+mat-dialog-actions {
+  padding: 12px 24px 22px;
+  border-top: 1px solid var(--nexa-border);
+}
+@media (max-width: 600px) {
+  .field-wide {
+    grid-column: auto;
+  }
+  .time-pair {
+    grid-template-columns: 1fr;
+  }
+}

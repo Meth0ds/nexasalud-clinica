@@ -1,0 +1,25 @@
+<main class="status-page">
+  <section class="status-page__card" aria-labelledby="status-page-title">
+    <div class="status-page__mark" aria-hidden="true">
+      <app-icon [name]="kind() === 'not-found' ? 'search' : 'shield'" [size]="28" />
+    </div>
+    <p class="status-page__eyebrow">NexaSalud · acceso protegido</p>
+    <h1 id="status-page-title">{{ title() }}</h1>
+    <p>{{ description() }}</p>
+    <div class="status-page__actions">
+      <button
+        mat-flat-button
+        type="button"
+        class="status-page__primary"
+        (click)="returnToWorkspace()"
+      >
+        Volver al espacio de trabajo
+      </button>
+      <a mat-stroked-button routerLink="/login">Ir al acceso seguro</a>
+    </div>
+    <p class="status-page__support">
+      Si el problema continúa, contacta con soporte autorizado e indica la hora aproximada del
+      incidente.
+    </p>
+  </section>
+</main>

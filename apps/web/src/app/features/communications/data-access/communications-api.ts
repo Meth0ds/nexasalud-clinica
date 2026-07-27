@@ -6,7 +6,8 @@ import { ApiClientService } from '../../../core/services/api-client';
 export type CommunicationChannel = 'portal' | 'sms' | 'email';
 export type CommunicationContentClass = 'administrative' | 'clinical_link';
 export type CommunicationStatus = 'draft' | 'queued' | 'cancelled';
-export type ExternalTemplateKey = 'appointment_reminder' | 'appointment_change' | 'billing_notification' | 'generic_notification';
+export type ExternalTemplateKey =
+  'appointment_reminder' | 'appointment_change' | 'billing_notification' | 'generic_notification';
 
 export interface PatientCommunicationRecord {
   readonly id: string;
@@ -50,7 +51,10 @@ interface CommunicationCollection {
 export class CommunicationsApiService {
   private readonly api = inject(ApiClientService);
 
-  list(): Observable<{ readonly communications: readonly PatientCommunicationRecord[]; readonly total: number }> {
+  list(): Observable<{
+    readonly communications: readonly PatientCommunicationRecord[];
+    readonly total: number;
+  }> {
     return this.api
       .get<CommunicationCollection>('/api/v1/communications', { params: { perPage: 100 } })
       .pipe(map((response) => ({ communications: response.data, total: response.meta.total })));
@@ -58,9 +62,13 @@ export class CommunicationsApiService {
 
   create(input: CreatePatientCommunicationInput): Observable<PatientCommunicationRecord> {
     return this.api
-      .post<ApiData<PatientCommunicationRecord>, CreatePatientCommunicationInput>('/api/v1/communications', input, {
-        idempotencyKey: idempotencyKey(),
-      })
+      .post<ApiData<PatientCommunicationRecord>, CreatePatientCommunicationInput>(
+        '/api/v1/communications',
+        input,
+        {
+          idempotencyKey: idempotencyKey(),
+        },
+      )
       .pipe(map((response) => response.data));
   }
 

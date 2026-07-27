@@ -1,5 +1,12 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +22,12 @@ import { PatientsService } from '../../../../core/services/patients';
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
-import { InvoiceApiService, InvoiceRecord, InvoiceStatus, PaymentMethod } from '../../data-access/invoice-api';
+import {
+  InvoiceApiService,
+  InvoiceRecord,
+  InvoiceStatus,
+  PaymentMethod,
+} from '../../data-access/invoice-api';
 
 @Component({
   selector: 'app-billing',
@@ -59,14 +71,22 @@ export class Billing {
     }
 
     return this.invoices().filter((invoice) =>
-      [invoice.number, invoice.patientDisplayName, ...invoice.items.map((item) => item.description)]
-        .some((value) => value.toLocaleLowerCase('es').includes(query)),
+      [
+        invoice.number,
+        invoice.patientDisplayName,
+        ...invoice.items.map((item) => item.description),
+      ].some((value) => value.toLocaleLowerCase('es').includes(query)),
     );
   });
   protected readonly metrics = computed(() => {
     const invoices = this.invoices();
-    const issued = invoices.filter((invoice) => invoice.status !== 'draft' && invoice.status !== 'void');
-    const collected = issued.reduce((sum, invoice) => sum + (invoice.totalMinor - invoice.balanceMinor), 0);
+    const issued = invoices.filter(
+      (invoice) => invoice.status !== 'draft' && invoice.status !== 'void',
+    );
+    const collected = issued.reduce(
+      (sum, invoice) => sum + (invoice.totalMinor - invoice.balanceMinor),
+      0,
+    );
     const outstanding = issued.reduce((sum, invoice) => sum + invoice.balanceMinor, 0);
     return {
       total: issued.reduce((sum, invoice) => sum + invoice.totalMinor, 0),
@@ -88,7 +108,10 @@ export class Billing {
 
   protected readonly paymentForm = this.formBuilder.nonNullable.group({
     amountEuro: ['', [Validators.required, Validators.min(0.01)]],
-    methodCode: this.formBuilder.nonNullable.control<PaymentMethod>('card_provider', Validators.required),
+    methodCode: this.formBuilder.nonNullable.control<PaymentMethod>(
+      'card_provider',
+      Validators.required,
+    ),
     externalReference: ['', Validators.maxLength(160)],
   });
 
@@ -98,7 +121,13 @@ export class Billing {
 
   protected openCreate(): void {
     this.invoiceForm.reset({
-      patientId: '', description: '', quantity: '1', unitPriceEuro: '', taxRatePercent: '0', dueOn: '', notes: '',
+      patientId: '',
+      description: '',
+      quantity: '1',
+      unitPriceEuro: '',
+      taxRatePercent: '0',
+      dueOn: '',
+      notes: '',
     });
     this.createOpen.set(true);
   }
@@ -130,14 +159,19 @@ export class Billing {
         currency: 'EUR',
         ...(value.dueOn ? { dueOn: value.dueOn } : {}),
         ...(value.notes.trim() ? { notes: value.notes.trim() } : {}),
-        items: [{
-          description: value.description.trim(),
-          quantity: value.quantity,
-          unitPriceMinor,
-          taxRateBasisPoints,
-        }],
+        items: [
+          {
+            description: value.description.trim(),
+            quantity: value.quantity,
+            unitPriceMinor,
+            taxRateBasisPoints,
+          },
+        ],
       })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (invoice) => {
           this.upsert(invoice);
@@ -155,7 +189,10 @@ export class Billing {
     this.processingId.set(invoice.id);
     this.invoiceApi
       .issue(invoice)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.processingId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.processingId.set(null)),
+      )
       .subscribe({
         next: (updated) => {
           this.upsert(updated);
@@ -202,9 +239,14 @@ export class Billing {
       .recordPayment(invoice, {
         amountMinor,
         methodCode: value.methodCode,
-        ...(value.externalReference.trim() ? { externalReference: value.externalReference.trim() } : {}),
+        ...(value.externalReference.trim()
+          ? { externalReference: value.externalReference.trim() }
+          : {}),
       })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.processingId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.processingId.set(null)),
+      )
       .subscribe({
         next: (updated) => {
           this.upsert(updated);
@@ -215,14 +257,21 @@ export class Billing {
   }
 
   protected download(invoice: InvoiceRecord): void {
-    if (this.downloadingId() === invoice.id || invoice.status === 'draft' || invoice.status === 'void') {
+    if (
+      this.downloadingId() === invoice.id ||
+      invoice.status === 'draft' ||
+      invoice.status === 'void'
+    ) {
       return;
     }
 
     this.downloadingId.set(invoice.id);
     this.invoiceApi
       .downloadInvoice(invoice)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.downloadingId.set(null)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.downloadingId.set(null)),
+      )
       .subscribe({
         next: ({ blob, filename }) => this.downloadBlob(blob, filename),
       });
@@ -230,12 +279,23 @@ export class Billing {
 
   protected statusLabel(status: InvoiceStatus): string {
     return {
-      draft: 'Borrador', issued: 'Emitida', partially_paid: 'Pago parcial', paid: 'Pagada', void: 'Anulada', overdue: 'Vencida',
+      draft: 'Borrador',
+      issued: 'Emitida',
+      partially_paid: 'Pago parcial',
+      paid: 'Pagada',
+      void: 'Anulada',
+      overdue: 'Vencida',
     }[status];
   }
 
   protected statusTone(status: InvoiceStatus): 'info' | 'warning' | 'success' | 'danger' {
-    return status === 'draft' || status === 'issued' ? 'info' : status === 'paid' ? 'success' : status === 'overdue' || status === 'void' ? 'danger' : 'warning';
+    return status === 'draft' || status === 'issued'
+      ? 'info'
+      : status === 'paid'
+        ? 'success'
+        : status === 'overdue' || status === 'void'
+          ? 'danger'
+          : 'warning';
   }
 
   protected money(value: number, currency = 'EUR'): string {
@@ -247,25 +307,35 @@ export class Billing {
       return 'Sin fecha';
     }
     const parsed = new Date(`${value}T12:00:00`);
-    return Number.isNaN(parsed.getTime()) ? 'Sin fecha' : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(parsed);
+    return Number.isNaN(parsed.getTime())
+      ? 'Sin fecha'
+      : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(parsed);
   }
 
   private load(): void {
     forkJoin({ invoices: this.invoiceApi.list(), patients: this.patientsApi.search() })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: ({ invoices, patients }) => {
           this.invoices.set(invoices.invoices);
           this.patients.set(patients.items);
         },
-        error: () => this.errorMessage.set('No se han podido cargar las facturas autorizadas. Comprueba tu sesión, contexto y permisos de facturación.'),
+        error: () =>
+          this.errorMessage.set(
+            'No se han podido cargar las facturas autorizadas. Comprueba tu sesión, contexto y permisos de facturación.',
+          ),
       });
   }
 
   private upsert(invoice: InvoiceRecord): void {
     this.invoices.update((items) => {
       const exists = items.some((item) => item.id === invoice.id);
-      return exists ? items.map((item) => item.id === invoice.id ? invoice : item) : [invoice, ...items];
+      return exists
+        ? items.map((item) => (item.id === invoice.id ? invoice : item))
+        : [invoice, ...items];
     });
   }
 

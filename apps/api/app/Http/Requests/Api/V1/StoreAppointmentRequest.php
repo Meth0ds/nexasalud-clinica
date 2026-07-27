@@ -8,7 +8,10 @@ use Illuminate\Validation\Rule;
 
 class StoreAppointmentRequest extends TenantFormRequest
 {
-    public function authorize(): bool { return $this->authenticatedUser()->can('create', Appointment::class); }
+    public function authorize(): bool
+    {
+        return $this->authenticatedUser()->can('create', Appointment::class);
+    }
 
     public function rules(): array
     {

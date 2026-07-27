@@ -7,6 +7,7 @@ use App\Exceptions\IdentityUnavailableException;
 use App\Services\Identity\Data\OidcMetadata;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -126,14 +127,11 @@ final class OidcDiscovery
         return ['keys' => $keys];
     }
 
-    private function request(string $url): \Illuminate\Http\Client\Response
+    private function request(string $url): Response
     {
         try {
             return Http::acceptJson()
-                ->withOptions([
-                    'allow_redirects' => false,
-                    'verify' => true,
-                ])
+                ->withOptions($this->httpOptions($url))
                 ->connectTimeout($this->positiveIntegerConfig('connect_timeout_seconds'))
                 ->timeout($this->positiveIntegerConfig('timeout_seconds'))
                 ->retry([100, 250], throw: false)
@@ -142,6 +140,48 @@ final class OidcDiscovery
         } catch (ConnectionException|RequestException $exception) {
             throw new IdentityUnavailableException($exception);
         }
+    }
+
+    /**
+     * Docker's PHP cURL resolver treats *.localhost as loopback, unlike the
+     * container resolver used by the rest of the local stack. Pin only this
+     * local development request to Docker DNS; production continues using
+     * standard DNS resolution and TLS verification.
+     *
+     * @return array<string, mixed>
+     */
+    private function httpOptions(string $url): array
+    {
+        $options = [
+            'allow_redirects' => false,
+            'verify' => true,
+        ];
+        $parts = parse_url($url);
+
+        if (
+            ! app()->environment(['local', 'testing'])
+            || ! is_array($parts)
+            || ($parts['scheme'] ?? null) !== 'http'
+            || ! is_string($parts['host'] ?? null)
+            || ! str_ends_with(mb_strtolower($parts['host']), '.localhost')
+        ) {
+            return $options;
+        }
+
+        $resolvedAddress = gethostbyname($parts['host']);
+        $port = isset($parts['port']) ? (int) $parts['port'] : 80;
+
+        if (
+            filter_var($resolvedAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false
+            || $port < 1
+            || $port > 65535
+        ) {
+            return $options;
+        }
+
+        $options['curl'] = [CURLOPT_RESOLVE => [sprintf('%s:%d:%s', $parts['host'], $port, $resolvedAddress)]];
+
+        return $options;
     }
 
     /**

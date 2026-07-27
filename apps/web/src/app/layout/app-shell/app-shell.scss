@@ -83,12 +83,7 @@
   border-radius: 14px;
   color: inherit;
   background: rgba(255, 255, 255, 0.055);
-  cursor: pointer;
   text-align: left;
-}
-
-.clinic-switch:hover {
-  background: rgba(255, 255, 255, 0.09);
 }
 
 .clinic-switch__symbol {
@@ -154,7 +149,10 @@
   font-size: 0.75rem;
   font-weight: 560;
   text-decoration: none;
-  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
 .nexa-nav a:hover {
@@ -179,15 +177,6 @@
 
 .nexa-nav a span {
   flex: 1;
-}
-
-.nexa-nav a small {
-  padding: 3px 6px;
-  border-radius: 999px;
-  color: #173b37;
-  background: #94cfc3;
-  font-size: 0.53rem;
-  font-weight: 820;
 }
 
 .security-status {
@@ -236,14 +225,6 @@
   font-size: 0.55rem;
 }
 
-.security-status > i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #79d099;
-  box-shadow: 0 0 0 4px rgba(121, 208, 153, 0.09);
-}
-
 .nexa-topbar {
   position: sticky;
   z-index: 20;
@@ -266,39 +247,6 @@
   gap: 10px;
 }
 
-.command-search {
-  display: flex;
-  align-items: center;
-  width: clamp(250px, 31vw, 430px);
-  min-height: 44px;
-  gap: 10px;
-  padding: 0 11px;
-  border: 1px solid var(--nexa-border);
-  border-radius: 13px;
-  color: var(--nexa-ink-soft);
-  background: var(--nexa-surface);
-  cursor: pointer;
-  text-align: left;
-}
-
-.command-search span {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  font-size: 0.74rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.command-search kbd {
-  padding: 3px 6px;
-  border: 1px solid var(--nexa-border);
-  border-radius: 6px;
-  color: var(--nexa-ink-soft);
-  background: var(--nexa-surface-muted);
-  font-size: 0.61rem;
-}
-
 .nexa-today {
   margin-right: 4px;
   color: var(--nexa-ink-soft);
@@ -307,57 +255,13 @@
   white-space: nowrap;
 }
 
-.notification-button {
-  position: relative;
-}
-
-.notification-button i {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 7px;
-  height: 7px;
-  border: 2px solid var(--nexa-surface);
-  border-radius: 50%;
-  background: var(--nexa-accent);
-}
-
 .profile-button {
   display: flex;
   align-items: center;
   gap: 9px;
-  min-height: 48px;
-  padding: 3px 7px 3px 3px;
   border: 0;
-  border-radius: 14px;
   color: var(--nexa-ink);
   background: transparent;
-  cursor: pointer;
-  text-align: left;
-}
-
-.profile-button:hover {
-  background: var(--nexa-surface-strong);
-}
-
-.profile-button__copy strong,
-.profile-button__copy small {
-  display: block;
-  max-width: 155px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-button__copy strong {
-  color: var(--nexa-ink-strong);
-  font-size: 0.71rem;
-}
-
-.profile-button__copy small {
-  margin-top: 2px;
-  color: var(--nexa-ink-soft);
-  font-size: 0.58rem;
 }
 
 .nexa-main {
@@ -377,14 +281,6 @@
     padding: 10px 14px;
   }
 
-  .command-search {
-    width: auto;
-    min-width: 42px;
-    padding-inline: 11px;
-  }
-
-  .command-search span,
-  .command-search kbd,
   .nexa-topbar__actions > .nexa-icon-button:first-of-type {
     display: none;
   }

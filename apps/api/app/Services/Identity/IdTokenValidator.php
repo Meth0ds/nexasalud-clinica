@@ -2,8 +2,8 @@
 
 namespace App\Services\Identity;
 
-use App\Exceptions\IdentityProtocolException;
 use App\Exceptions\IdentityMfaEnrollmentCompletedException;
+use App\Exceptions\IdentityProtocolException;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use JsonException;

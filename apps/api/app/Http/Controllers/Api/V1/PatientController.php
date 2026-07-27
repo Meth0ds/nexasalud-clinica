@@ -17,10 +17,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Provides tenant-scoped patient directory operations and records every sensitive access.
+ */
 final class PatientController extends Controller
 {
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Lists only the patients the current tenant and actor may access.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Patient::class);
@@ -57,6 +63,9 @@ final class PatientController extends Controller
         return PatientResource::collection($patients);
     }
 
+    /**
+     * Creates a patient record from validated, minimum-necessary input.
+     */
     public function store(StorePatientRequest $request): PatientResource
     {
         $data = $request->validated();
@@ -77,6 +86,9 @@ final class PatientController extends Controller
         return new PatientResource($patient->load($this->relationships()));
     }
 
+    /**
+     * Returns an authorized patient record and audits the clinical access purpose.
+     */
     public function show(Request $request, Patient $patient): PatientResource
     {
         Gate::authorize('view', $patient);
@@ -85,6 +97,9 @@ final class PatientController extends Controller
         return new PatientResource($patient->load($this->relationships()));
     }
 
+    /**
+     * Updates only fields permitted by the request contract under a row lock.
+     */
     public function update(UpdatePatientRequest $request, Patient $patient): PatientResource
     {
         $data = $request->validated();
@@ -117,6 +132,9 @@ final class PatientController extends Controller
         return new PatientResource($patient->load($this->relationships()));
     }
 
+    /**
+     * Deactivates an active patient without deleting its traceable clinical record.
+     */
     public function destroy(Request $request, Patient $patient): Response
     {
         Gate::authorize('update', $patient);
@@ -128,7 +146,11 @@ final class PatientController extends Controller
         return response()->noContent();
     }
 
-    /** @return array<int|string, mixed> */
+    /**
+     * Defines the minimum relations needed to render an authorized patient resource.
+     *
+     * @return array<int|string, mixed>
+     */
     private function relationships(): array
     {
         return [
@@ -139,6 +161,9 @@ final class PatientController extends Controller
         ];
     }
 
+    /**
+     * Resolves the tenant context and fails closed when no authorized tenant is active.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

@@ -10,9 +10,14 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
+/**
+ * Persists a privacy-preserving audit trail for sensitive application actions.
+ */
 final class AuditRecorder
 {
     /**
+     * Records an authorized action using allowlisted metadata and hashed request fingerprints.
+     *
      * @param  array<string, bool|int|string|null>  $metadata
      */
     public function record(
@@ -47,6 +52,9 @@ final class AuditRecorder
         ]);
     }
 
+    /**
+     * Creates a tenant-bound non-reversible fingerprint for operational correlation.
+     */
     private function fingerprint(Tenant $tenant, string $value): string
     {
         return hash_hmac(

@@ -16,6 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Provides a tenant and clinic-scoped operational dashboard from authorized live data only.
+ */
 final class DashboardController extends Controller
 {
     public function __construct(
@@ -23,14 +26,18 @@ final class DashboardController extends Controller
         private readonly AuditRecorder $audit,
     ) {}
 
+    /**
+     * Returns the current clinic day summary and records an aggregate-only audit event.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         abort_unless($request->user() && $this->permissions->allows($request->user(), 'appointments.read'), Response::HTTP_FORBIDDEN);
         $clinic = app()->bound('currentClinic') ? app('currentClinic') : null;
         abort_unless($clinic instanceof Clinic, Response::HTTP_FORBIDDEN);
 
-        $from = now($clinic->timezone)->startOfDay()->utc();
-        $to = now($clinic->timezone)->endOfDay()->utc();
+        $generatedAt = now($clinic->timezone);
+        $from = $generatedAt->copy()->startOfDay()->utc();
+        $to = $generatedAt->copy()->endOfDay()->utc();
         $appointments = Appointment::query()
             ->where('clinic_id', $clinic->getKey())
             ->where('starts_at', '<=', $to)
@@ -65,7 +72,8 @@ final class DashboardController extends Controller
 
         return response()->json([
             'data' => [
-                'date' => now($clinic->timezone)->toDateString(),
+                'date' => $generatedAt->toDateString(),
+                'generatedAt' => $generatedAt->toIso8601String(),
                 'timezone' => $clinic->timezone,
                 'clinic' => ['id' => $clinic->getKey(), 'name' => $clinic->name],
                 'metrics' => [
@@ -99,7 +107,11 @@ final class DashboardController extends Controller
         ]);
     }
 
-    /** @return array<string, string|null> */
+    /**
+     * Projects an authorized appointment into the minimum dashboard payload without clinical content.
+     *
+     * @return array<string, string|null>
+     */
     private function appointmentPayload(Appointment $appointment): array
     {
         $patientName = trim((string) $appointment->patient?->first_name.' '.(string) $appointment->patient?->last_name);

@@ -4,7 +4,11 @@ namespace App\Http\Requests\Api\V1;
 
 class UpdatePreferencesRequest extends TenantFormRequest
 {
-    public function authorize(): bool { return app()->bound('currentMembership'); }
+    public function authorize(): bool
+    {
+        return app()->bound('currentMembership');
+    }
+
     public function rules(): array
     {
         return [

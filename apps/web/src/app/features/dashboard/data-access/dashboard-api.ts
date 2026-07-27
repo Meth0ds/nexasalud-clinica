@@ -17,6 +17,7 @@ export interface DashboardAppointment {
 
 export interface DashboardData {
   readonly date: string;
+  readonly generatedAt: string;
   readonly timezone: string;
   readonly clinic: { readonly id: string; readonly name: string };
   readonly metrics: {
@@ -35,6 +36,8 @@ export class DashboardApiService {
   private readonly api = inject(ApiClientService);
 
   load(): Observable<DashboardData> {
-    return this.api.get<{ readonly data: DashboardData }>('/api/v1/dashboard').pipe(map((response) => response.data));
+    return this.api
+      .get<{ readonly data: DashboardData }>('/api/v1/dashboard')
+      .pipe(map((response) => response.data));
   }
 }

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,18 +32,51 @@ import {
 
 type CommunicationFilter = 'all' | CommunicationStatus;
 
-const EXTERNAL_TEMPLATES: readonly { readonly key: ExternalTemplateKey; readonly label: string; readonly description: string }[] = [
-  { key: 'appointment_reminder', label: 'Recordatorio de cita', description: 'Aviso genérico para acceder al área privada.' },
-  { key: 'appointment_change', label: 'Actualización de cita', description: 'Aviso genérico de cambio sin datos asistenciales.' },
-  { key: 'billing_notification', label: 'Aviso administrativo de facturación', description: 'Aviso para revisar documentación en el portal.' },
-  { key: 'generic_notification', label: 'Nueva notificación del centro', description: 'Aviso neutro sin contenido clínico.' },
+const EXTERNAL_TEMPLATES: readonly {
+  readonly key: ExternalTemplateKey;
+  readonly label: string;
+  readonly description: string;
+}[] = [
+  {
+    key: 'appointment_reminder',
+    label: 'Recordatorio de cita',
+    description: 'Aviso genérico para acceder al área privada.',
+  },
+  {
+    key: 'appointment_change',
+    label: 'Actualización de cita',
+    description: 'Aviso genérico de cambio sin datos asistenciales.',
+  },
+  {
+    key: 'billing_notification',
+    label: 'Aviso administrativo de facturación',
+    description: 'Aviso para revisar documentación en el portal.',
+  },
+  {
+    key: 'generic_notification',
+    label: 'Nueva notificación del centro',
+    description: 'Aviso neutro sin contenido clínico.',
+  },
 ];
 
 @Component({
   selector: 'app-communications',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSelectModule, AppIcon, ScrollReveal],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    AppIcon,
+    ScrollReveal,
+  ],
   templateUrl: './communications.html',
-  styleUrls: ['./communications.scss', './communications-compose.scss', './communications-side.scss'],
+  styleUrls: [
+    './communications.scss',
+    './communications-compose.scss',
+    './communications-side.scss',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Communications {
@@ -67,22 +107,41 @@ export class Communications {
   });
   protected readonly currentChannel = signal<CommunicationChannel>('portal');
   protected readonly isExternalChannel = computed(() => this.currentChannel() !== 'portal');
-  protected readonly canComposeClinical = computed(() => this.session.hasPermission('communications.clinical.write'));
+  protected readonly canComposeClinical = computed(() =>
+    this.session.hasPermission('communications.clinical.write'),
+  );
   protected readonly filteredCommunications = computed(() => {
     const term = this.searchTerm().trim().toLocaleLowerCase('es-ES');
     const filter = this.activeFilter();
 
     return this.communications().filter((record) => {
       const matchesStatus = filter === 'all' || record.status === filter;
-      const matchesSearch = !term || `${record.patientDisplayName} ${record.subject ?? ''} ${record.preview}`.toLocaleLowerCase('es-ES').includes(term);
+      const matchesSearch =
+        !term ||
+        `${record.patientDisplayName} ${record.subject ?? ''} ${record.preview}`
+          .toLocaleLowerCase('es-ES')
+          .includes(term);
       return matchesStatus && matchesSearch;
     });
   });
-  protected readonly selected = computed(() => this.communications().find((record) => record.id === this.selectedId()) ?? null);
-  protected readonly draftCount = computed(() => this.communications().filter((record) => record.status === 'draft').length);
-  protected readonly queuedCount = computed(() => this.communications().filter((record) => record.status === 'queued').length);
-  protected readonly scheduledCount = computed(() => this.communications().filter((record) => record.status === 'queued' && isFuture(record.scheduledAt)).length);
-  protected readonly cancelledCount = computed(() => this.communications().filter((record) => record.status === 'cancelled').length);
+  protected readonly selected = computed(
+    () => this.communications().find((record) => record.id === this.selectedId()) ?? null,
+  );
+  protected readonly draftCount = computed(
+    () => this.communications().filter((record) => record.status === 'draft').length,
+  );
+  protected readonly queuedCount = computed(
+    () => this.communications().filter((record) => record.status === 'queued').length,
+  );
+  protected readonly scheduledCount = computed(
+    () =>
+      this.communications().filter(
+        (record) => record.status === 'queued' && isFuture(record.scheduledAt),
+      ).length,
+  );
+  protected readonly cancelledCount = computed(
+    () => this.communications().filter((record) => record.status === 'cancelled').length,
+  );
 
   constructor() {
     this.composeForm.controls.channel.valueChanges
@@ -95,7 +154,10 @@ export class Communications {
     this.loading.set(true);
     this.errorMessage.set(null);
     forkJoin({ timeline: this.communicationsApi.list(), patients: this.patientsApi.search() })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
         next: ({ timeline, patients }) => {
           const communications = [...timeline.communications].sort(compareCommunications);
@@ -103,7 +165,8 @@ export class Communications {
           this.patients.set(patients.items);
           this.selectedId.set(communications[0]?.id ?? null);
         },
-        error: () => this.errorMessage.set('No se ha podido cargar la línea de comunicaciones autorizada.'),
+        error: () =>
+          this.errorMessage.set('No se ha podido cargar la línea de comunicaciones autorizada.'),
       });
   }
 
@@ -113,7 +176,12 @@ export class Communications {
       return;
     }
     this.composeForm.reset({
-      patientId: '', channel: 'portal', contentClass: 'administrative', subject: '', body: '', templateKey: 'appointment_reminder',
+      patientId: '',
+      channel: 'portal',
+      contentClass: 'administrative',
+      subject: '',
+      body: '',
+      templateKey: 'appointment_reminder',
     });
     this.currentChannel.set('portal');
     this.composeOpen.set(true);
@@ -149,26 +217,42 @@ export class Communications {
       return;
     }
 
-    const input = value.channel === 'portal'
-      ? {
-          patientId: value.patientId, channel: value.channel, contentClass: value.contentClass, mode,
-          subject: value.subject.trim(), body: value.body.trim(),
-        }
-      : {
-          patientId: value.patientId, channel: value.channel, contentClass: 'administrative' as const, mode,
-          templateKey: value.templateKey,
-        };
+    const input =
+      value.channel === 'portal'
+        ? {
+            patientId: value.patientId,
+            channel: value.channel,
+            contentClass: value.contentClass,
+            mode,
+            subject: value.subject.trim(),
+            body: value.body.trim(),
+          }
+        : {
+            patientId: value.patientId,
+            channel: value.channel,
+            contentClass: 'administrative' as const,
+            mode,
+            templateKey: value.templateKey,
+          };
     this.saving.set(true);
-    this.communicationsApi.create(input)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+    this.communicationsApi
+      .create(input)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (record) => {
-          this.communications.update((items) => [record, ...items.filter((item) => item.id !== record.id)].sort(compareCommunications));
+          this.communications.update((items) =>
+            [record, ...items.filter((item) => item.id !== record.id)].sort(compareCommunications),
+          );
           this.selectedId.set(record.id);
           this.composeOpen.set(false);
-          this.notifications.success(mode === 'draft'
-            ? 'Borrador cifrado y auditado. Aún no se ha encolado ningún envío.'
-            : 'Comunicación validada y añadida a la cola segura. La entrega externa requiere proveedor configurado.');
+          this.notifications.success(
+            mode === 'draft'
+              ? 'Borrador cifrado y auditado. Aún no se ha encolado ningún envío.'
+              : 'Comunicación validada y añadida a la cola segura. La entrega externa requiere proveedor configurado.',
+          );
         },
       });
   }
@@ -179,12 +263,18 @@ export class Communications {
     }
 
     this.saving.set(true);
-    this.communicationsApi.queue(record)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+    this.communicationsApi
+      .queue(record)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (updated) => {
           this.replace(updated);
-          this.notifications.success('Borrador validado contra el consentimiento actual y añadido a la cola segura.');
+          this.notifications.success(
+            'Borrador validado contra el consentimiento actual y añadido a la cola segura.',
+          );
         },
       });
   }
@@ -195,22 +285,30 @@ export class Communications {
     }
 
     this.saving.set(true);
-    this.communicationsApi.cancel(record)
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)))
+    this.communicationsApi
+      .cancel(record)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: (updated) => {
           this.replace(updated);
-          this.notifications.success('La comunicación se ha cancelado y queda registrada en la auditoría.');
+          this.notifications.success(
+            'La comunicación se ha cancelado y queda registrada en la auditoría.',
+          );
         },
       });
   }
 
   protected channelLabel(channel: CommunicationChannel): string {
-    return ({ portal: 'Portal seguro', sms: 'SMS con plantilla', email: 'Correo con plantilla' })[channel];
+    return { portal: 'Portal seguro', sms: 'SMS con plantilla', email: 'Correo con plantilla' }[
+      channel
+    ];
   }
 
   protected statusLabel(status: CommunicationStatus): string {
-    return ({ draft: 'Borrador', queued: 'En cola segura', cancelled: 'Cancelada' })[status];
+    return { draft: 'Borrador', queued: 'En cola segura', cancelled: 'Cancelada' }[status];
   }
 
   protected statusTone(status: CommunicationStatus): 'info' | 'warning' | 'danger' {
@@ -222,13 +320,18 @@ export class Communications {
       return 'Sin fecha';
     }
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Sin fecha' : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    return Number.isNaN(date.getTime())
+      ? 'Sin fecha'
+      : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   }
 
   private configureChannel(channel: CommunicationChannel): void {
     this.currentChannel.set(channel);
     if (channel !== 'portal') {
-      this.composeForm.patchValue({ contentClass: 'administrative', subject: '', body: '' }, { emitEvent: false });
+      this.composeForm.patchValue(
+        { contentClass: 'administrative', subject: '', body: '' },
+        { emitEvent: false },
+      );
     }
     this.applyChannelValidators(channel);
   }
@@ -238,8 +341,16 @@ export class Communications {
     const body = this.composeForm.controls.body;
     const templateKey = this.composeForm.controls.templateKey;
     if (channel === 'portal') {
-      subject.setValidators([Validators.required, Validators.minLength(3), Validators.maxLength(160)]);
-      body.setValidators([Validators.required, Validators.minLength(2), Validators.maxLength(4000)]);
+      subject.setValidators([
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(160),
+      ]);
+      body.setValidators([
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(4000),
+      ]);
       templateKey.clearValidators();
     } else {
       subject.clearValidators();
@@ -252,12 +363,17 @@ export class Communications {
   }
 
   private replace(updated: PatientCommunicationRecord): void {
-    this.communications.update((items) => items.map((item) => item.id === updated.id ? updated : item).sort(compareCommunications));
+    this.communications.update((items) =>
+      items.map((item) => (item.id === updated.id ? updated : item)).sort(compareCommunications),
+    );
     this.selectedId.set(updated.id);
   }
 }
 
-function compareCommunications(left: PatientCommunicationRecord, right: PatientCommunicationRecord): number {
+function compareCommunications(
+  left: PatientCommunicationRecord,
+  right: PatientCommunicationRecord,
+): number {
   return String(right.createdAt).localeCompare(String(left.createdAt));
 }
 

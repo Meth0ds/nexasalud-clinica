@@ -19,7 +19,12 @@ body,
     radial-gradient(circle at 14% 18%, rgba(201, 240, 231, 0.92), transparent 30rem),
     radial-gradient(circle at 92% 82%, rgba(244, 238, 226, 0.94), transparent 32rem),
     linear-gradient(145deg, #eff9f6 0%, #f8f5ee 54%, #edf7f4 100%);
-  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family:
+    Inter,
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 body::before,
@@ -30,14 +35,16 @@ body::after {
   height: 18rem;
   border: 1px solid rgba(13, 116, 105, 0.16);
   border-radius: 50%;
-  content: "";
+  content: '';
   pointer-events: none;
 }
 
 body::before {
   top: -7rem;
   right: -5rem;
-  box-shadow: 0 0 0 3rem rgba(13, 116, 105, 0.035), 0 0 0 6rem rgba(13, 116, 105, 0.025);
+  box-shadow:
+    0 0 0 3rem rgba(13, 116, 105, 0.035),
+    0 0 0 6rem rgba(13, 116, 105, 0.025);
 }
 
 body::after {
@@ -78,7 +85,7 @@ body::after {
   color: white;
   background: linear-gradient(145deg, var(--nexa-teal), var(--nexa-teal-deep));
   box-shadow: 0 12px 30px rgba(13, 116, 105, 0.22);
-  content: "+";
+  content: '+';
   font-size: 1.55rem;
   font-weight: 430;
   line-height: 1;
@@ -120,7 +127,7 @@ body::after {
   border-radius: 0.85rem;
   color: var(--nexa-teal-deep);
   background: rgba(201, 240, 231, 0.38);
-  content: "DNI + contraseña + verificación en dos pasos";
+  content: 'DNI + contraseña + verificación en dos pasos';
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.025em;
@@ -134,17 +141,19 @@ label,
   font-weight: 650;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="tel"] {
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='tel'] {
   min-height: 3rem;
   border: 1px solid var(--nexa-line);
   border-radius: 0.75rem;
   color: var(--nexa-ink);
   background: #fff;
   box-shadow: 0 1px 0 rgba(16, 43, 51, 0.03);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 input:focus,
@@ -169,7 +178,9 @@ input:focus {
   background: linear-gradient(135deg, var(--nexa-teal), var(--nexa-teal-deep));
   box-shadow: 0 12px 28px rgba(13, 116, 105, 0.2);
   font-weight: 720;
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
 #kc-login:hover,
@@ -220,4 +231,3 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
-

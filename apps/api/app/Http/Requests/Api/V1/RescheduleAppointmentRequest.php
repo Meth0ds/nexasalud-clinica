@@ -6,8 +6,14 @@ use App\Models\Appointment;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate a clinician-initiated, versioned appointment rescheduling request.
+ */
 class RescheduleAppointmentRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may update the routed appointment.
+     */
     public function authorize(): bool
     {
         $appointment = $this->route('appointment');
@@ -15,6 +21,11 @@ class RescheduleAppointmentRequest extends TenantFormRequest
         return $appointment instanceof Appointment && $this->authenticatedUser()->can('update', $appointment);
     }
 
+    /**
+     * Return tenant-scoped validation rules for a replacement appointment period and resources.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $tenant = $this->tenantId();

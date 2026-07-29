@@ -64,6 +64,17 @@ describe('AppointmentsService', () => {
     });
   });
 
+  it('maps frontend lifecycle states to the protected idempotent transition endpoint', async () => {
+    const result = firstValueFrom(service.transition(appointment.id, appointment.version, 'waiting'));
+    const request = http.expectOne(`/api/v1/appointments/${appointment.id}/transition`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.has('Idempotency-Key')).toBe(true);
+    expect(request.request.body).toEqual({ version: 1, status: 'checked_in' });
+    request.flush({ data: { ...appointment, version: 2, status: 'waiting' } });
+
+    await expect(result).resolves.toMatchObject({ version: 2, status: 'waiting' });
+  });
+
   it('generates and downloads appointment confirmations through protected document endpoints', async () => {
     const result = firstValueFrom(service.downloadAppointmentConfirmation(appointment.id));
     const generationRequest = http.expectOne(

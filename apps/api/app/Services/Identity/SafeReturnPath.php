@@ -2,8 +2,14 @@
 
 namespace App\Services\Identity;
 
+/**
+ * Normalizes browser return paths to safe, application-local destinations.
+ */
 final class SafeReturnPath
 {
+    /**
+     * Return a safe local path or the application root for an invalid candidate.
+     */
     public function normalize(?string $candidate): string
     {
         if ($candidate === null || $candidate === '') {

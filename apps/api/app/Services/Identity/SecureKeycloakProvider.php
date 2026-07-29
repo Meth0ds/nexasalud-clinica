@@ -16,6 +16,9 @@ use JsonException;
 use SocialiteProviders\Keycloak\Provider;
 use SocialiteProviders\Manager\OAuth2\User as ManagerUser;
 
+/**
+ * Implements a stateful Keycloak authorization-code flow with PKCE and verified identity data.
+ */
 final class SecureKeycloakProvider extends Provider
 {
     public const TRANSACTION_SESSION_KEY = 'auth.oidc.transaction';
@@ -28,6 +31,8 @@ final class SecureKeycloakProvider extends Provider
     private ?string $completedReturnPath = null;
 
     /**
+     * Create the provider with hardened discovery, token validation and HTTP settings.
+     *
      * @param  array<string, mixed>  $guzzle
      */
     public function __construct(
@@ -43,6 +48,9 @@ final class SecureKeycloakProvider extends Provider
         $this->enablePKCE();
     }
 
+    /**
+     * Create an authorization redirect and persist its one-time state and PKCE transaction.
+     */
     public function redirectFor(string $returnPath): RedirectResponse
     {
         $requiredAcrValues = config('services.keycloak.required_acr_values', []);
@@ -95,6 +103,9 @@ final class SecureKeycloakProvider extends Provider
         }
     }
 
+    /**
+     * Consume and validate the callback transaction before retrieving the verified provider user.
+     */
     public function user(): ManagerUser
     {
         $transaction = OidcTransaction::fromSession(
@@ -165,6 +176,8 @@ final class SecureKeycloakProvider extends Provider
     }
 
     /**
+     * Return the claims validated during the completed callback.
+     *
      * @return array<string, mixed>
      */
     public function validatedClaims(): array
@@ -176,6 +189,9 @@ final class SecureKeycloakProvider extends Provider
         return $this->validatedClaims;
     }
 
+    /**
+     * Return the local path bound to the completed OIDC transaction.
+     */
     public function completedReturnPath(): string
     {
         if ($this->completedReturnPath === null) {
@@ -185,17 +201,25 @@ final class SecureKeycloakProvider extends Provider
         return $this->completedReturnPath;
     }
 
+    /**
+     * Build the authorization URL from trusted discovery metadata.
+     */
     protected function getAuthUrl($state): string
     {
         return $this->buildAuthUrlFromBase($this->discovery->metadata()->authorizationEndpoint, $state);
     }
 
+    /**
+     * Return the token endpoint pinned to the trusted issuer.
+     */
     protected function getTokenUrl(): string
     {
         return $this->discovery->metadata()->tokenEndpoint;
     }
 
     /**
+     * Fetch a bounded user-info response using the server-side access token.
+     *
      * @return array<string, mixed>
      */
     protected function getUserByToken($token): array
@@ -231,6 +255,8 @@ final class SecureKeycloakProvider extends Provider
     }
 
     /**
+     * Exchange an authorization code for a bounded bearer token response.
+     *
      * @return array<string, mixed>
      */
     public function getAccessTokenResponse($code): array
@@ -270,6 +296,8 @@ final class SecureKeycloakProvider extends Provider
     }
 
     /**
+     * Build the authorization-code exchange fields, including the active PKCE verifier.
+     *
      * @return array<string, string>
      */
     protected function getTokenFields($code): array
@@ -288,6 +316,9 @@ final class SecureKeycloakProvider extends Provider
         ];
     }
 
+    /**
+     * Derive the RFC 7636 S256 challenge from the active transaction verifier.
+     */
     protected function getCodeChallenge(): string
     {
         if ($this->activeTransaction === null) {
@@ -300,6 +331,8 @@ final class SecureKeycloakProvider extends Provider
     }
 
     /**
+     * Read a required bounded token string from the token endpoint response.
+     *
      * @param  array<string, mixed>  $tokens
      */
     private function requiredToken(array $tokens, string $key): string
@@ -316,6 +349,8 @@ final class SecureKeycloakProvider extends Provider
     }
 
     /**
+     * Convert an optional space-delimited OAuth scope string to a list.
+     *
      * @return list<string>
      */
     private function parseScopes(mixed $scopes): array

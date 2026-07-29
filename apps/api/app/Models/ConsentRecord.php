@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['tenant_id', 'patient_id', 'consent_type', 'document_version', 'status', 'recorded_by', 'granted_at', 'expires_at', 'withdrawn_at', 'withdrawal_reason', 'evidence_hash'])]
 #[Hidden(['withdrawal_reason'])]
+/**
+ * Records a tenant-scoped patient consent decision and its evidence lifecycle.
+ */
 class ConsentRecord extends Model
 {
     /** @use HasFactory<ConsentRecordFactory> */
@@ -22,16 +25,27 @@ class ConsentRecord extends Model
 
     protected $attributes = ['status' => ConsentStatus::Active->value];
 
+    /**
+     * Return the patient who granted, withdrew or is subject to this consent.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return clinical documents generated from this consent record.
+     */
     public function documents(): HasMany
     {
         return $this->hasMany(ClinicalDocument::class);
     }
 
+    /**
+     * Define consent status, encrypted withdrawal reason and immutable lifecycle timestamps.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

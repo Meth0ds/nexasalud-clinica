@@ -7,8 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
+/**
+ * Transform a patient into a privacy-minimized operational API representation.
+ */
 class PatientResource extends JsonResource
 {
+    /**
+     * Convert the patient resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $displayName = trim((string) $this->first_name.' '.(string) $this->last_name);
@@ -36,6 +44,9 @@ class PatientResource extends JsonResource
         ];
     }
 
+    /**
+     * Group an age into a non-identifying ten-year range.
+     */
     private static function ageRange(int $age): string
     {
         $lower = intdiv(max(0, $age), 10) * 10;
@@ -43,6 +54,9 @@ class PatientResource extends JsonResource
         return "{$lower}–".($lower + 9).' años';
     }
 
+    /**
+     * Mask a value while retaining its trailing characters for operational recognition.
+     */
     private static function mask(string $value, int $visible): string
     {
         if ($value === '') {
@@ -52,6 +66,9 @@ class PatientResource extends JsonResource
         return str_repeat('•', max(4, mb_strlen($value) - $visible)).mb_substr($value, -$visible);
     }
 
+    /**
+     * Mask an email address while retaining its domain for operational recognition.
+     */
     private static function maskEmail(string $email): string
     {
         if (! str_contains($email, '@')) {

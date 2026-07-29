@@ -6,13 +6,24 @@ use App\Models\WaitlistEntry;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate creation of a tenant-scoped patient waitlist entry.
+ */
 class StoreWaitlistRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create waitlist entries.
+     */
     public function authorize(): bool
     {
         return $this->authenticatedUser()->can('create', WaitlistEntry::class);
     }
 
+    /**
+     * Return tenant-scoped validation rules for a waitlist entry and its preferences.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $tenant = $this->tenantId();

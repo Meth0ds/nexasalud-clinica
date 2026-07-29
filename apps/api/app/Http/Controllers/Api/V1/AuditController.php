@@ -11,8 +11,14 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
+/**
+ * Provides authorized, paginated access to tenant-scoped privacy-preserving audit events.
+ */
 final class AuditController extends Controller
 {
+    /**
+     * Return validated audit events after enforcing the audit-view authorization policy.
+     */
     public function __invoke(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', AuditEvent::class);

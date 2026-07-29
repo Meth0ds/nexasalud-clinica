@@ -30,6 +30,7 @@ import {
   PortalAvailability,
   PortalAvailabilitySlot,
   PortalBookingCatalog,
+  PortalWaitlistEntry,
   PortalDocument,
   PortalInvoice,
   PortalMessage,
@@ -122,7 +123,7 @@ export class PatientPortal {
       label: 'Lista de espera',
       shortLabel: 'Espera',
       icon: 'waitlist',
-      available: false,
+      available: true,
     },
     {
       id: 'salud',
@@ -170,6 +171,9 @@ export class PatientPortal {
   protected readonly messagesLoading = signal(false);
   protected readonly messagesError = signal<AppError | null>(null);
   protected readonly selectedMessageId = signal<string | null>(null);
+  protected readonly waitlistEntries = signal<readonly PortalWaitlistEntry[] | null>(null);
+  protected readonly waitlistLoading = signal(false);
+  protected readonly waitlistError = signal<AppError | null>(null);
   protected readonly catalog = signal<PortalBookingCatalog | null>(null);
   protected readonly catalogLoading = signal(true);
   protected readonly catalogError = signal<AppError | null>(null);
@@ -240,6 +244,10 @@ export class PatientPortal {
   protected readonly bookingAccessibility = signal('');
   protected readonly bookingConsent = signal(false);
   protected readonly healthTab = signal<HealthTab>('medicacion');
+  protected readonly waitlistAppointmentTypeId = signal('');
+  protected readonly waitlistDesiredFrom = signal(dateInputValue(1));
+  protected readonly waitlistDesiredTo = signal(dateInputValue(21));
+  protected readonly waitlistNotes = signal('');
 
   protected readonly careOptions = computed(() => this.catalog()?.appointmentTypes ?? []);
   protected readonly selectedCareType = computed(() =>
@@ -300,6 +308,9 @@ export class PatientPortal {
     if (section === 'mensajes' && this.messages() === null && !this.messagesLoading()) {
       this.loadMessages();
     }
+    if (section === 'espera' && this.waitlistEntries() === null && !this.waitlistLoading()) {
+      this.loadWaitlist();
+    }
     globalThis.scrollTo?.({ top: 0, behavior: 'smooth' });
   }
 
@@ -337,6 +348,9 @@ export class PatientPortal {
               '',
           );
           this.selectedAppointmentTypeId.set(catalog.appointmentTypes[0]?.id ?? '');
+          if (!this.waitlistAppointmentTypeId()) {
+            this.waitlistAppointmentTypeId.set(catalog.appointmentTypes[0]?.id ?? '');
+          }
         },
         error: (error: unknown) => this.catalogError.set(toAppError(error)),
       });
@@ -362,6 +376,56 @@ export class PatientPortal {
 
   protected selectMessage(id: string): void {
     this.selectedMessageId.set(id);
+  }
+
+  protected loadWaitlist(): void {
+    this.waitlistLoading.set(true);
+    this.waitlistError.set(null);
+    this.api
+      .getWaitlistEntries()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.waitlistLoading.set(false)),
+      )
+      .subscribe({
+        next: (entries) => this.waitlistEntries.set(entries),
+        error: (error: unknown) => this.waitlistError.set(toAppError(error)),
+      });
+  }
+
+  protected submitWaitlist(): void {
+    const clinicId = this.selectedClinicId();
+    const appointmentTypeId = this.waitlistAppointmentTypeId();
+    const desiredFrom = this.waitlistDesiredFrom();
+    const desiredTo = this.waitlistDesiredTo();
+    if (!clinicId || !appointmentTypeId || !desiredFrom || !desiredTo || desiredTo <= desiredFrom) {
+      this.announce('Selecciona un tipo de atención y un intervalo de fechas válido.');
+      return;
+    }
+
+    this.actionBusy.set('waitlist');
+    this.api
+      .createWaitlistEntry({
+        clinicId,
+        appointmentTypeId,
+        desiredFrom: new Date(`${desiredFrom}T00:00:00`).toISOString(),
+        desiredTo: new Date(`${desiredTo}T23:59:59`).toISOString(),
+        preferredDays: [1, 2, 3, 4, 5],
+        ...(this.waitlistNotes().trim() ? { notes: this.waitlistNotes().trim() } : {}),
+      })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.actionBusy.set(null)),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.waitlistEntries.update((entries) => [entry, ...(entries ?? [])]);
+          this.waitlistNotes.set('');
+          this.notifications.success('Tu solicitud se ha añadido a la lista de espera.');
+          this.announce('Tu solicitud se ha añadido a la lista de espera.');
+        },
+        error: (error: unknown) => this.handleMutationError(error),
+      });
   }
 
   protected continueBooking(): void {
@@ -713,6 +777,12 @@ function dateKey(value: string, timezone = 'Europe/Madrid'): string {
   const month = parts.find((part) => part.type === 'month')?.value;
   const day = parts.find((part) => part.type === 'day')?.value;
   return `${year}-${month}-${day}`;
+}
+
+function dateInputValue(daysFromNow: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString().slice(0, 10);
 }
 
 function humanize(value: string): string {

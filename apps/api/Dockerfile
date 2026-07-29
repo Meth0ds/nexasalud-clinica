@@ -77,6 +77,7 @@ COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/nexasalud-entrypoint
 RUN mkdir -p \
         bootstrap/cache \
         storage/app/clinical \
+        storage/app/openapi \
         storage/app/private \
         storage/app/public \
         storage/framework/cache/data \

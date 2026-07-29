@@ -6,13 +6,24 @@ use App\Models\Prescription;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate creation of a prescription and its coded medication items.
+ */
 class StorePrescriptionRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create prescriptions.
+     */
     public function authorize(): bool
     {
         return $this->authenticatedUser()->can('create', Prescription::class);
     }
 
+    /**
+     * Return tenant-scoped validation rules for prescription details and medication items.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $tenant = $this->tenantId();

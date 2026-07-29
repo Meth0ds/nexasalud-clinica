@@ -15,10 +15,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Exposes active tenant-scoped reference data required by clinical scheduling workflows.
+ */
 final class ReferenceDataController extends Controller
 {
+    /**
+     * Create the reference-data controller with server-side permission evaluation.
+     */
     public function __construct(private readonly PermissionService $permissions) {}
 
+    /**
+     * Return authorized active reference data without exposing protected clinical records.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         abort_unless($request->user() && $this->permissions->allows($request->user(), 'appointments.read'), Response::HTTP_FORBIDDEN);

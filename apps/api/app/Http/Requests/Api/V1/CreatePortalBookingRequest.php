@@ -8,13 +8,24 @@ use App\Support\Authorization\PermissionService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate a patient portal request that consumes an appointment slot hold.
+ */
 final class CreatePortalBookingRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user has patient portal access.
+     */
     public function authorize(): bool
     {
         return app(PermissionService::class)->allows($this->authenticatedUser(), 'portal.self');
     }
 
+    /**
+     * Return tenant-scoped validation rules for a portal booking request.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [

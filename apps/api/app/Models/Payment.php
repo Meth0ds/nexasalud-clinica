@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'invoice_id', 'amount_minor', 'currency', 'status', 'method_code', 'external_reference', 'failure_reason', 'received_at'])]
 #[Hidden(['failure_reason'])]
+/**
+ * Represents a tenant-scoped payment attempt or receipt against an invoice.
+ */
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -24,11 +27,19 @@ class Payment extends Model
         'status' => PaymentStatus::Pending->value,
     ];
 
+    /**
+     * Return the invoice settled or attempted by this payment.
+     */
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
+    /**
+     * Define monetary, payment-status, encrypted failure and immutable receipt-time casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

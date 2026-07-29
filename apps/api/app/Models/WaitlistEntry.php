@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'clinic_id', 'patient_id', 'appointment_type_id', 'preferred_clinician_user_id', 'desired_from', 'desired_to', 'preferred_days', 'priority', 'status', 'notes', 'offered_at', 'offer_expires_at', 'fulfilled_appointment_id', 'lock_version'])]
 #[Hidden(['notes'])]
+/**
+ * Represents a tenant-scoped patient request for a future appointment opportunity.
+ */
 class WaitlistEntry extends Model
 {
     /** @use HasFactory<WaitlistEntryFactory> */
@@ -26,31 +29,51 @@ class WaitlistEntry extends Model
         'lock_version' => 1,
     ];
 
+    /**
+     * Return the patient waiting for an appointment.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return the preferred clinic for the waiting-list request.
+     */
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }
 
+    /**
+     * Return the requested appointment type.
+     */
     public function appointmentType(): BelongsTo
     {
         return $this->belongsTo(AppointmentType::class);
     }
 
+    /**
+     * Return the optionally preferred clinician.
+     */
     public function preferredClinician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'preferred_clinician_user_id');
     }
 
+    /**
+     * Return the appointment that fulfilled this waitlist entry, when present.
+     */
     public function fulfilledAppointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class, 'fulfilled_appointment_id');
     }
 
+    /**
+     * Define scheduling preferences, status enum, encrypted notes and lifecycle casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

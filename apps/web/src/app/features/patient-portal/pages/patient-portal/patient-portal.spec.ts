@@ -43,6 +43,21 @@ describe('PatientPortal', () => {
                   publishedAt: '2026-07-26T09:15:00.000Z',
                 },
               ]),
+            getWaitlistEntries: () => of([]),
+            createWaitlistEntry: () =>
+              of({
+                id: 'waitlist-1',
+                version: 1,
+                patientId: 'patient-1',
+                requestedType: 'Consulta',
+                preferredWindow: [null, null],
+                preferredDays: [],
+                priority: 3,
+                status: 'waiting',
+                waitingSince: null,
+                offeredAt: null,
+                offerExpiresAt: null,
+              }),
           },
         },
         {
@@ -73,5 +88,17 @@ describe('PatientPortal', () => {
       'Revise la información desde su portal seguro.',
     );
     expect(fixture.nativeElement.textContent).not.toContain('Mensajes no disponibles');
+  });
+
+  it('opens an operational patient-owned waitlist section from navigation', () => {
+    const waitlistNavigation = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('Lista de espera')) as HTMLButtonElement;
+
+    waitlistNavigation.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Solicitar plaza en lista de espera');
+    expect(fixture.nativeElement.textContent).not.toContain('El backend del portal todavÃ­a no ofrece esta operaciÃ³n');
   });
 });

@@ -78,6 +78,25 @@ export class AppointmentsService {
       .pipe(map((response) => response.data));
   }
 
+  transition(
+    id: string,
+    version: number,
+    status: Exclude<Appointment['status'], 'pending'>,
+    reason?: string,
+  ): Observable<Appointment> {
+    return this.api
+      .post<ApiData<Appointment>, { version: number; status: string; reason?: string }>(
+        `/api/v1/appointments/${encodeURIComponent(id)}/transition`,
+        {
+          version,
+          status: serverStatus(status),
+          ...(reason ? { reason } : {}),
+        },
+        { idempotencyKey: idempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   reschedule(
     id: string,
     input: {
@@ -133,6 +152,17 @@ function idempotencyKey(): string {
   } catch {
     return `appointment-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   }
+}
+
+function serverStatus(status: Exclude<Appointment['status'], 'pending'>): string {
+  return {
+    confirmed: 'confirmed',
+    waiting: 'checked_in',
+    'in-progress': 'in_progress',
+    completed: 'completed',
+    cancelled: 'cancelled',
+    'no-show': 'no_show',
+  }[status];
 }
 
 function filenameFromDisposition(value: string | null): string {

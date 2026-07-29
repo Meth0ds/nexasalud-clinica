@@ -9,14 +9,25 @@ use App\Support\Authorization\PermissionService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate a patient portal request that reschedules an appointment through a slot hold.
+ */
 final class ReschedulePortalAppointmentRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the request targets an appointment and the actor has portal access.
+     */
     public function authorize(): bool
     {
         return $this->route('appointment') instanceof Appointment
             && app(PermissionService::class)->allows($this->authenticatedUser(), 'portal.self');
     }
 
+    /**
+     * Return tenant-scoped validation rules for a portal appointment rescheduling request.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [

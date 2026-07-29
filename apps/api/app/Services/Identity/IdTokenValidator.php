@@ -9,11 +9,19 @@ use Firebase\JWT\JWT;
 use JsonException;
 use Throwable;
 
+/**
+ * Verifies signed OpenID Connect ID tokens against trusted issuer metadata and policy.
+ */
 final class IdTokenValidator
 {
+    /**
+     * Create an ID token validator backed by trusted OIDC discovery data.
+     */
     public function __construct(private OidcDiscovery $discovery) {}
 
     /**
+     * Verify an ID token and return its validated claims.
+     *
      * @return array<string, mixed>
      */
     public function validate(string $idToken, string $expectedNonce, string $accessToken): array
@@ -40,6 +48,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Decode and validate the untrusted JWT header before selecting a signing key.
+     *
      * @return array<string, mixed>
      */
     private function decodeHeader(string $idToken): array
@@ -65,6 +75,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Select an explicitly configured asymmetric signature algorithm from the token header.
+     *
      * @param  array<string, mixed>  $header
      */
     private function allowedAlgorithm(array $header): string
@@ -83,6 +95,9 @@ final class IdTokenValidator
         return $algorithm;
     }
 
+    /**
+     * Verify the token signature, refreshing the issuer key set once for key rotation.
+     */
     private function decodeAndVerify(string $idToken, string $keyId, string $algorithm): object
     {
         $keys = $this->matchingKeys($this->discovery->jwks(), $keyId, $algorithm);
@@ -109,6 +124,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Select issuer verification keys that exactly match the token key ID and algorithm.
+     *
      * @param  array{keys: list<array<string, mixed>>}  $jwks
      * @return list<array<string, mixed>>
      */
@@ -127,6 +144,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Enforce issuer, nonce, time, audience, assurance and token-binding claims.
+     *
      * @param  array<string, mixed>  $claims
      */
     private function validateClaims(array $claims, string $expectedNonce, string $accessToken, string $algorithm): void
@@ -162,6 +181,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Ensure the token audience and authorized party identify this client only.
+     *
      * @param  array<string, mixed>  $claims
      */
     private function validateAudience(array $claims): void
@@ -191,6 +212,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Enforce the configured authentication context and multi-factor methods.
+     *
      * @param  array<string, mixed>  $claims
      */
     private function validateAuthenticationContext(array $claims): void
@@ -225,6 +248,9 @@ final class IdTokenValidator
         }
     }
 
+    /**
+     * Verify the optional access-token hash binding in an ID token.
+     */
     private function validateAccessTokenHash(mixed $claim, string $accessToken, string $algorithm): void
     {
         if (! is_string($claim) || $claim === '' || $accessToken === '') {
@@ -247,6 +273,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Read a required non-empty string value from token claims or key data.
+     *
      * @param  array<string, mixed>  $values
      */
     private function requiredString(array $values, string $key): string
@@ -261,6 +289,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Read a required numeric timestamp claim.
+     *
      * @param  array<string, mixed>  $values
      */
     private function requiredNumeric(array $values, string $key): int|float
@@ -275,6 +305,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Ensure a JWK key type, curve or modulus is appropriate for the requested algorithm.
+     *
      * @param  array<string, mixed>  $key
      */
     private function keyMatchesAlgorithm(array $key, string $algorithm): bool
@@ -290,6 +322,8 @@ final class IdTokenValidator
     }
 
     /**
+     * Ensure a JWK is permitted to perform signature verification when operations are declared.
+     *
      * @param  array<string, mixed>  $key
      */
     private function keyAllowsVerification(array $key): bool
@@ -299,6 +333,9 @@ final class IdTokenValidator
         return $operations === null || (is_array($operations) && in_array('verify', $operations, true));
     }
 
+    /**
+     * Return the bounded clock-skew tolerance configured for identity assertions.
+     */
     private function clockSkew(): int
     {
         $leeway = config('services.keycloak.clock_skew_seconds');

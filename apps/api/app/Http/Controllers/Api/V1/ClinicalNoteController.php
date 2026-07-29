@@ -18,10 +18,19 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages authorized, append-only clinical notes and requires recent MFA for signing.
+ */
 final class ClinicalNoteController extends Controller
 {
+    /**
+     * Create the clinical-note controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return the authorized patient's paginated clinical-note timeline.
+     */
     public function index(Request $request, Patient $patient): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', [ClinicalNote::class, $patient]);
@@ -40,6 +49,9 @@ final class ClinicalNoteController extends Controller
         return ClinicalNoteResource::collection($notes);
     }
 
+    /**
+     * Create an authorized draft clinical note from validated minimum-necessary content.
+     */
     public function store(StoreClinicalNoteRequest $request, Patient $patient): ClinicalNoteResource
     {
         $data = $request->validated();
@@ -53,6 +65,9 @@ final class ClinicalNoteController extends Controller
         return new ClinicalNoteResource($note->load('author'));
     }
 
+    /**
+     * Create a signed clinical note only after recent multi-factor authentication.
+     */
     public function sign(StoreClinicalNoteRequest $request, Patient $patient): ClinicalNoteResource
     {
         $this->requireRecentMfa($request);
@@ -69,7 +84,11 @@ final class ClinicalNoteController extends Controller
         return new ClinicalNoteResource($note->load('author'));
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Create a clinical note after validating related records and the authenticated author.
+     *
+     * @param  array<string, mixed>  $data
+     */
     private function create(Request $request, Patient $patient, array $data, ClinicalNoteStatus $status): ClinicalNote
     {
         $this->validateRelations($patient, $data);
@@ -89,7 +108,11 @@ final class ClinicalNoteController extends Controller
         ]);
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Ensure optional appointment and superseded-note references belong to the same patient.
+     *
+     * @param  array<string, mixed>  $data
+     */
     private function validateRelations(Patient $patient, array $data): void
     {
         if (isset($data['appointmentId'])) {
@@ -103,6 +126,9 @@ final class ClinicalNoteController extends Controller
         }
     }
 
+    /**
+     * Require a recent, verified multi-factor authentication context for clinical signing.
+     */
     private function requireRecentMfa(Request $request): void
     {
         $methods = $request->session()->get('auth.assurance.amr', []);
@@ -113,7 +139,11 @@ final class ClinicalNoteController extends Controller
         abort_unless($hasMfa && $isRecent, Response::HTTP_FORBIDDEN);
     }
 
-    /** @return array{amr: list<string>, authenticated_at: int|null} */
+    /**
+     * Capture only allowlisted authentication assurance values as note-signature context.
+     *
+     * @return array{amr: list<string>, authenticated_at: int|null}
+     */
     private function signatureContext(Request $request): array
     {
         $methods = $request->session()->get('auth.assurance.amr', []);

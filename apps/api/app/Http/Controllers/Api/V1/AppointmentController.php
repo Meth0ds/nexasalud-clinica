@@ -25,10 +25,19 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped appointment scheduling with authorization, optimistic locking and audit evidence.
+ */
 final class AppointmentController extends Controller
 {
+    /**
+     * Create the appointment controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return authorized appointments within a bounded date range and validated filters.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Appointment::class);
@@ -62,6 +71,9 @@ final class AppointmentController extends Controller
         return AppointmentResource::collection($appointments);
     }
 
+    /**
+     * Create a validated appointment after enforcing room, clinic and channel constraints.
+     */
     public function store(StoreAppointmentRequest $request): AppointmentResource
     {
         $data = $request->validated();
@@ -99,6 +111,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($appointment));
     }
 
+    /**
+     * Return an authorized appointment and record the sensitive access event.
+     */
     public function show(Request $request, Appointment $appointment): AppointmentResource
     {
         Gate::authorize('view', $appointment);
@@ -107,6 +122,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($appointment));
     }
 
+    /**
+     * Update non-scheduling appointment details under a row lock and expected version.
+     */
     public function update(UpdateAppointmentRequest $request, Appointment $appointment): AppointmentResource
     {
         $data = $request->validated();
@@ -134,6 +152,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($appointment));
     }
 
+    /**
+     * Reschedule an appointment through its guarded domain operation and expected version.
+     */
     public function reschedule(RescheduleAppointmentRequest $request, Appointment $appointment): AppointmentResource
     {
         $data = $request->validated();
@@ -156,6 +177,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($rescheduled));
     }
 
+    /**
+     * Apply an authorized appointment status transition at the expected optimistic-lock version.
+     */
     public function transition(TransitionAppointmentRequest $request, Appointment $appointment): AppointmentResource
     {
         $data = $request->validated();
@@ -171,6 +195,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($transitioned));
     }
 
+    /**
+     * Cancel an active appointment with a validated reason and expected version.
+     */
     public function cancel(Request $request, Appointment $appointment): AppointmentResource
     {
         Gate::authorize('delete', $appointment);
@@ -191,6 +218,9 @@ final class AppointmentController extends Controller
         return new AppointmentResource($this->load($cancelled));
     }
 
+    /**
+     * Preserve auditability by translating deletion into a controlled cancellation.
+     */
     public function destroy(Request $request, Appointment $appointment): Response
     {
         Gate::authorize('delete', $appointment);
@@ -206,11 +236,17 @@ final class AppointmentController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * Load only the relations needed by the authorized appointment response.
+     */
     private function load(Appointment $appointment): Appointment
     {
         return $appointment->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']);
     }
 
+    /**
+     * Map the validated client appointment mode to its persisted channel value.
+     */
     private function channel(string $mode): string
     {
         return match ($mode) {
@@ -220,11 +256,17 @@ final class AppointmentController extends Controller
         };
     }
 
+    /**
+     * Reject a stale mutation when its optimistic-lock version does not match.
+     */
     private function requireVersion(Appointment $appointment, int $version): void
     {
         abort_if($appointment->lock_version !== $version, Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Return the authenticated local actor or reject anonymous appointment mutations.
+     */
     private function actor(Request $request): User
     {
         $actor = $request->user();
@@ -233,6 +275,9 @@ final class AppointmentController extends Controller
         return $actor;
     }
 
+    /**
+     * Return the active tenant context or reject contextless appointment creation.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

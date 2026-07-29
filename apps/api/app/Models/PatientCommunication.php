@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'patient_id', 'author_user_id', 'consent_record_id', 'channel', 'content_class', 'template_key', 'subject', 'body', 'status', 'scheduled_at', 'queued_at', 'cancelled_at', 'cancellation_reason', 'compliance_snapshot', 'lock_version'])]
 #[Hidden(['body', 'cancellation_reason', 'compliance_snapshot'])]
+/**
+ * Represents a consent-aware patient communication with encrypted content and compliance metadata.
+ */
 final class PatientCommunication extends Model
 {
     /** @use HasFactory<PatientCommunicationFactory> */
@@ -29,21 +32,35 @@ final class PatientCommunication extends Model
         'lock_version' => 1,
     ];
 
+    /**
+     * Return the patient to whom this communication is directed.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return the user who created this communication.
+     */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_user_id');
     }
 
+    /**
+     * Return the consent evidence authorizing this communication, when required.
+     */
     public function consentRecord(): BelongsTo
     {
         return $this->belongsTo(ConsentRecord::class);
     }
 
+    /**
+     * Define communication enums, encrypted content and immutable lifecycle timestamp casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

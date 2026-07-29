@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'patient_id', 'insurer_id', 'member_number_hash', 'member_number', 'policy_number', 'valid_from', 'valid_until', 'is_primary', 'is_active'])]
 #[Hidden(['member_number', 'policy_number'])]
+/**
+ * Represents a patient insurance coverage record with encrypted membership identifiers.
+ */
 class PatientCoverage extends Model
 {
     /** @use HasFactory<PatientCoverageFactory> */
@@ -25,16 +28,25 @@ class PatientCoverage extends Model
         'is_active' => true,
     ];
 
+    /**
+     * Return the covered patient.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return the insurance provider associated with this coverage.
+     */
     public function insurer(): BelongsTo
     {
         return $this->belongsTo(Insurer::class);
     }
 
+    /**
+     * Register synchronization of the tenant-bound member-number blind index.
+     */
     protected static function booted(): void
     {
         $synchronizeBlindIndex = function (self $coverage): void {
@@ -56,6 +68,11 @@ class PatientCoverage extends Model
         });
     }
 
+    /**
+     * Define encrypted insurance identifiers, immutable coverage dates and status casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

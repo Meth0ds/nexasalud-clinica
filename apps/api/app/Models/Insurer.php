@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'code', 'name', 'provider_reference', 'is_active'])]
+/**
+ * Represents a tenant-scoped insurance provider available for patient coverage records.
+ */
 class Insurer extends Model
 {
     /** @use HasFactory<InsurerFactory> */
@@ -19,11 +22,19 @@ class Insurer extends Model
 
     protected $attributes = ['is_active' => true];
 
+    /**
+     * Return patient coverage records supplied by this insurer.
+     */
     public function coverages(): HasMany
     {
         return $this->hasMany(PatientCoverage::class);
     }
 
+    /**
+     * Define the insurer activation attribute cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];

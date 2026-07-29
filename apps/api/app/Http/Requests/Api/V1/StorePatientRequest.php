@@ -5,13 +5,24 @@ namespace App\Http\Requests\Api\V1;
 use App\Models\Patient;
 use Closure;
 
+/**
+ * Validate creation of a patient record within the current tenant.
+ */
 class StorePatientRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create patients.
+     */
     public function authorize(): bool
     {
         return $this->authenticatedUser()->can('create', Patient::class);
     }
 
+    /**
+     * Return validation rules for patient demographics and the tenant-local medical record number.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [
@@ -26,6 +37,9 @@ class StorePatientRequest extends TenantFormRequest
         ];
     }
 
+    /**
+     * Create a validation rule that prevents duplicate blinded medical record number indexes.
+     */
     private function uniqueMedicalRecordNumber(): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail): void {

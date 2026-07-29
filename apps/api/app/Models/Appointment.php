@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\DB;
 
 #[Fillable(['tenant_id', 'clinic_id', 'room_id', 'appointment_type_id', 'patient_id', 'clinician_user_id', 'starts_at', 'ends_at', 'status', 'channel', 'reason', 'clinical_notes', 'lock_version', 'created_by', 'updated_by', 'cancelled_at'])]
 #[Hidden(['reason', 'clinical_notes'])]
+/**
+ * Represents a tenant-scoped clinical appointment with guarded scheduling and status transitions.
+ */
 class Appointment extends Model
 {
     /** @use HasFactory<AppointmentFactory> */
@@ -35,41 +38,65 @@ class Appointment extends Model
 
     private bool $allowsStatusMutation = false;
 
+    /**
+     * Return the clinic at which this appointment takes place.
+     */
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }
 
+    /**
+     * Return the assigned room, when one is required.
+     */
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
+    /**
+     * Return the configured appointment type.
+     */
     public function appointmentType(): BelongsTo
     {
         return $this->belongsTo(AppointmentType::class);
     }
 
+    /**
+     * Return the patient receiving care during this appointment.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return the clinician assigned to this appointment.
+     */
     public function clinician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'clinician_user_id');
     }
 
+    /**
+     * Return ordered append-only status transitions for this appointment.
+     */
     public function statusHistory(): HasMany
     {
         return $this->hasMany(AppointmentStatusHistory::class)->orderBy('occurred_at');
     }
 
+    /**
+     * Return ordered append-only scheduling and cancellation changes for this appointment.
+     */
     public function changeHistory(): HasMany
     {
         return $this->hasMany(AppointmentChangeHistory::class)->orderBy('occurred_at');
     }
 
+    /**
+     * Perform an allowed status transition under a database lock and record its history.
+     */
     public function transitionTo(AppointmentStatus $next, User $actor, ?string $reason = null): self
     {
         return DB::transaction(function () use ($next, $actor, $reason): self {
@@ -115,6 +142,9 @@ class Appointment extends Model
         });
     }
 
+    /**
+     * Reschedule this appointment under a database lock and record the before-and-after values.
+     */
     public function reschedule(
         CarbonInterface $startsAt,
         CarbonInterface $endsAt,
@@ -123,6 +153,10 @@ class Appointment extends Model
         ?User $clinician = null,
         ?string $reason = null,
     ): self {
+        if (! $this->status->blocksAvailability()) {
+            throw new DomainException('Cannot reschedule a terminal appointment.');
+        }
+
         if (! $endsAt->isAfter($startsAt)) {
             throw new DomainException('Appointment end time must be after its start time.');
         }
@@ -163,6 +197,9 @@ class Appointment extends Model
         });
     }
 
+    /**
+     * Register overlap, transition-path and scheduling-mutation invariants for appointments.
+     */
     protected static function booted(): void
     {
         static::saving(function (self $appointment): void {
@@ -222,6 +259,11 @@ class Appointment extends Model
         });
     }
 
+    /**
+     * Define immutable schedule, status enum, encrypted notes and optimistic-lock attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

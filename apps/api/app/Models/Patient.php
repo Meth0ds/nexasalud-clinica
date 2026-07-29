@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'medical_record_hash', 'medical_record_number', 'first_name', 'last_name', 'birth_date', 'email', 'phone', 'address', 'clinical_notes', 'preferred_language', 'is_active'])]
 #[Hidden(['medical_record_number', 'first_name', 'last_name', 'birth_date', 'email', 'phone', 'address', 'clinical_notes'])]
+/**
+ * Represents a tenant-isolated patient record with encrypted personal and clinical data.
+ */
 class Patient extends Model
 {
     /** @use HasFactory<PatientFactory> */
@@ -25,51 +28,81 @@ class Patient extends Model
         'is_active' => true,
     ];
 
+    /**
+     * Return appointments associated with this patient.
+     */
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
     }
 
+    /**
+     * Return prescriptions issued for this patient.
+     */
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class);
     }
 
+    /**
+     * Return recorded allergies for this patient.
+     */
     public function allergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class);
     }
 
+    /**
+     * Return adverse reactions recorded for this patient.
+     */
     public function adverseReactions(): HasMany
     {
         return $this->hasMany(AdverseReaction::class);
     }
 
+    /**
+     * Return clinical documents belonging to this patient.
+     */
     public function documents(): HasMany
     {
         return $this->hasMany(ClinicalDocument::class);
     }
 
+    /**
+     * Return consent records retained for this patient.
+     */
     public function consentRecords(): HasMany
     {
         return $this->hasMany(ConsentRecord::class);
     }
 
+    /**
+     * Return active and historical coverage records for this patient.
+     */
     public function coverages(): HasMany
     {
         return $this->hasMany(PatientCoverage::class);
     }
 
+    /**
+     * Return invoices issued to this patient.
+     */
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
+    /**
+     * Return portal user identities linked to this patient.
+     */
     public function userLinks(): HasMany
     {
         return $this->hasMany(PatientUserLink::class);
     }
 
+    /**
+     * Build a tenant-bound blind index for privacy-preserving patient record lookups.
+     */
     public static function blindIndex(string $tenantId, string $value): string
     {
         $applicationKey = config('app.key');
@@ -83,6 +116,9 @@ class Patient extends Model
         return hash_hmac('sha256', mb_strtolower(trim($value)), $tenantKey);
     }
 
+    /**
+     * Register blind-index synchronization whenever the record number or tenant changes.
+     */
     protected static function booted(): void
     {
         $synchronizeBlindIndex = function (self $patient): void {
@@ -102,6 +138,11 @@ class Patient extends Model
         });
     }
 
+    /**
+     * Define encrypted patient attributes and activation status casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

@@ -19,6 +19,7 @@
         "socialiteproviders/keycloak": "^5.3"
     },
     "require-dev": {
+        "dedoc/scramble": "^0.13.34",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "*",
         "laravel/pail": "^1.2.5",

@@ -9,12 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Terminates sessions for inactive users or identities whose sessions were revoked.
+ */
 class EnsureUserIsActive
 {
     /**
-     * Handle an incoming request.
+     * Reject a revoked or inactive user before invoking the next request handler.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

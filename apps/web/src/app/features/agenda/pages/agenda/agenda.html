@@ -146,13 +146,31 @@
                 }
                 <mat-menu #eventMenu="matMenu">
                   <button mat-menu-item (click)="openEdit(appointment)">Editar detalles</button>
-                  <button mat-menu-item (click)="openEdit(appointment, 'reschedule')">
-                    Cambiar fecha u hora
-                  </button>
-                  <button mat-menu-item (click)="downloadConfirmation(appointment)">
-                    Descargar justificante PDF
-                  </button>
-                  <button mat-menu-item (click)="cancel(appointment)">Cancelar cita</button>
+                  @if (nextTransition(appointment); as action) {
+                    <button mat-menu-item (click)="transition(appointment, action)">
+                      {{ action.label }}
+                    </button>
+                  }
+                  @if (canReschedule(appointment)) {
+                    <button mat-menu-item (click)="openEdit(appointment, 'reschedule')">
+                      Cambiar fecha u hora
+                    </button>
+                  }
+                  @if (appointment.status !== 'cancelled' && appointment.status !== 'no-show') {
+                    <button mat-menu-item (click)="downloadConfirmation(appointment)">
+                      Descargar justificante PDF
+                    </button>
+                  }
+                  @if (canCancel(appointment)) {
+                    <button mat-menu-item (click)="openCriticalAction(appointment, 'cancel')">
+                      Cancelar cita
+                    </button>
+                  }
+                  @if (canMarkNoShow(appointment)) {
+                    <button mat-menu-item (click)="openCriticalAction(appointment, 'no-show')">
+                      Registrar no presentación
+                    </button>
+                  }
                 </mat-menu>
               </article>
             }
@@ -218,21 +236,30 @@
           <div>
             <dt>Estado</dt>
             <dd>
-              <span class="nexa-chip nexa-chip--success">{{ appointment.status }}</span>
+              <span class="nexa-chip nexa-chip--success">{{ appointment.statusLabel }}</span>
             </dd>
           </div>
         </dl>
         <div class="inspector-actions">
-          <button
-            mat-stroked-button
-            class="nexa-btn-secondary"
-            (click)="openEdit(appointment, 'reschedule')"
-          >
-            <app-icon name="clock" [size]="16" /> Cambiar cita
-          </button>
-          <button mat-button (click)="downloadConfirmation(appointment)">
-            <app-icon name="download" [size]="16" /> Justificante PDF
-          </button>
+          @if (nextTransition(appointment); as action) {
+            <button mat-flat-button class="nexa-btn-primary" (click)="transition(appointment, action)">
+              {{ action.label }}
+            </button>
+          }
+          @if (canReschedule(appointment)) {
+            <button
+              mat-stroked-button
+              class="nexa-btn-secondary"
+              (click)="openEdit(appointment, 'reschedule')"
+            >
+              <app-icon name="clock" [size]="16" /> Cambiar cita
+            </button>
+          }
+          @if (appointment.status !== 'cancelled' && appointment.status !== 'no-show') {
+            <button mat-button (click)="downloadConfirmation(appointment)">
+              <app-icon name="download" [size]="16" /> Justificante PDF
+            </button>
+          }
         </div>
         <p class="inspector-audit">
           <app-icon name="eye" [size]="13" /> Acceso registrado por seguridad

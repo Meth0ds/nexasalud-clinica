@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+mat-dialog-content {
+  display: grid;
+  gap: 12px;
+  min-width: min(100%, 420px);
+}
+
+p {
+  margin: 0;
+  color: var(--nexa-ink);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.appointment-action-dialog__description {
+  color: var(--nexa-ink-soft);
+}
+
+mat-form-field {
+  width: 100%;
+  margin-top: 4px;
+}

@@ -6,8 +6,14 @@ use App\Enums\PrescriptionStatus;
 use App\Models\Prescription;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate a versioned prescription status transition and its state-specific fields.
+ */
 class TransitionPrescriptionRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user has the ability required by the requested transition.
+     */
     public function authorize(): bool
     {
         $prescription = $this->route('prescription');
@@ -19,6 +25,11 @@ class TransitionPrescriptionRequest extends TenantFormRequest
         return $this->authenticatedUser()->can($ability, $prescription);
     }
 
+    /**
+     * Return validation rules for a prescription status transition.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [

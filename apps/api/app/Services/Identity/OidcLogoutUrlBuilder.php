@@ -4,13 +4,22 @@ namespace App\Services\Identity;
 
 use App\Exceptions\IdentityProtocolException;
 
+/**
+ * Builds a validated upstream OpenID Connect logout URL.
+ */
 final class OidcLogoutUrlBuilder
 {
+    /**
+     * Create a logout URL builder.
+     */
     public function __construct(
         private OidcDiscovery $discovery,
         private OidcAuthenticationService $authentication,
     ) {}
 
+    /**
+     * Build the configured upstream logout URL when it is enabled and safe.
+     */
     public function build(): ?string
     {
         if (config('services.keycloak.upstream_logout') !== true) {
@@ -44,6 +53,9 @@ final class OidcLogoutUrlBuilder
         ], encoding_type: PHP_QUERY_RFC3986);
     }
 
+    /**
+     * Extract the origin from a URL that does not contain user information or a fragment.
+     */
     private function origin(string $url): string
     {
         $parts = parse_url($url);

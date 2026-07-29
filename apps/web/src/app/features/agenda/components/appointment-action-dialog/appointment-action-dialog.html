@@ -1,0 +1,36 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+
+<mat-dialog-content>
+  <p>
+    Vas a aplicar esta acción a la cita autorizada de <strong>{{ data.patientName }}</strong>.
+  </p>
+  <p class="appointment-action-dialog__description">{{ description }}</p>
+
+  <form [formGroup]="form" (ngSubmit)="confirm()" id="appointment-action-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Motivo operativo</mat-label>
+      <textarea
+        matInput
+        cdkTextareaAutosize
+        cdkAutosizeMinRows="3"
+        cdkAutosizeMaxRows="6"
+        maxlength="500"
+        formControlName="reason"
+        aria-describedby="appointment-action-reason-help"
+      ></textarea>
+      <mat-hint id="appointment-action-reason-help">No incluyas datos clínicos innecesarios.</mat-hint>
+      @if (form.controls.reason.hasError('required')) {
+        <mat-error>Indica el motivo de esta acción.</mat-error>
+      } @else if (form.controls.reason.hasError('minlength')) {
+        <mat-error>El motivo debe contener al menos 3 caracteres.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close type="button">Volver</button>
+  <button mat-flat-button class="nexa-btn-primary" type="submit" form="appointment-action-form">
+    {{ confirmLabel }}
+  </button>
+</mat-dialog-actions>

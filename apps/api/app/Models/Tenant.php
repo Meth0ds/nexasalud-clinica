@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['slug', 'name', 'timezone', 'locale', 'is_active'])]
+/**
+ * Represents an isolated healthcare organization within the application.
+ */
 class Tenant extends Model
 {
     /** @use HasFactory<TenantFactory> */
@@ -22,21 +25,35 @@ class Tenant extends Model
         'is_active' => true,
     ];
 
+    /**
+     * Return user memberships belonging to this organization.
+     */
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
     }
 
+    /**
+     * Return clinics operated by this organization.
+     */
     public function clinics(): HasMany
     {
         return $this->hasMany(Clinic::class);
     }
 
+    /**
+     * Return patient records isolated within this organization.
+     */
     public function patients(): HasMany
     {
         return $this->hasMany(Patient::class);
     }
 
+    /**
+     * Define the tenant activation attribute cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];

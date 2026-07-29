@@ -93,6 +93,11 @@ jobs:
       - name: Check Laravel formatting
         run: vendor/bin/pint --test
 
+      - name: Generate and validate the OpenAPI contract
+        run: |
+          SCRAMBLE_CACHE_STORE=array php artisan scramble:export --path=storage/app/openapi/openapi-ci.json
+          php -r '$document = json_decode(file_get_contents("storage/app/openapi/openapi-ci.json"), true, 512, JSON_THROW_ON_ERROR); if (($document["openapi"] ?? null) !== "3.1.0" || ! isset($document["paths"]["/appointments"])) { fwrite(STDERR, "OpenAPI contract validation failed.\n"); exit(1); } echo "OpenAPI 3.1 contract validated.\n";'
+
       - name: Run API tests
         run: php artisan test
 

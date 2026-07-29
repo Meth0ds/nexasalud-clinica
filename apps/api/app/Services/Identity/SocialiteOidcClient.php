@@ -10,18 +10,30 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+/**
+ * Adapts the hardened Keycloak provider to the application's OIDC client contract.
+ */
 final class SocialiteOidcClient implements OidcClient
 {
+    /**
+     * Create the client with trusted discovery and ID token validation services.
+     */
     public function __construct(
         private OidcDiscovery $discovery,
         private IdTokenValidator $idTokenValidator,
     ) {}
 
+    /**
+     * Start a provider redirect for an already normalized local return path.
+     */
     public function redirect(Request $request, string $returnPath): RedirectResponse
     {
         return $this->provider($request)->redirectFor($returnPath);
     }
 
+    /**
+     * Complete the OIDC callback and map verified claims to a token-free login result.
+     */
     public function complete(Request $request): OidcLoginResult
     {
         $provider = $this->provider($request);
@@ -51,6 +63,9 @@ final class SocialiteOidcClient implements OidcClient
         );
     }
 
+    /**
+     * Create a hardened Keycloak provider from validated identity configuration.
+     */
     private function provider(Request $request): SecureKeycloakProvider
     {
         $clientId = $this->configString('client_id');
@@ -84,6 +99,8 @@ final class SocialiteOidcClient implements OidcClient
     }
 
     /**
+     * Select a bounded display name from trusted profile information.
+     *
      * @param  array<string, mixed>  $rawUser
      * @param  array<string, mixed>  $claims
      */
@@ -99,6 +116,8 @@ final class SocialiteOidcClient implements OidcClient
     }
 
     /**
+     * Return a normalized email address only when the issuer has verified it.
+     *
      * @param  array<string, mixed>  $rawUser
      * @param  array<string, mixed>  $claims
      */
@@ -115,6 +134,8 @@ final class SocialiteOidcClient implements OidcClient
     }
 
     /**
+     * Normalize the bounded list of authentication methods supplied by the issuer.
+     *
      * @return list<string>
      */
     private function authenticationMethods(mixed $methods): array
@@ -132,6 +153,8 @@ final class SocialiteOidcClient implements OidcClient
     }
 
     /**
+     * Return the authenticated-at claim after rejecting invalid or implausible values.
+     *
      * @param  array<string, mixed>  $claims
      */
     private function authenticatedAt(array $claims): int
@@ -146,6 +169,8 @@ final class SocialiteOidcClient implements OidcClient
     }
 
     /**
+     * Read a required non-empty string claim from a provider response.
+     *
      * @param  array<string, mixed>  $values
      */
     private function requiredString(array $values, string $key): string
@@ -159,6 +184,9 @@ final class SocialiteOidcClient implements OidcClient
         return $value;
     }
 
+    /**
+     * Read a required non-empty string from Keycloak configuration.
+     */
     private function configString(string $key): string
     {
         $value = config('services.keycloak.'.$key);
@@ -170,6 +198,9 @@ final class SocialiteOidcClient implements OidcClient
         return $value;
     }
 
+    /**
+     * Read a required positive integer from Keycloak configuration.
+     */
     private function configInteger(string $key): int
     {
         $value = config('services.keycloak.'.$key);

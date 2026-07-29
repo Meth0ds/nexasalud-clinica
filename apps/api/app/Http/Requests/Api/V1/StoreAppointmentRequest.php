@@ -6,13 +6,24 @@ use App\Models\Appointment;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate a clinician-initiated appointment creation request.
+ */
 class StoreAppointmentRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create appointments.
+     */
     public function authorize(): bool
     {
         return $this->authenticatedUser()->can('create', Appointment::class);
     }
 
+    /**
+     * Return tenant-scoped validation rules for a new appointment and its resources.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $tenant = $this->tenantId();

@@ -22,10 +22,19 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped invoices, precise monetary calculations and payment allocation.
+ */
 final class InvoiceController extends Controller
 {
+    /**
+     * Create the invoice controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return authorized invoices using validated, bounded filters.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Invoice::class);
@@ -45,6 +54,9 @@ final class InvoiceController extends Controller
         return InvoiceResource::collection($invoices);
     }
 
+    /**
+     * Create a draft invoice with calculated minor-unit totals and validated patient coverage.
+     */
     public function store(StoreInvoiceRequest $request): InvoiceResource
     {
         $data = $request->validated();
@@ -78,6 +90,9 @@ final class InvoiceController extends Controller
         return new InvoiceResource($this->load($invoice));
     }
 
+    /**
+     * Return an authorized invoice and record the sensitive access event.
+     */
     public function show(Request $request, Invoice $invoice): InvoiceResource
     {
         Gate::authorize('view', $invoice);
@@ -86,6 +101,9 @@ final class InvoiceController extends Controller
         return new InvoiceResource($this->load($invoice));
     }
 
+    /**
+     * Update draft invoice metadata under a row lock and expected optimistic-lock version.
+     */
     public function update(Request $request, Invoice $invoice): InvoiceResource
     {
         Gate::authorize('update', $invoice);
@@ -117,6 +135,9 @@ final class InvoiceController extends Controller
         return new InvoiceResource($this->load($invoice));
     }
 
+    /**
+     * Issue a non-empty draft invoice under a row lock and expected optimistic-lock version.
+     */
     public function issue(Request $request, Invoice $invoice): InvoiceResource
     {
         Gate::authorize('update', $invoice);
@@ -140,6 +161,9 @@ final class InvoiceController extends Controller
         return new InvoiceResource($this->load($invoice));
     }
 
+    /**
+     * Record an authorized payment without allowing the invoice balance to become negative.
+     */
     public function recordPayment(Request $request, Invoice $invoice): InvoiceResource
     {
         Gate::authorize('update', $invoice);
@@ -183,12 +207,17 @@ final class InvoiceController extends Controller
         return new InvoiceResource($this->load($invoice));
     }
 
+    /**
+     * Disallow invoice deletion to preserve financial traceability.
+     */
     public function destroy(): never
     {
         abort(Response::HTTP_METHOD_NOT_ALLOWED);
     }
 
     /**
+     * Calculate rounded minor-unit invoice totals and normalized line items without floating-point arithmetic.
+     *
      * @param  list<array<string, mixed>>  $items
      * @return array{subtotal: int, tax: int, total: int, items: list<array<string, mixed>>}
      */
@@ -220,6 +249,9 @@ final class InvoiceController extends Controller
         return ['subtotal' => $subtotal, 'tax' => $tax, 'total' => $subtotal + $tax, 'items' => $normalized];
     }
 
+    /**
+     * Convert a validated decimal quantity to integer thousandths for exact monetary calculation.
+     */
     private function quantityMilli(string $quantity): int
     {
         abort_unless(preg_match('/^(\d{1,5})(?:\.(\d{1,3}))?$/', $quantity, $matches) === 1, Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -227,7 +259,11 @@ final class InvoiceController extends Controller
         return ((int) $matches[1] * 1000) + (int) str_pad($matches[2] ?? '', 3, '0');
     }
 
-    /** @param list<array<string, mixed>> $items */
+    /**
+     * Persist normalized invoice line items for a newly created invoice.
+     *
+     * @param  list<array<string, mixed>>  $items
+     */
     private function replaceItems(Invoice $invoice, array $items): void
     {
         foreach ($items as $item) {
@@ -235,6 +271,9 @@ final class InvoiceController extends Controller
         }
     }
 
+    /**
+     * Ensure an optional active coverage record belongs to the invoiced patient.
+     */
     private function validateCoverage(?string $coverageId, string $patientId): void
     {
         if ($coverageId === null) {
@@ -245,21 +284,33 @@ final class InvoiceController extends Controller
         abort_if($coverage->patient_id !== $patientId || ! $coverage->is_active, Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    /**
+     * Generate a non-sequential public invoice reference without exposing internal identifiers.
+     */
     private function nextNumber(): string
     {
         return 'D-'.now()->format('Ym').'-'.Str::upper(Str::substr((string) Str::ulid(), -10));
     }
 
+    /**
+     * Load only the relations required by an authorized invoice response.
+     */
     private function load(Invoice $invoice): Invoice
     {
         return $invoice->load(['patient', 'items', 'payments', 'coverage.insurer', 'clinic']);
     }
 
+    /**
+     * Reject a stale financial mutation when its optimistic-lock version does not match.
+     */
     private function requireVersion(Invoice $invoice, int $version): void
     {
         abort_if($invoice->lock_version !== $version, Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Return the active tenant context or reject contextless invoice creation.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

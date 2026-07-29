@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Defines the lifecycle state of an appointment waitlist request.
+ */
 enum WaitlistStatus: string
 {
     case Waiting = 'waiting';
@@ -10,7 +13,11 @@ enum WaitlistStatus: string
     case Expired = 'expired';
     case Cancelled = 'cancelled';
 
-    /** @return list<string> */
+    /**
+     * Return all persisted waitlist-status values.
+     *
+     * @return list<string>
+     */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

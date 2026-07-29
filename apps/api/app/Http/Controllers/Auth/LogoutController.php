@@ -9,13 +9,22 @@ use App\Services\Identity\OidcLogoutUrlBuilder;
 use Illuminate\Http\JsonResponse;
 use Throwable;
 
+/**
+ * Terminates the local session and optionally supplies a validated upstream logout redirect.
+ */
 class LogoutController extends Controller
 {
+    /**
+     * Create the logout controller.
+     */
     public function __construct(
         private OidcAuthenticationService $authentication,
         private OidcLogoutUrlBuilder $logoutUrlBuilder,
     ) {}
 
+    /**
+     * End the local session and report an optional upstream logout destination.
+     */
     public function __invoke(LogoutRequest $request): JsonResponse
     {
         $upstreamRequested = $request->boolean('upstream');

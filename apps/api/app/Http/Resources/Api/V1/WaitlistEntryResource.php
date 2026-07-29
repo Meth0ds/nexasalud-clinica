@@ -6,8 +6,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
+/**
+ * Transform a waitlist entry and its patient context into the scheduling API contract.
+ */
 class WaitlistEntryResource extends JsonResource
 {
+    /**
+     * Convert the waitlist entry resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $patient = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);

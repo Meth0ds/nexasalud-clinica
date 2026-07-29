@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'appointment_id', 'from_status', 'to_status', 'changed_by', 'reason', 'context', 'occurred_at'])]
 #[Hidden(['reason', 'context'])]
+/**
+ * Stores an append-only history of appointment status transitions.
+ */
 class AppointmentStatusHistory extends Model
 {
     /** @use HasFactory<AppointmentStatusHistoryFactory> */
@@ -22,16 +25,27 @@ class AppointmentStatusHistory extends Model
 
     public $timestamps = false;
 
+    /**
+     * Return the appointment whose status changed.
+     */
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
     }
 
+    /**
+     * Return the user who initiated the status transition.
+     */
     public function changedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'changed_by');
     }
 
+    /**
+     * Define status enum, encrypted context and immutable timestamp attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

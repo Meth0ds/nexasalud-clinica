@@ -7,8 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
+/**
+ * Transform an appointment and its loaded relations into the client-facing API contract.
+ */
 class AppointmentResource extends JsonResource
 {
+    /**
+     * Convert the appointment resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $patientName = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);
@@ -39,11 +47,17 @@ class AppointmentResource extends JsonResource
         ];
     }
 
+    /**
+     * Derive up to two uppercase initials from a display name.
+     */
     private static function initials(string $name): string
     {
         return Str::of($name)->explode(' ')->filter()->take(2)->map(fn (string $part): string => Str::upper(Str::substr($part, 0, 1)))->join('');
     }
 
+    /**
+     * Map a persisted appointment status to its frontend status identifier.
+     */
     private static function frontendStatus(AppointmentStatus $status): string
     {
         return match ($status) {

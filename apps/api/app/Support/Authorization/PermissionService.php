@@ -7,8 +7,14 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Evaluates tenant-scoped permissions and model ownership for the active request context.
+ */
 final class PermissionService
 {
+    /**
+     * Determine whether the current active membership grants a requested permission or namespace wildcard.
+     */
     public function allows(User $user, string $permission): bool
     {
         $membership = app()->bound('currentMembership') ? app('currentMembership') : null;
@@ -38,6 +44,9 @@ final class PermissionService
             });
     }
 
+    /**
+     * Determine whether a model belongs to the tenant bound to the current request.
+     */
     public function belongsToCurrentTenant(Model $model): bool
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

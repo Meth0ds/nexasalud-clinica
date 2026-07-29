@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'actor_user_id', 'actor_subject', 'event_type', 'auditable_type', 'auditable_id', 'request_id', 'ip_hash', 'user_agent_hash', 'metadata', 'occurred_at'])]
 #[Hidden(['ip_hash', 'user_agent_hash', 'metadata'])]
+/**
+ * Stores an append-only, tenant-scoped audit record with privacy-preserving identifiers.
+ */
 class AuditEvent extends Model
 {
     /** @use HasFactory<AuditEventFactory> */
@@ -21,11 +24,19 @@ class AuditEvent extends Model
 
     public $timestamps = false;
 
+    /**
+     * Return the local user who initiated the audited action.
+     */
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
     }
 
+    /**
+     * Define encrypted audit metadata and immutable timestamp attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

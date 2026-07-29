@@ -21,13 +21,22 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response as HttpStatus;
 use UnexpectedValueException;
 
+/**
+ * Generates, verifies and serves protected clinical documents with audit evidence.
+ */
 final class DocumentController extends Controller
 {
+    /**
+     * Create the document controller with the protected PDF generator and audit recorder.
+     */
     public function __construct(
         private readonly ClinicalPdfGenerator $pdfGenerator,
         private readonly AuditRecorder $audit,
     ) {}
 
+    /**
+     * Generate an authorized encrypted appointment-confirmation document.
+     */
     public function generateAppointmentConfirmation(Request $request, Appointment $appointment): JsonResponse
     {
         Gate::authorize('view', $appointment);
@@ -46,6 +55,9 @@ final class DocumentController extends Controller
         return $this->createdResponse($document);
     }
 
+    /**
+     * Generate an authorized encrypted prescription-plan document.
+     */
     public function generatePrescriptionPlan(Request $request, Prescription $prescription): JsonResponse
     {
         Gate::authorize('view', $prescription);
@@ -64,6 +76,9 @@ final class DocumentController extends Controller
         return $this->createdResponse($document);
     }
 
+    /**
+     * Generate an authorized encrypted invoice document.
+     */
     public function generateInvoice(Request $request, Invoice $invoice): JsonResponse
     {
         Gate::authorize('view', $invoice);
@@ -82,6 +97,9 @@ final class DocumentController extends Controller
         return $this->createdResponse($document);
     }
 
+    /**
+     * Serve a verified ready document with restrictive browser and caching headers.
+     */
     public function download(Request $request, ClinicalDocument $document): Response
     {
         Gate::authorize('view', $document);
@@ -128,6 +146,9 @@ final class DocumentController extends Controller
         ]);
     }
 
+    /**
+     * Return the authenticated local actor or reject anonymous document operations.
+     */
     private function actor(Request $request): User
     {
         $actor = $request->user();
@@ -136,6 +157,9 @@ final class DocumentController extends Controller
         return $actor;
     }
 
+    /**
+     * Return the minimal creation response for a generated clinical document.
+     */
     private function createdResponse(ClinicalDocument $document): JsonResponse
     {
         return response()->json([

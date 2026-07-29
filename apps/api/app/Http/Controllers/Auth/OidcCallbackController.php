@@ -12,10 +12,19 @@ use App\Http\Requests\Auth\OidcCallbackRequest;
 use App\Services\Identity\OidcAuthenticationService;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * Completes the browser-facing OpenID Connect callback and maps failures to safe frontend errors.
+ */
 class OidcCallbackController extends Controller
 {
+    /**
+     * Create the OIDC callback controller.
+     */
     public function __construct(private OidcAuthenticationService $authentication) {}
 
+    /**
+     * Complete a validated callback and redirect the browser to the local application.
+     */
     public function __invoke(OidcCallbackRequest $request): RedirectResponse
     {
         try {
@@ -33,6 +42,9 @@ class OidcCallbackController extends Controller
         }
     }
 
+    /**
+     * Build a safe frontend login redirect for an allowed authentication error code.
+     */
     private function errorRedirect(string $error): RedirectResponse
     {
         return redirect()->to($this->authentication->frontendUrl('/login?error='.$error));

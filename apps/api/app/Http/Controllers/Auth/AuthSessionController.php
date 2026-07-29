@@ -16,10 +16,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+/**
+ * Returns the non-sensitive session contract for the authenticated clinical user.
+ */
 class AuthSessionController extends Controller
 {
+    /**
+     * Create the session controller with the local authentication service.
+     */
     public function __construct(private OidcAuthenticationService $authentication) {}
 
+    /**
+     * Return authenticated identity, authorized context and bounded session-assurance metadata.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         $user = $this->authentication->currentUser($request);
@@ -59,6 +68,9 @@ class AuthSessionController extends Controller
         ]);
     }
 
+    /**
+     * Return a privacy-preserving hint for a valid user email address.
+     */
     private function emailHint(User $user): string
     {
         $email = $user->email;
@@ -75,6 +87,9 @@ class AuthSessionController extends Controller
         return Str::substr($localPart, 0, 1).'***@'.Str::substr($domainLabel, 0, 1).'***'.$topLevelDomain;
     }
 
+    /**
+     * Derive display initials while omitting common Spanish honorifics.
+     */
     private function initials(string $displayName): string
     {
         $words = Str::of($displayName)
@@ -95,6 +110,9 @@ class AuthSessionController extends Controller
             ->implode('');
     }
 
+    /**
+     * Return a bounded professional title from the member's first assigned role.
+     */
     private function professionalTitle(Membership $membership): string
     {
         $role = $membership->roles->first();
@@ -107,6 +125,8 @@ class AuthSessionController extends Controller
     }
 
     /**
+     * Return the unique, validated permissions granted by the member's roles.
+     *
      * @return list<string>
      */
     private function permissions(Membership $membership): array
@@ -131,6 +151,9 @@ class AuthSessionController extends Controller
         return array_slice($permissions, 0, 256);
     }
 
+    /**
+     * Return the bounded idle session lifetime from trusted configuration.
+     */
     private function idleLifetimeMinutes(): int
     {
         $minutes = config('session.lifetime');
@@ -142,6 +165,9 @@ class AuthSessionController extends Controller
         return $minutes;
     }
 
+    /**
+     * Return the absolute session expiration timestamp from server-side session state.
+     */
     private function absoluteExpiresAt(Request $request): CarbonImmutable
     {
         $expiresAt = $request->session()->get('auth.session.absolute_expires_at');
@@ -153,6 +179,9 @@ class AuthSessionController extends Controller
         return CarbonImmutable::createFromTimestamp($expiresAt)->utc();
     }
 
+    /**
+     * Classify the current authentication assurance from verified authentication methods.
+     */
     private function assuranceLevel(Request $request): string
     {
         $methods = $request->session()->get('auth.assurance.amr', []);
@@ -169,6 +198,9 @@ class AuthSessionController extends Controller
         return 'password';
     }
 
+    /**
+     * Return the bounded timestamp at which the identity provider authenticated the user.
+     */
     private function authenticatedAt(Request $request): CarbonImmutable
     {
         $authenticatedAt = $request->session()->get('auth.assurance.authenticated_at');

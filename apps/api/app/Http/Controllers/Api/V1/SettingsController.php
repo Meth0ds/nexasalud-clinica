@@ -16,12 +16,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped workspace preferences for the authenticated user.
+ */
 final class SettingsController extends Controller
 {
     private const KEY = 'workspace';
 
+    /**
+     * Create the settings controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return the user's preferences merged with safe server-defined defaults.
+     */
     public function show(Request $request): JsonResponse
     {
         $user = $this->actor($request);
@@ -37,6 +46,9 @@ final class SettingsController extends Controller
         ]]);
     }
 
+    /**
+     * Persist validated preference changes under a lock and record the resulting update.
+     */
     public function update(UpdatePreferencesRequest $request): JsonResponse
     {
         $user = $this->actor($request);
@@ -78,7 +90,11 @@ final class SettingsController extends Controller
         ]]);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Return the server-controlled default workspace preference structure.
+     *
+     * @return array<string, mixed>
+     */
     private function defaults(): array
     {
         return [
@@ -89,6 +105,9 @@ final class SettingsController extends Controller
         ];
     }
 
+    /**
+     * Return the authenticated local user or reject unauthenticated access.
+     */
     private function actor(Request $request): User
     {
         $user = $request->user();
@@ -97,6 +116,9 @@ final class SettingsController extends Controller
         return $user;
     }
 
+    /**
+     * Return the current tenant context or reject contextless access.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

@@ -16,6 +16,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class TeamController extends Controller
 {
+    /**
+     * Create the staff-directory controller with server-side permission evaluation.
+     */
     public function __construct(private readonly PermissionService $permissions) {}
 
     /**

@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'code', 'name', 'duration_minutes', 'buffer_before_minutes', 'buffer_after_minutes', 'color', 'requires_room', 'allows_video', 'is_active'])]
+/**
+ * Defines a tenant-scoped appointment template and its scheduling constraints.
+ */
 class AppointmentType extends Model
 {
     /** @use HasFactory<AppointmentTypeFactory> */
@@ -26,11 +29,19 @@ class AppointmentType extends Model
         'is_active' => true,
     ];
 
+    /**
+     * Return appointments created with this type.
+     */
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
     }
 
+    /**
+     * Define duration, buffer, room, video and activation attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

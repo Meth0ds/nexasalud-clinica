@@ -21,10 +21,19 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped appointment waitlist entries with controlled offers and audit evidence.
+ */
 final class WaitlistController extends Controller
 {
+    /**
+     * Create the waitlist controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return authorized waitlist entries using validated, bounded filters.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', WaitlistEntry::class);
@@ -47,6 +56,9 @@ final class WaitlistController extends Controller
         return WaitlistEntryResource::collection($entries);
     }
 
+    /**
+     * Create a tenant-scoped waitlist request from validated scheduling preferences.
+     */
     public function store(StoreWaitlistRequest $request): WaitlistEntryResource
     {
         $data = $request->validated();
@@ -68,6 +80,9 @@ final class WaitlistController extends Controller
         return new WaitlistEntryResource($this->load($entry));
     }
 
+    /**
+     * Return an authorized waitlist entry and record the sensitive access event.
+     */
     public function show(Request $request, WaitlistEntry $waitlistEntry): WaitlistEntryResource
     {
         Gate::authorize('view', $waitlistEntry);
@@ -76,6 +91,9 @@ final class WaitlistController extends Controller
         return new WaitlistEntryResource($this->load($waitlistEntry));
     }
 
+    /**
+     * Update a waiting entry under a row lock and expected optimistic-lock version.
+     */
     public function update(Request $request, WaitlistEntry $waitlistEntry): WaitlistEntryResource
     {
         Gate::authorize('update', $waitlistEntry);
@@ -117,6 +135,9 @@ final class WaitlistController extends Controller
         return new WaitlistEntryResource($this->load($entry));
     }
 
+    /**
+     * Create a time-bounded offer for a waiting entry and optionally link a matching appointment.
+     */
     public function offer(OfferWaitlistRequest $request, WaitlistEntry $waitlistEntry): WaitlistEntryResource
     {
         $data = $request->validated();
@@ -143,6 +164,9 @@ final class WaitlistController extends Controller
         return new WaitlistEntryResource($this->load($entry));
     }
 
+    /**
+     * Return an appointment identifier only when it matches the waitlist patient, clinic and type.
+     */
     private function matchingAppointmentId(WaitlistEntry $entry, mixed $appointmentId): ?string
     {
         if (! is_string($appointmentId) || $appointmentId === '') {
@@ -161,6 +185,9 @@ final class WaitlistController extends Controller
         return (string) $appointment->getKey();
     }
 
+    /**
+     * Cancel an eligible waitlist entry without erasing its traceable history.
+     */
     public function destroy(Request $request, WaitlistEntry $waitlistEntry): Response
     {
         Gate::authorize('update', $waitlistEntry);
@@ -175,11 +202,17 @@ final class WaitlistController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * Load only the relations required by an authorized waitlist response.
+     */
     private function load(WaitlistEntry $entry): WaitlistEntry
     {
         return $entry->load(['patient', 'appointmentType', 'preferredClinician', 'clinic']);
     }
 
+    /**
+     * Return the active tenant context or reject contextless waitlist creation.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

@@ -5,8 +5,16 @@ namespace App\Http\Resources\Api\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transform an invoice and its optionally loaded items into the billing API contract.
+ */
 class InvoiceResource extends JsonResource
 {
+    /**
+     * Convert the invoice resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

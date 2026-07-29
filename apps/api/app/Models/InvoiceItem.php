@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'invoice_id', 'service_code', 'description', 'quantity', 'unit_price_minor', 'tax_minor', 'total_minor', 'sort_order'])]
 #[Hidden(['description'])]
+/**
+ * Represents one encrypted-description line item on a tenant-scoped invoice.
+ */
 class InvoiceItem extends Model
 {
     /** @use HasFactory<InvoiceItemFactory> */
@@ -24,11 +27,19 @@ class InvoiceItem extends Model
         'sort_order' => 0,
     ];
 
+    /**
+     * Return the invoice that contains this line item.
+     */
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
+    /**
+     * Define encrypted description, decimal quantity and minor-unit monetary casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

@@ -9,8 +9,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
+/**
+ * Transform a patient communication into a channel-safe administrative API representation.
+ */
 final class PatientCommunicationResource extends JsonResource
 {
+    /**
+     * Convert the patient communication resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $patientName = trim((string) ($this->patient?->first_name ?? '').' '.(string) ($this->patient?->last_name ?? ''));
@@ -40,6 +48,9 @@ final class PatientCommunicationResource extends JsonResource
         ];
     }
 
+    /**
+     * Return the localized label for a supported administrative communication template.
+     */
     private static function templateLabel(string $templateKey): string
     {
         return match ($templateKey) {

@@ -23,10 +23,19 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Manages tenant-scoped prescriptions with controlled drafting, signing and medication-safety checks.
+ */
 final class PrescriptionController extends Controller
 {
+    /**
+     * Create the prescription controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
+    /**
+     * Return authorized prescriptions using validated, bounded filters.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Prescription::class);
@@ -48,6 +57,9 @@ final class PrescriptionController extends Controller
         return PrescriptionResource::collection($prescriptions);
     }
 
+    /**
+     * Create a draft prescription and its medication items after validating the care context.
+     */
     public function store(StorePrescriptionRequest $request): PrescriptionResource
     {
         $data = $request->validated();
@@ -79,6 +91,9 @@ final class PrescriptionController extends Controller
         return new PrescriptionResource($this->load($prescription));
     }
 
+    /**
+     * Return an authorized prescription and record the sensitive access event.
+     */
     public function show(Request $request, Prescription $prescription): PrescriptionResource
     {
         Gate::authorize('view', $prescription);
@@ -87,6 +102,9 @@ final class PrescriptionController extends Controller
         return new PrescriptionResource($this->load($prescription));
     }
 
+    /**
+     * Update a draft prescription under a row lock and expected optimistic-lock version.
+     */
     public function update(UpdatePrescriptionRequest $request, Prescription $prescription): PrescriptionResource
     {
         $data = $request->validated();
@@ -117,6 +135,9 @@ final class PrescriptionController extends Controller
         return new PrescriptionResource($this->load($updated));
     }
 
+    /**
+     * Apply an authorized status transition, requiring recent MFA and justification for safety overrides.
+     */
     public function transition(TransitionPrescriptionRequest $request, Prescription $prescription): PrescriptionResource
     {
         $data = $request->validated();
@@ -146,12 +167,17 @@ final class PrescriptionController extends Controller
         return new PrescriptionResource($this->load($transitioned));
     }
 
+    /**
+     * Disallow prescription deletion to preserve clinical traceability.
+     */
     public function destroy(): never
     {
         abort(Response::HTTP_METHOD_NOT_ALLOWED);
     }
 
     /**
+     * Replace draft medication items in their validated request order.
+     *
      * @param  list<array<string, mixed>>  $items
      */
     private function replaceItems(Prescription $prescription, array $items): void
@@ -178,7 +204,11 @@ final class PrescriptionController extends Controller
         }
     }
 
-    /** @return list<string> */
+    /**
+     * Return active patient-allergy medication-code matches as safety warnings.
+     *
+     * @return list<string>
+     */
     private function allergyWarnings(Prescription $prescription): array
     {
         $codes = $prescription->items()->pluck('medication_code')->filter()->all();
@@ -196,7 +226,11 @@ final class PrescriptionController extends Controller
             ->all();
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Ensure an optional appointment belongs to the selected patient and clinic.
+     *
+     * @param  array<string, mixed>  $data
+     */
     private function validateAppointmentContext(array $data): void
     {
         if (! isset($data['appointmentId'])) {
@@ -210,6 +244,9 @@ final class PrescriptionController extends Controller
         );
     }
 
+    /**
+     * Require a recent, verified multi-factor authentication context before prescription signing.
+     */
     private function requireRecentMfa(Request $request): void
     {
         $methods = $request->session()->get('auth.assurance.amr', []);
@@ -220,16 +257,25 @@ final class PrescriptionController extends Controller
         abort_unless($hasMfa && $isRecent, Response::HTTP_FORBIDDEN);
     }
 
+    /**
+     * Load only the relations required by an authorized prescription response.
+     */
     private function load(Prescription $prescription): Prescription
     {
         return $prescription->load(['patient.allergies', 'prescriber', 'items', 'appointment']);
     }
 
+    /**
+     * Reject a stale prescription mutation when its optimistic-lock version does not match.
+     */
     private function requireVersion(Prescription $prescription, int $version): void
     {
         abort_if($prescription->lock_version !== $version, Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Return the authenticated local actor or reject anonymous prescription mutations.
+     */
     private function actor(Request $request): User
     {
         $actor = $request->user();
@@ -238,6 +284,9 @@ final class PrescriptionController extends Controller
         return $actor;
     }
 
+    /**
+     * Return the active tenant context or reject contextless prescription creation.
+     */
     private function tenant(): Tenant
     {
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;

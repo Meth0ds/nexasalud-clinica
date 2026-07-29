@@ -16,6 +16,8 @@ case "${APP_KEY}" in
     *CHANGE_ME*|*change-me*|*DEV_ONLY*) fail 'APP_KEY still contains a placeholder.' ;;
 esac
 
+mkdir -p storage/app/openapi
+
 php artisan package:discover --ansi --no-interaction
 
 if [ "${RUN_MIGRATIONS:-false}" = 'true' ]; then

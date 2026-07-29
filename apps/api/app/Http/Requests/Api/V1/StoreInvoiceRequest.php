@@ -6,13 +6,24 @@ use App\Models\Invoice;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate creation of an invoice, its tenant-owned references, and its line items.
+ */
 class StoreInvoiceRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create invoices.
+     */
     public function authorize(): bool
     {
         return $this->authenticatedUser()->can('create', Invoice::class);
     }
 
+    /**
+     * Return tenant-scoped validation rules for invoice attributes and line items.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $tenant = $this->tenantId();

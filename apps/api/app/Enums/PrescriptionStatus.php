@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Defines the controlled clinical lifecycle states for a prescription.
+ */
 enum PrescriptionStatus: string
 {
     case Draft = 'draft';
@@ -10,6 +13,9 @@ enum PrescriptionStatus: string
     case Sent = 'sent';
     case Cancelled = 'cancelled';
 
+    /**
+     * Determine whether this prescription status may transition to the requested next state.
+     */
     public function canTransitionTo(self $next): bool
     {
         return in_array($next, match ($this) {
@@ -21,12 +27,19 @@ enum PrescriptionStatus: string
         }, true);
     }
 
+    /**
+     * Determine whether the prescription may still have its medication details edited.
+     */
     public function isEditable(): bool
     {
         return $this === self::Draft;
     }
 
-    /** @return list<string> */
+    /**
+     * Return all persisted prescription-status values.
+     *
+     * @return list<string>
+     */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

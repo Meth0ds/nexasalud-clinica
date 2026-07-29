@@ -20,6 +20,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class AnalyticsController extends Controller
 {
+    /**
+     * Create the aggregate analytics controller with authorization and audit services.
+     */
     public function __construct(
         private readonly PermissionService $permissions,
         private readonly AuditRecorder $audit,

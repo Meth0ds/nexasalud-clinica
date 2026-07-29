@@ -28,6 +28,11 @@ import {
   AppointmentDialogData,
   AppointmentDialogResult,
 } from '../../components/appointment-dialog/appointment-dialog';
+import {
+  AppointmentActionDialog,
+  AppointmentActionDialogData,
+  AppointmentActionDialogResult,
+} from '../../components/appointment-action-dialog/appointment-action-dialog';
 
 interface AgendaItem {
   readonly id: string;
@@ -46,10 +51,16 @@ interface AgendaItem {
   readonly duration: number;
   readonly type: string;
   readonly room: string;
-  readonly status: string;
+  readonly status: Appointment['status'];
+  readonly statusLabel: string;
   readonly tone: 'green' | 'blue' | 'coral' | 'sand';
   readonly mode: 'in-person' | 'video' | 'phone';
   readonly alerts: readonly string[];
+}
+
+interface TransitionAction {
+  readonly status: Exclude<Appointment['status'], 'pending'>;
+  readonly label: string;
 }
 
 @Component({
@@ -220,6 +231,11 @@ export class Agenda implements OnInit {
   }
 
   protected openEdit(item: AgendaItem, mode: 'edit' | 'reschedule' = 'edit'): void {
+    if (mode === 'reschedule' && !this.canReschedule(item)) {
+      this.notifications.error('Esta cita ya no admite cambios de horario. Actualiza la agenda.');
+      return;
+    }
+
     this.openDialog({
       mode,
       id: item.id,
@@ -235,16 +251,79 @@ export class Agenda implements OnInit {
     });
   }
 
-  protected cancel(item: AgendaItem): void {
-    this.appointmentApi
-      .cancel(item.id, item.version, 'Cancelación confirmada desde la agenda.')
-      .subscribe({
-        next: (appointment) => {
-          this.upsert(appointment);
-          this.selectedId.set(appointment.id);
-          this.notifications.success('Cita cancelada. El cambio ha quedado registrado.');
+  protected openCriticalAction(item: AgendaItem, action: 'cancel' | 'no-show'): void {
+    this.dialog
+      .open<AppointmentActionDialog, AppointmentActionDialogData, AppointmentActionDialogResult>(
+        AppointmentActionDialog,
+        {
+          data: { action, patientName: item.patient },
+          autoFocus: 'dialog',
+          restoreFocus: true,
         },
+      )
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
+
+        const request =
+          action === 'cancel'
+            ? this.appointmentApi.cancel(item.id, item.version, result.reason)
+            : this.appointmentApi.transition(item.id, item.version, 'no-show', result.reason);
+        request.subscribe({
+          next: (appointment) => {
+            this.upsert(appointment);
+            this.selectedId.set(appointment.id);
+            this.notifications.success(
+              action === 'cancel'
+                ? 'Cita cancelada. El cambio ha quedado registrado.'
+                : 'No presentación registrada. El cambio ha quedado auditado.',
+            );
+          },
+          error: () => this.loadAppointments(),
+        });
       });
+  }
+
+  protected transition(item: AgendaItem, action: TransitionAction): void {
+    this.appointmentApi.transition(item.id, item.version, action.status).subscribe({
+      next: (appointment) => {
+        this.upsert(appointment);
+        this.selectedId.set(appointment.id);
+        this.notifications.success(`${action.label}. El cambio ha quedado registrado.`);
+      },
+      error: () => this.loadAppointments(),
+    });
+  }
+
+  protected nextTransition(item: AgendaItem): TransitionAction | null {
+    switch (item.status) {
+      case 'pending':
+        return { status: 'confirmed', label: 'Cita confirmada' };
+      case 'confirmed':
+        return { status: 'waiting', label: 'Llegada registrada' };
+      case 'waiting':
+        return { status: 'in-progress', label: 'Consulta iniciada' };
+      case 'in-progress':
+        return { status: 'completed', label: 'Consulta completada' };
+      case 'completed':
+      case 'cancelled':
+      case 'no-show':
+        return null;
+    }
+  }
+
+  protected canReschedule(item: AgendaItem): boolean {
+    return ['pending', 'confirmed', 'waiting', 'in-progress'].includes(item.status);
+  }
+
+  protected canCancel(item: AgendaItem): boolean {
+    return ['pending', 'confirmed', 'waiting', 'in-progress'].includes(item.status);
+  }
+
+  protected canMarkNoShow(item: AgendaItem): boolean {
+    return ['pending', 'confirmed'].includes(item.status);
   }
 
   protected downloadConfirmation(item: AgendaItem): void {
@@ -368,6 +447,7 @@ export class Agenda implements OnInit {
             : 'Cita guardada correctamente.',
         );
       },
+      error: () => this.loadAppointments(),
     });
   }
 
@@ -460,7 +540,8 @@ export class Agenda implements OnInit {
       duration: Math.round((endsAt.getTime() - startsAt.getTime()) / 60_000),
       type: appointment.typeName,
       room: appointment.roomName ?? (appointment.mode === 'video' ? 'Videoconsulta' : 'Sin sala'),
-      status: this.statusLabel(appointment.status),
+      status: appointment.status,
+      statusLabel: this.statusLabel(appointment.status),
       tone:
         appointment.mode === 'video'
           ? 'blue'

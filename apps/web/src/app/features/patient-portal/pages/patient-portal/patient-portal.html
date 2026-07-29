@@ -1265,24 +1265,89 @@
           }
 
           @case ('espera') {
-            <section class="portal-view unavailable-view">
-              <div class="portal-empty">
-                <span><app-icon name="waitlist" [size]="28" /></span>
-                <p class="nexa-eyebrow">No disponible</p>
-                <h1>Lista de espera</h1>
-                <p>
-                  El backend del portal todavía no ofrece esta operación. No se ha creado ninguna
-                  solicitud.
-                </p>
-                <button
-                  mat-stroked-button
-                  class="nexa-btn-secondary"
-                  type="button"
-                  (click)="activateSection('inicio')"
-                >
-                  Volver a Mi salud
+            <section class="portal-view" aria-labelledby="portal-waitlist-title">
+              <header class="portal-section-heading" appScrollReveal>
+                <div>
+                  <p class="nexa-eyebrow">Disponibilidad alternativa</p>
+                  <h1 id="portal-waitlist-title">Lista de espera</h1>
+                  <p>Indica el intervalo que te conviene. El centro te contactará si aparece una cita.</p>
+                </div>
+                <button mat-stroked-button class="nexa-btn-secondary" type="button" [disabled]="waitlistLoading()" (click)="loadWaitlist()">
+                  <app-icon name="arrow" [size]="16" /> Actualizar
                 </button>
-              </div>
+              </header>
+
+              <section class="waitlist-explainer" appScrollReveal [revealDelay]="40">
+                <div>
+                  <span><app-icon name="waitlist" [size]="20" /></span>
+                  <p><strong>Solicitud protegida</strong><small>No crea una cita ni modifica tu agenda actual.</small></p>
+                </div>
+              </section>
+
+              <section class="waitlist-form" aria-labelledby="waitlist-form-title" appScrollReveal [revealDelay]="80">
+                <header>
+                  <div>
+                    <h2 id="waitlist-form-title">Solicitar plaza en lista de espera</h2>
+                    <p>Selecciona el tipo de atención y el periodo que puedes atender.</p>
+                  </div>
+                </header>
+                <div class="waitlist-fields">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Tipo de atención</mat-label>
+                    <mat-select [ngModel]="waitlistAppointmentTypeId()" (ngModelChange)="waitlistAppointmentTypeId.set($event)">
+                      @for (type of careOptions(); track type.id) {
+                        <mat-option [value]="type.id">{{ type.name }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Disponible desde</mat-label>
+                    <input matInput type="date" [ngModel]="waitlistDesiredFrom()" (ngModelChange)="waitlistDesiredFrom.set($event)" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Disponible hasta</mat-label>
+                    <input matInput type="date" [ngModel]="waitlistDesiredTo()" (ngModelChange)="waitlistDesiredTo.set($event)" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="full-field">
+                    <mat-label>Observaciones de disponibilidad (opcional)</mat-label>
+                    <textarea matInput rows="3" maxlength="500" [ngModel]="waitlistNotes()" (ngModelChange)="waitlistNotes.set($event)"></textarea>
+                    <mat-hint>Evita incluir datos clínicos o urgencias.</mat-hint>
+                  </mat-form-field>
+                </div>
+                <p class="clinical-boundary"><app-icon name="shield" [size]="16" /> La solicitud usa una clave de idempotencia y queda asociada únicamente a tu cuenta autorizada.</p>
+                <div>
+                  <button mat-flat-button class="nexa-btn-primary" type="button" [disabled]="!!actionBusy() || catalogLoading() || !!catalogError()" (click)="submitWaitlist()">
+                    <app-icon name="check" [size]="16" /> {{ actionBusy() === 'waitlist' ? 'Enviando…' : 'Enviar solicitud' }}
+                  </button>
+                </div>
+              </section>
+
+              @if (waitlistLoading()) {
+                <section class="portal-state" aria-live="polite" aria-busy="true">
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar><p>Cargando tus solicitudes…</p>
+                </section>
+              } @else if (waitlistError(); as error) {
+                <section class="portal-state portal-state--error" role="alert">
+                  <app-icon name="shield" [size]="22" />
+                  <div><strong>No se ha podido cargar la lista de espera</strong><p>{{ error.message }}</p></div>
+                  <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="loadWaitlist()">Reintentar</button>
+                </section>
+              } @else if (waitlistEntries(); as entries) {
+                <section class="waitlist-requests" aria-label="Tus solicitudes de lista de espera">
+                  <h2>Tus solicitudes</h2>
+                  @for (entry of entries; track entry.id) {
+                    <article>
+                      <span><app-icon name="waitlist" [size]="18" /></span>
+                      <div><strong>{{ entry.requestedType || 'Tipo de atención' }}</strong><small>{{ formatDate(entry.preferredWindow[0]) }} — {{ formatDate(entry.preferredWindow[1]) }}</small></div>
+                      <span class="nexa-chip nexa-chip--{{ statusTone(entry.status) }}">{{ statusLabel(entry.status) }}</span>
+                    </article>
+                  } @empty {
+                    <div class="portal-empty">
+                      <span><app-icon name="waitlist" [size]="28" /></span><h2>No tienes solicitudes activas</h2><p>Usa el formulario para solicitar una plaza si aparece disponibilidad.</p>
+                    </div>
+                  }
+                </section>
+              }
             </section>
           }
           @case ('mensajes') {

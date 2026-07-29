@@ -8,8 +8,14 @@ use App\Models\User;
 use App\Services\Identity\Data\OidcIdentity;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Resolves a verified OpenID Connect identity to an active local user.
+ */
 final class OidcUserResolver
 {
+    /**
+     * Create or update the local user that belongs to the verified identity.
+     */
     public function resolve(OidcIdentity $identity): User
     {
         if (

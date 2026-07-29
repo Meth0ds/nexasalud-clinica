@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Fillable(['tenant_id', 'actor_subject', 'operation', 'key_hash', 'request_hash', 'response_status', 'response_body', 'resource_type', 'resource_id', 'expires_at', 'created_at'])]
 #[Hidden(['key_hash', 'request_hash', 'response_body'])]
+/**
+ * Stores the tenant-scoped request fingerprint and replayable successful mutation response.
+ */
 class IdempotencyKey extends Model
 {
     /** @use HasFactory<IdempotencyKeyFactory> */
@@ -19,6 +22,11 @@ class IdempotencyKey extends Model
 
     public const UPDATED_AT = null;
 
+    /**
+     * Define encrypted response and immutable timestamp attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

@@ -6,8 +6,14 @@ use Illuminate\Contracts\Debug\ShouldntReport;
 use RuntimeException;
 use Throwable;
 
+/**
+ * Signals an invalid or unverifiable identity-provider response without disclosing sensitive details.
+ */
 class IdentityProtocolException extends RuntimeException implements ShouldntReport
 {
+    /**
+     * Create a safe identity-protocol exception from an optional message or prior throwable.
+     */
     public function __construct(Throwable|string|null $previous = null)
     {
         parent::__construct(

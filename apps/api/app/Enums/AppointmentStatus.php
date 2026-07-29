@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Defines the permitted lifecycle states for a clinical appointment.
+ */
 enum AppointmentStatus: string
 {
     case Scheduled = 'scheduled';
@@ -12,6 +15,9 @@ enum AppointmentStatus: string
     case Cancelled = 'cancelled';
     case NoShow = 'no_show';
 
+    /**
+     * Determine whether this appointment status may transition to the requested next state.
+     */
     public function canTransitionTo(self $next): bool
     {
         return in_array($next, match ($this) {
@@ -23,6 +29,9 @@ enum AppointmentStatus: string
         }, true);
     }
 
+    /**
+     * Determine whether this status reserves patient, clinician or room availability.
+     */
     public function blocksAvailability(): bool
     {
         return in_array($this, [
@@ -33,7 +42,11 @@ enum AppointmentStatus: string
         ], true);
     }
 
-    /** @return list<string> */
+    /**
+     * Return all persisted appointment-status values.
+     *
+     * @return list<string>
+     */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

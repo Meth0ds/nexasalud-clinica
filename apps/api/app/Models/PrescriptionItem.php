@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'prescription_id', 'medication_code_system', 'medication_code', 'medication_display', 'dose_amount', 'dose_unit_code', 'route_code', 'frequency_code', 'duration_value', 'duration_unit', 'quantity', 'quantity_unit_code', 'instructions', 'sort_order'])]
 #[Hidden(['medication_display', 'instructions'])]
+/**
+ * Represents one medication instruction within a draft prescription.
+ */
 class PrescriptionItem extends Model
 {
     /** @use HasFactory<PrescriptionItemFactory> */
@@ -23,11 +26,17 @@ class PrescriptionItem extends Model
 
     protected $attributes = ['sort_order' => 0];
 
+    /**
+     * Return the prescription that contains this medication instruction.
+     */
     public function prescription(): BelongsTo
     {
         return $this->belongsTo(Prescription::class);
     }
 
+    /**
+     * Register guards that permit medication-item changes only while the prescription is a draft.
+     */
     protected static function booted(): void
     {
         $ensureDraft = function (self $item): void {
@@ -42,6 +51,11 @@ class PrescriptionItem extends Model
         static::deleting($ensureDraft);
     }
 
+    /**
+     * Define encrypted medication details, decimal values and ordering casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

@@ -8,10 +8,19 @@ use App\Http\Requests\Auth\StartOidcLoginRequest;
 use App\Services\Identity\OidcAuthenticationService;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * Starts the browser-facing OpenID Connect authorization flow.
+ */
 class StartOidcLoginController extends Controller
 {
+    /**
+     * Create the login entry-point controller.
+     */
     public function __construct(private OidcAuthenticationService $authentication) {}
 
+    /**
+     * Redirect the browser to the identity provider or a safe unavailable-identity error.
+     */
     public function __invoke(StartOidcLoginRequest $request): RedirectResponse
     {
         try {

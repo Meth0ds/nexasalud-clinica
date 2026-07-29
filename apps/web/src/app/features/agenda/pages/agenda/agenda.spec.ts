@@ -102,4 +102,13 @@ describe('Agenda', () => {
     expect(text).not.toContain('Siguiente hueco');
     expect(text).not.toContain('Domingo, 19 de julio');
   });
+
+  it('offers only the next permitted lifecycle action for a confirmed appointment', () => {
+    fixture.componentInstance['selectedId'].set('appointment-authorized');
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Llegada registrada');
+    expect(text).not.toContain('Consulta completada');
+  });
 });

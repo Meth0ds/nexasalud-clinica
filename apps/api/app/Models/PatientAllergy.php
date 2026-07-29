@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['tenant_id', 'patient_id', 'substance_code_system', 'substance_code', 'substance_display', 'clinical_status', 'verification_status', 'criticality', 'notes', 'recorded_by', 'recorded_at'])]
 #[Hidden(['substance_display', 'notes'])]
+/**
+ * Represents a tenant-scoped patient allergy with encrypted clinical detail.
+ */
 class PatientAllergy extends Model
 {
     /** @use HasFactory<PatientAllergyFactory> */
@@ -26,16 +29,27 @@ class PatientAllergy extends Model
         'criticality' => 'unknown',
     ];
 
+    /**
+     * Return the patient with this documented allergy.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return adverse reactions linked to this allergy.
+     */
     public function adverseReactions(): HasMany
     {
         return $this->hasMany(AdverseReaction::class);
     }
 
+    /**
+     * Define encrypted allergy detail and immutable recording timestamp casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

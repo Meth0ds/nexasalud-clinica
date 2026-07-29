@@ -12,8 +12,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Lists active tenant memberships and clinics that the authenticated user may select.
+ */
 class TenantContextOptionsController extends Controller
 {
+    /**
+     * Return bounded context-selection options without exposing memberships outside the current user.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         /** @var Collection<int, Membership> $memberships */

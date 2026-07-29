@@ -22,6 +22,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class PatientController extends Controller
 {
+    /**
+     * Create the patient controller with privacy-preserving audit recording.
+     */
     public function __construct(private readonly AuditRecorder $audit) {}
 
     /**

@@ -6,8 +6,14 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate an optimistic-concurrency request to transition an appointment's status.
+ */
 class TransitionAppointmentRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may update the routed appointment.
+     */
     public function authorize(): bool
     {
         $appointment = $this->route('appointment');
@@ -15,6 +21,11 @@ class TransitionAppointmentRequest extends TenantFormRequest
         return $appointment instanceof Appointment && $this->authenticatedUser()->can('update', $appointment);
     }
 
+    /**
+     * Return validation rules for an appointment status transition and its required rationale.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [

@@ -7,8 +7,16 @@ namespace App\Http\Resources\Api\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transform a clinical note into the API representation authorized for its reader.
+ */
 final class ClinicalNoteResource extends JsonResource
 {
+    /**
+     * Convert the clinical note resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

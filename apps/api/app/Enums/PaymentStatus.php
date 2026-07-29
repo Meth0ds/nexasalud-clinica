@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Defines the processing lifecycle state of an invoice payment.
+ */
 enum PaymentStatus: string
 {
     case Pending = 'pending';

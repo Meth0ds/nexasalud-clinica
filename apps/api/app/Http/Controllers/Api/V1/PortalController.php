@@ -13,6 +13,7 @@ use App\Http\Requests\Api\V1\CreateSlotHoldRequest;
 use App\Http\Requests\Api\V1\ReschedulePortalAppointmentRequest;
 use App\Http\Resources\Api\V1\AppointmentResource;
 use App\Http\Resources\Api\V1\PortalMessageResource;
+use App\Http\Resources\Api\V1\WaitlistEntryResource;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\AppointmentType;
@@ -22,6 +23,7 @@ use App\Models\PatientCommunication;
 use App\Models\PatientUserLink;
 use App\Models\Room;
 use App\Models\User;
+use App\Models\WaitlistEntry;
 use App\Support\Auditing\AuditRecorder;
 use App\Support\Authorization\PermissionService;
 use Carbon\CarbonImmutable;
@@ -41,11 +43,17 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class PortalController extends Controller
 {
+    /**
+     * Create the controller with portal authorization and audit dependencies.
+     */
     public function __construct(
         private readonly PermissionService $permissions,
         private readonly AuditRecorder $audit,
     ) {}
 
+    /**
+     * Return the linked patient's portal overview and audit the sensitive read.
+     */
     public function overview(Request $request): JsonResponse
     {
         $link = $this->patientLink($request);
@@ -127,6 +135,67 @@ final class PortalController extends Controller
         return PortalMessageResource::collection($messages);
     }
 
+    /**
+     * List only waitlist entries owned by the verified patient and audit the sensitive read.
+     */
+    public function waitlist(Request $request): AnonymousResourceCollection
+    {
+        $link = $this->patientLink($request);
+        $entries = WaitlistEntry::query()
+            ->with(['patient', 'appointmentType'])
+            ->where('patient_id', $link->patient_id)
+            ->latest('created_at')
+            ->limit(100)
+            ->get();
+
+        $this->audit->record($request, 'portal.waitlist_viewed', $link->patient, [
+            'result_count' => $entries->count(),
+        ]);
+
+        return WaitlistEntryResource::collection($entries);
+    }
+
+    /**
+     * Create a waiting-list request for the verified patient using conservative portal defaults.
+     */
+    public function createWaitlist(Request $request): WaitlistEntryResource
+    {
+        $link = $this->patientLink($request);
+        $tenantId = (string) $link->tenant_id;
+        $data = $request->validate([
+            'clinicId' => ['required', 'string', Rule::exists('clinics', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->where('is_active', true))],
+            'appointmentTypeId' => ['required', 'string', Rule::exists('appointment_types', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->where('is_active', true))],
+            'desiredFrom' => ['required', 'date', 'after_or_equal:today'],
+            'desiredTo' => ['required', 'date', 'after:desiredFrom'],
+            'preferredDays' => ['nullable', 'array', 'max:7'],
+            'preferredDays.*' => ['integer', 'between:1,7', 'distinct'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+        $clinic = Clinic::query()->findOrFail($data['clinicId']);
+        $this->requireCurrentClinic($clinic);
+
+        $entry = WaitlistEntry::create([
+            'tenant_id' => $link->tenant_id,
+            'clinic_id' => $clinic->getKey(),
+            'patient_id' => $link->patient_id,
+            'appointment_type_id' => $data['appointmentTypeId'],
+            'desired_from' => CarbonImmutable::parse($data['desiredFrom'])->utc(),
+            'desired_to' => CarbonImmutable::parse($data['desiredTo'])->utc(),
+            'preferred_days' => $data['preferredDays'] ?? [],
+            'priority' => 3,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        $this->audit->record($request, 'portal.waitlist_created', $entry, [
+            'priority' => $entry->priority,
+        ]);
+
+        return new WaitlistEntryResource($entry->load(['patient', 'appointmentType']));
+    }
+
+    /**
+     * Generate bookable appointment slots for the linked patient within the selected clinic context.
+     */
     public function availability(Request $request): JsonResponse
     {
         $link = $this->patientLink($request);
@@ -163,6 +232,9 @@ final class PortalController extends Controller
         ]]);
     }
 
+    /**
+     * Atomically reserve an available appointment slot for the authenticated portal user.
+     */
     public function hold(CreateSlotHoldRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -218,6 +290,9 @@ final class PortalController extends Controller
         ]], Response::HTTP_CREATED);
     }
 
+    /**
+     * Consume a patient-owned active hold and create the corresponding appointment.
+     */
     public function book(CreatePortalBookingRequest $request): AppointmentResource
     {
         $data = $request->validated();
@@ -265,6 +340,9 @@ final class PortalController extends Controller
         return new AppointmentResource($appointment->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']));
     }
 
+    /**
+     * Cancel a future appointment owned by the linked patient using optimistic concurrency.
+     */
     public function cancel(Request $request, Appointment $appointment): AppointmentResource
     {
         $link = $this->patientLink($request);
@@ -282,6 +360,9 @@ final class PortalController extends Controller
         return new AppointmentResource($cancelled->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']));
     }
 
+    /**
+     * Reschedule a future patient-owned appointment to a verified active slot hold.
+     */
     public function reschedule(ReschedulePortalAppointmentRequest $request, Appointment $appointment): AppointmentResource
     {
         $link = $this->patientLink($request);
@@ -312,6 +393,9 @@ final class PortalController extends Controller
         return new AppointmentResource($rescheduled->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']));
     }
 
+    /**
+     * Resolve the authenticated actor's preferred active, unexpired patient portal link.
+     */
     private function patientLink(Request $request): PatientUserLink
     {
         $actor = $this->actor($request);
@@ -326,7 +410,11 @@ final class PortalController extends Controller
             ->firstOrFail();
     }
 
-    /** @return Collection<int, Membership> */
+    /**
+     * Return active clinical memberships optionally restricted to one practitioner.
+     *
+     * @return Collection<int, Membership>
+     */
     private function clinicalMemberships(?string $userId): Collection
     {
         return Membership::query()
@@ -348,6 +436,8 @@ final class PortalController extends Controller
     }
 
     /**
+     * Build non-conflicting weekday slots across the requested provider and clinic range.
+     *
      * @param  Collection<int, Membership>  $providers
      * @return list<array<string, mixed>>
      */
@@ -414,6 +504,9 @@ final class PortalController extends Controller
         return $slots;
     }
 
+    /**
+     * Abort when an appointment or an active hold conflicts with the requested resources and period.
+     */
     private function assertSlotFree(
         string $patientId,
         string $clinicianId,
@@ -435,6 +528,9 @@ final class PortalController extends Controller
         abort_if($appointmentConflict || $holdConflict, Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Ensure that a hold belongs to the linked patient and authenticated actor and has not expired.
+     */
     private function assertOwnedActiveHold(AppointmentSlotHold $hold, PatientUserLink $link, User $actor): void
     {
         abort_if($hold->patient_id !== $link->patient_id || $hold->created_by_user_id !== $actor->getKey(), Response::HTTP_NOT_FOUND);
@@ -445,12 +541,18 @@ final class PortalController extends Controller
         abort_unless($hold->status === 'active' && $hold->expires_at?->isFuture(), Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Ensure that an appointment belongs to the linked patient and matches the submitted version.
+     */
     private function assertPortalAppointment(Appointment $appointment, PatientUserLink $link, int $version): void
     {
         abort_if($appointment->patient_id !== $link->patient_id, Response::HTTP_NOT_FOUND);
         abort_if($appointment->lock_version !== $version, Response::HTTP_CONFLICT);
     }
 
+    /**
+     * Ensure that a requested slot falls within the clinic's permitted weekday booking window.
+     */
     private function assertBookableTime(CarbonImmutable $start, CarbonImmutable $end, Clinic $clinic): void
     {
         $localStart = $start->setTimezone($clinic->timezone);
@@ -459,17 +561,26 @@ final class PortalController extends Controller
         abort_if($localStart->format('H:i') < '08:00' || $localEnd->format('H:i') > '18:00' || $localStart->toDateString() !== $localEnd->toDateString(), Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    /**
+     * Ensure that the selected clinic matches the request's tenant-scoped clinic context.
+     */
     private function requireCurrentClinic(Clinic $clinic): void
     {
         $current = app()->bound('currentClinic') ? app('currentClinic') : null;
         abort_unless($current instanceof Clinic && $current->is($clinic), Response::HTTP_FORBIDDEN);
     }
 
+    /**
+     * Convert the portal's in-person mode identifier to the persisted appointment channel value.
+     */
     private function channel(string $mode): string
     {
         return $mode === 'in-person' ? 'in_person' : $mode;
     }
 
+    /**
+     * Return the authenticated user or abort the request when no application user is present.
+     */
     private function actor(Request $request): User
     {
         $actor = $request->user();

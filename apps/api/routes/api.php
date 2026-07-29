@@ -50,7 +50,7 @@ Route::prefix('v1')
             ->middleware(['throttle:clinical-mutation', 'idempotent'])
             ->name('appointments.reschedule');
         Route::post('/appointments/{appointment}/transition', [AppointmentController::class, 'transition'])
-            ->middleware('throttle:clinical-mutation')
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
             ->name('appointments.transition');
         Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
             ->middleware(['throttle:clinical-mutation', 'idempotent'])
@@ -135,6 +135,10 @@ Route::prefix('v1')
         Route::prefix('portal')->name('portal.')->group(function (): void {
             Route::get('/overview', [PortalController::class, 'overview'])->name('overview');
             Route::get('/messages', [PortalController::class, 'messages'])->name('messages.index');
+            Route::get('/waitlist-entries', [PortalController::class, 'waitlist'])->name('waitlist-entries.index');
+            Route::post('/waitlist-entries', [PortalController::class, 'createWaitlist'])
+                ->middleware(['throttle:clinical-mutation', 'idempotent'])
+                ->name('waitlist-entries.store');
             Route::get('/availability', [PortalController::class, 'availability'])->name('availability');
             Route::post('/slot-holds', [PortalController::class, 'hold'])
                 ->middleware(['throttle:clinical-mutation', 'idempotent'])

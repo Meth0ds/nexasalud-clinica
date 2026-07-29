@@ -77,6 +77,26 @@ class AppointmentDomainTest extends TestCase
         $appointment->update(['status' => AppointmentStatus::Completed]);
     }
 
+    public function test_terminal_appointments_cannot_be_rescheduled(): void
+    {
+        [$tenant, $user, $clinic, $room, $type, $patient] = $this->clinicalContext();
+        $start = now()->addDays(3)->startOfHour();
+        $appointment = $this->appointment($tenant, $user, $clinic, $room, $type, $patient, $start, $start->clone()->addMinutes(30));
+        $appointment = $appointment->transitionTo(AppointmentStatus::Cancelled, $user, 'Cancelación confirmada.');
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('terminal appointment');
+
+        $appointment->reschedule(
+            $start->clone()->addDay(),
+            $start->clone()->addDay()->addMinutes(30),
+            $user,
+            $room,
+            $user,
+            'Cambio no permitido.',
+        );
+    }
+
     /** @return array{Tenant, User, Clinic, Room, AppointmentType, Patient} */
     private function clinicalContext(): array
     {

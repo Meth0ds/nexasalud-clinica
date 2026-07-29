@@ -4,8 +4,14 @@ namespace App\Http\Requests\Api\V1;
 
 use App\Models\Patient;
 
+/**
+ * Validate a partial update to the routed patient's demographic data.
+ */
 class UpdatePatientRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may update the routed patient.
+     */
     public function authorize(): bool
     {
         $patient = $this->route('patient');
@@ -13,6 +19,11 @@ class UpdatePatientRequest extends TenantFormRequest
         return $patient instanceof Patient && $this->authenticatedUser()->can('update', $patient);
     }
 
+    /**
+     * Return validation rules for mutable patient demographic attributes.
+     *
+     * @return array<string, list<string>>
+     */
     public function rules(): array
     {
         return [

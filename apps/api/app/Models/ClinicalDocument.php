@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'patient_id', 'appointment_id', 'prescription_id', 'consent_record_id', 'document_type', 'status', 'sha256', 'template_version', 'storage_key', 'metadata', 'revision', 'generated_by', 'generated_at', 'expires_at', 'voided_at'])]
 #[Hidden(['storage_key'])]
+/**
+ * Represents a tenant-scoped clinical artifact with integrity, storage and access-audit controls.
+ */
 class ClinicalDocument extends Model
 {
     /** @use HasFactory<ClinicalDocumentFactory> */
@@ -25,31 +28,49 @@ class ClinicalDocument extends Model
         'revision' => 1,
     ];
 
+    /**
+     * Return the patient whose record owns this document.
+     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
+    /**
+     * Return the optional appointment represented by this document.
+     */
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
     }
 
+    /**
+     * Return the optional prescription represented by this document.
+     */
     public function prescription(): BelongsTo
     {
         return $this->belongsTo(Prescription::class);
     }
 
+    /**
+     * Return the optional consent record represented by this document.
+     */
     public function consentRecord(): BelongsTo
     {
         return $this->belongsTo(ConsentRecord::class);
     }
 
+    /**
+     * Return the user who generated this document.
+     */
     public function generatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');
     }
 
+    /**
+     * Record an allowlisted clinical document view or download event.
+     */
     public function recordAccess(User $actor, string $action, ?string $requestId = null): AuditEvent
     {
         if (! in_array($action, ['clinical_document.viewed', 'clinical_document.downloaded'], true)) {
@@ -71,6 +92,9 @@ class ClinicalDocument extends Model
         ]);
     }
 
+    /**
+     * Register document-integrity and opaque-storage-key invariants.
+     */
     protected static function booted(): void
     {
         static::saving(function (self $document): void {
@@ -84,6 +108,11 @@ class ClinicalDocument extends Model
         });
     }
 
+    /**
+     * Define document status, metadata, revision and immutable lifecycle timestamp casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

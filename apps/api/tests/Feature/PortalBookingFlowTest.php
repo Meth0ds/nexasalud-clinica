@@ -14,6 +14,7 @@ use App\Models\Role;
 use App\Models\Room;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\WaitlistEntry;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
@@ -214,6 +215,55 @@ final class PortalBookingFlowTest extends TestCase
             'event_type' => 'portal.messages_viewed',
             'actor_user_id' => $this->patientUser->getKey(),
             'auditable_id' => $link->patient_id,
+        ]);
+    }
+
+    public function test_a_patient_can_list_and_create_only_their_own_waitlist_entries(): void
+    {
+        app()->instance('currentTenant', $this->tenant);
+        $link = PatientUserLink::query()->where('user_id', $this->patientUser->getKey())->firstOrFail();
+        $visible = WaitlistEntry::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'clinic_id' => $this->clinic->getKey(),
+            'patient_id' => $link->patient_id,
+            'appointment_type_id' => $this->appointmentType->getKey(),
+        ]);
+        $hidden = WaitlistEntry::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'clinic_id' => $this->clinic->getKey(),
+            'patient_id' => Patient::factory()->create(['tenant_id' => $this->tenant->getKey()])->getKey(),
+            'appointment_type_id' => $this->appointmentType->getKey(),
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $this->actingAs($this->patientUser);
+        $session = $this->sessionContext($this->patientMembership);
+        $listed = $this->withSession($session)->getJson('/api/v1/portal/waitlist-entries');
+        $listed->assertOk()
+            ->assertJsonPath('data.0.id', $visible->getKey())
+            ->assertJsonCount(1, 'data')
+            ->assertJsonMissing(['id' => $hidden->getKey()]);
+
+        $payload = [
+            'clinicId' => $this->clinic->getKey(),
+            'appointmentTypeId' => $this->appointmentType->getKey(),
+            'desiredFrom' => now()->addDay()->toIso8601String(),
+            'desiredTo' => now()->addDays(21)->toIso8601String(),
+            'preferredDays' => [1, 3, 5],
+            'notes' => 'Solicito una cita en horario de maÃ±ana.',
+        ];
+        $created = $this->withSession($session)
+            ->withHeader('Idempotency-Key', 'portal-waitlist-create-0001')
+            ->postJson('/api/v1/portal/waitlist-entries', $payload);
+        $created->assertCreated()
+            ->assertJsonPath('data.patientId', $link->patient_id)
+            ->assertJsonPath('data.priority', 3)
+            ->assertJsonPath('data.status', 'waiting');
+        $this->assertDatabaseHas('waitlist_entries', [
+            'patient_id' => $link->patient_id,
+            'clinic_id' => $this->clinic->getKey(),
+            'priority' => 3,
+            'status' => 'waiting',
         ]);
     }
 

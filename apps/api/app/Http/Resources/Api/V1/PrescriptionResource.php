@@ -6,8 +6,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
+/**
+ * Transform a prescription into an API representation including loaded medication safety alerts.
+ */
 class PrescriptionResource extends JsonResource
 {
+    /**
+     * Convert the prescription resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $patient = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);

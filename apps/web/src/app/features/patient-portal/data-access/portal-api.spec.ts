@@ -57,6 +57,38 @@ describe('PortalApiService', () => {
     ]);
   });
 
+  it('lists and creates patient-owned waitlist entries through portal endpoints', async () => {
+    const listed = firstValueFrom(service.getWaitlistEntries());
+    const listRequest = http.expectOne('/api/v1/portal/waitlist-entries');
+    expect(listRequest.request.method).toBe('GET');
+    listRequest.flush({ data: [] });
+    await expect(listed).resolves.toEqual([]);
+
+    const created = firstValueFrom(
+      service.createWaitlistEntry({
+        clinicId: 'clinic-1',
+        appointmentTypeId: 'type-1',
+        desiredFrom: '2026-07-30T08:00:00.000Z',
+        desiredTo: '2026-08-20T17:00:00.000Z',
+        preferredDays: [1, 3, 5],
+        notes: 'Disponibilidad por la maÃ±ana.',
+      }),
+    );
+    const createRequest = http.expectOne('/api/v1/portal/waitlist-entries');
+    expect(createRequest.request.method).toBe('POST');
+    expect(createRequest.request.headers.has('Idempotency-Key')).toBe(true);
+    expect(createRequest.request.body).toEqual({
+      clinicId: 'clinic-1',
+      appointmentTypeId: 'type-1',
+      desiredFrom: '2026-07-30T08:00:00.000Z',
+      desiredTo: '2026-08-20T17:00:00.000Z',
+      preferredDays: [1, 3, 5],
+      notes: 'Disponibilidad por la maÃ±ana.',
+    });
+    createRequest.flush({ data: { id: 'waitlist-1', status: 'waiting', priority: 3 } });
+    await expect(created).resolves.toMatchObject({ id: 'waitlist-1', priority: 3 });
+  });
+
   it('sends availability filters as query parameters', async () => {
     const result = firstValueFrom(
       service.getAvailability({

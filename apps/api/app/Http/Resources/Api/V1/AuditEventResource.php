@@ -5,8 +5,16 @@ namespace App\Http\Resources\Api\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transform an audit event into a privacy-conscious client-facing audit record.
+ */
 class AuditEventResource extends JsonResource
 {
+    /**
+     * Convert the audit event resource into an array for the current request.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

@@ -21,6 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class DashboardController extends Controller
 {
+    /**
+     * Create the dashboard controller with authorization and aggregate audit services.
+     */
     public function __construct(
         private readonly PermissionService $permissions,
         private readonly AuditRecorder $audit,

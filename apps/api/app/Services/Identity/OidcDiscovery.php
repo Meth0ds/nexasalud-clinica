@@ -11,8 +11,14 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
+/**
+ * Retrieves and validates discovery metadata and signing keys from the configured OIDC issuer.
+ */
 final class OidcDiscovery
 {
+    /**
+     * Return trusted issuer metadata, optionally refreshing the cached document first.
+     */
     public function metadata(bool $fresh = false): OidcMetadata
     {
         $issuer = $this->issuer();
@@ -33,6 +39,8 @@ final class OidcDiscovery
     }
 
     /**
+     * Return the trusted JSON Web Key Set, optionally refreshing its cache first.
+     *
      * @return array{keys: list<array<string, mixed>>}
      */
     public function jwks(bool $fresh = false): array
@@ -54,6 +62,9 @@ final class OidcDiscovery
         return $jwks;
     }
 
+    /**
+     * Return the configured issuer after enforcing its trusted URL shape.
+     */
     public function issuer(): string
     {
         $issuer = config('services.keycloak.issuer');
@@ -127,6 +138,9 @@ final class OidcDiscovery
         return ['keys' => $keys];
     }
 
+    /**
+     * Fetch a trusted identity endpoint without following redirects.
+     */
     private function request(string $url): Response
     {
         try {
@@ -185,6 +199,8 @@ final class OidcDiscovery
     }
 
     /**
+     * Convert validated discovery fields into immutable issuer metadata.
+     *
      * @param  array<string, mixed>  $metadata
      */
     private function toMetadata(array $metadata, string $issuer): OidcMetadata
@@ -210,6 +226,8 @@ final class OidcDiscovery
     }
 
     /**
+     * Return a required discovery endpoint after pinning it to the configured issuer.
+     *
      * @param  array<string, mixed>  $metadata
      */
     private function requiredEndpoint(array $metadata, string $key, string $issuer): string
@@ -226,6 +244,8 @@ final class OidcDiscovery
     }
 
     /**
+     * Return an optional discovery endpoint after pinning it to the configured issuer.
+     *
      * @param  array<string, mixed>  $metadata
      */
     private function optionalEndpoint(array $metadata, string $key, string $issuer): ?string
@@ -245,6 +265,9 @@ final class OidcDiscovery
         return $endpoint;
     }
 
+    /**
+     * Ensure a discovery endpoint remains within the issuer origin and path boundary.
+     */
     private function assertTrustedEndpoint(string $endpoint, string $issuer): void
     {
         $endpointParts = parse_url($endpoint);
@@ -280,6 +303,8 @@ final class OidcDiscovery
     }
 
     /**
+     * Allow an HTTP issuer only for explicit local development or test environments.
+     *
      * @param  array<string, mixed>  $parts
      */
     private function isAllowedLocalHttpIssuer(array $parts): bool
@@ -291,6 +316,9 @@ final class OidcDiscovery
         return $allowInsecureHttp && app()->environment(['local', 'testing']) && $localHost;
     }
 
+    /**
+     * Read a bounded positive timeout or cache-duration setting from identity configuration.
+     */
     private function positiveIntegerConfig(string $key): int
     {
         $value = config('services.keycloak.'.$key);

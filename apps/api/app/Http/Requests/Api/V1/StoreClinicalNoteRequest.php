@@ -9,8 +9,14 @@ use App\Models\Patient;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validate creation of a patient-scoped clinical note and optional related records.
+ */
 final class StoreClinicalNoteRequest extends TenantFormRequest
 {
+    /**
+     * Determine whether the authenticated user may create a clinical note for the routed patient.
+     */
     public function authorize(): bool
     {
         $patient = $this->route('patient');
@@ -18,6 +24,11 @@ final class StoreClinicalNoteRequest extends TenantFormRequest
         return $patient instanceof Patient && $this->authenticatedUser()->can('create', [ClinicalNote::class, $patient]);
     }
 
+    /**
+     * Return tenant-scoped validation rules for clinical note content and relationships.
+     *
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         return [
@@ -39,6 +50,9 @@ final class StoreClinicalNoteRequest extends TenantFormRequest
         ];
     }
 
+    /**
+     * Normalize clinical note content before Laravel evaluates its validation rules.
+     */
     protected function prepareForValidation(): void
     {
         if (is_string($this->input('content'))) {

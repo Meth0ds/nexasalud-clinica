@@ -10,8 +10,14 @@ use App\Models\Membership;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Selects an authorized tenant membership and clinic for the authenticated session.
+ */
 class SelectTenantContextController extends Controller
 {
+    /**
+     * Persist an ownership-checked tenant and clinic context, then rotate the session identifier.
+     */
     public function __invoke(SelectTenantContextRequest $request): JsonResponse
     {
         $user = $request->user('web');

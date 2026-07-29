@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['tenant_id', 'prescription_id', 'from_status', 'to_status', 'changed_by', 'reason', 'context', 'occurred_at'])]
 #[Hidden(['reason', 'context'])]
+/**
+ * Stores an append-only history of prescription status transitions.
+ */
 class PrescriptionStatusHistory extends Model
 {
     /** @use HasFactory<PrescriptionStatusHistoryFactory> */
@@ -22,11 +25,19 @@ class PrescriptionStatusHistory extends Model
 
     public $timestamps = false;
 
+    /**
+     * Return the prescription whose status changed.
+     */
     public function prescription(): BelongsTo
     {
         return $this->belongsTo(Prescription::class);
     }
 
+    /**
+     * Define status enum, encrypted context and immutable timestamp attribute casts.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

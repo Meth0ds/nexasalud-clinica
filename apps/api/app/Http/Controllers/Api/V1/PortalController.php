@@ -18,12 +18,16 @@ use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\AppointmentType;
 use App\Models\Clinic;
+use App\Models\Invoice;
 use App\Models\Membership;
 use App\Models\PatientCommunication;
 use App\Models\PatientUserLink;
+use App\Models\PortalDemoRequest;
+use App\Models\Prescription;
 use App\Models\Room;
 use App\Models\User;
 use App\Models\WaitlistEntry;
+use App\Services\Documents\ClinicalPdfGenerator;
 use App\Support\Auditing\AuditRecorder;
 use App\Support\Authorization\PermissionService;
 use Carbon\CarbonImmutable;
@@ -49,6 +53,7 @@ final class PortalController extends Controller
     public function __construct(
         private readonly PermissionService $permissions,
         private readonly AuditRecorder $audit,
+        private readonly ClinicalPdfGenerator $pdfGenerator,
     ) {}
 
     /**
@@ -110,6 +115,19 @@ final class PortalController extends Controller
                 'totalMinor' => $invoice->total_minor,
                 'balanceMinor' => $invoice->balance_minor,
             ]),
+            'demoCapabilities' => [
+                'medicationReview' => (bool) config('demo.portal_simulations'),
+                'invoicePreview' => (bool) config('demo.portal_simulations'),
+            ],
+            'demoMedicationReviewPrescriptionIds' => (bool) config('demo.portal_simulations')
+                ? PortalDemoRequest::query()
+                    ->where('tenant_id', $link->tenant_id)
+                    ->where('patient_id', $link->patient_id)
+                    ->where('request_type', 'medication_review')
+                    ->pluck('prescription_id')
+                    ->values()
+                    ->all()
+                : [],
         ]]);
     }
 
@@ -133,6 +151,89 @@ final class PortalController extends Controller
         ]);
 
         return PortalMessageResource::collection($messages);
+    }
+
+    /**
+     * Store one non-clinical medication-review simulation for the linked patient.
+     */
+    public function createDemoMedicationReview(Request $request, Prescription $prescription): JsonResponse
+    {
+        abort_unless((bool) config('demo.portal_simulations'), Response::HTTP_NOT_FOUND);
+
+        $link = $this->patientLink($request);
+        $created = false;
+        $demoRequest = DB::transaction(function () use ($link, $prescription, &$created): PortalDemoRequest {
+            $ownedPrescription = Prescription::query()
+                ->whereKey($prescription->getKey())
+                ->where('tenant_id', $link->tenant_id)
+                ->where('patient_id', $link->patient_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $existing = PortalDemoRequest::query()
+                ->where('tenant_id', $link->tenant_id)
+                ->where('patient_id', $link->patient_id)
+                ->where('prescription_id', $ownedPrescription->getKey())
+                ->where('request_type', 'medication_review')
+                ->first();
+
+            if ($existing instanceof PortalDemoRequest) {
+                return $existing;
+            }
+
+            $created = true;
+
+            return PortalDemoRequest::create([
+                'tenant_id' => $link->tenant_id,
+                'patient_id' => $link->patient_id,
+                'prescription_id' => $ownedPrescription->getKey(),
+                'request_type' => 'medication_review',
+                'status' => 'submitted',
+                'submitted_at' => now(),
+            ]);
+        });
+
+        if ($created) {
+            $this->audit->record($request, 'portal.demo_medication_review_requested', $demoRequest, [
+                'simulated' => true,
+            ]);
+        }
+
+        return response()->json(['data' => [
+            'id' => $demoRequest->getKey(),
+            'status' => $demoRequest->status,
+            'simulated' => true,
+            'submittedAt' => $demoRequest->submitted_at?->toIso8601String(),
+        ]], $created ? Response::HTTP_CREATED : Response::HTTP_OK);
+    }
+
+    /**
+     * Generate a protected, non-fiscal invoice preview for the linked patient demonstration.
+     */
+    public function generateDemoInvoicePreview(Request $request, Invoice $invoice): JsonResponse
+    {
+        abort_unless((bool) config('demo.portal_simulations'), Response::HTTP_NOT_FOUND);
+
+        $link = $this->patientLink($request);
+        $ownedInvoice = Invoice::query()
+            ->whereKey($invoice->getKey())
+            ->where('tenant_id', $link->tenant_id)
+            ->where('patient_id', $link->patient_id)
+            ->firstOrFail();
+        $document = $this->pdfGenerator->generateDemoInvoicePreview($ownedInvoice, $this->actor($request));
+
+        $this->audit->record($request, 'portal.demo_invoice_preview_generated', $document, [
+            'simulated' => true,
+        ]);
+
+        return response()->json(['data' => [
+            'id' => $document->getKey(),
+            'documentType' => $document->document_type,
+            'status' => $document->status->value,
+            'revision' => $document->revision,
+            'simulated' => true,
+            'generatedAt' => $document->generated_at?->toIso8601String(),
+            'downloadPath' => '/api/v1/documents/'.$document->getKey().'/download',
+        ]], Response::HTTP_CREATED);
     }
 
     /**

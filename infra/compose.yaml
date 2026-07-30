@@ -67,6 +67,7 @@ x-api-environment: &api-environment
   OIDC_REQUIRED_ACR_VALUES: '2'
   OIDC_REQUIRED_AMR_VALUES: otp
   OIDC_ALLOW_INSECURE_HTTP: 'true'
+  DEMO_PORTAL_SIMULATIONS: ${DEMO_PORTAL_SIMULATIONS:-true}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
 
 services:
@@ -90,7 +91,7 @@ services:
       - /var/cache/nginx:rw,noexec,nosuid,nodev,uid=101,gid=101
       - /var/run:rw,noexec,nosuid,nodev,uid=101,gid=101
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q -T 3 -O /dev/null http://127.0.0.1:8080/up || exit 1']
+      test: ['CMD-SHELL', 'wget -q -T 3 -O /dev/null http://127.0.0.1:8080/ready || exit 1']
       interval: 10s
       timeout: 4s
       start_period: 20s
@@ -126,6 +127,56 @@ services:
       - api-bootstrap-cache:/var/www/html/bootstrap/cache
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+
+  worker:
+    <<: *service-security
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+      target: development
+      args:
+        PHP_VERSION: '8.4'
+        APP_UID: '10001'
+        APP_GID: '10001'
+    command:
+      [
+        'php',
+        'artisan',
+        'queue:work',
+        'redis',
+        '--queue=communications',
+        '--sleep=1',
+        '--tries=3',
+        '--backoff=10,60,300',
+        '--timeout=30',
+        '--max-time=3600',
+        '--no-interaction',
+      ]
+    environment:
+      <<: *api-environment
+      RUN_MIGRATIONS: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    read_only: true
+    volumes:
+      - api-worker-bootstrap-cache:/var/www/html/bootstrap/cache
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=communications'",
+        ]
+      interval: 15s
+      timeout: 4s
+      start_period: 20s
+      retries: 3
 
   postgres:
     <<: *service-security
@@ -280,6 +331,7 @@ networks:
 volumes:
   api-storage:
   api-bootstrap-cache:
+  api-worker-bootstrap-cache:
   postgres-data:
   redis-data:
   keycloak-data:

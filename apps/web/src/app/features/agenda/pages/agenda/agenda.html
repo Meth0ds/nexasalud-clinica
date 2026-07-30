@@ -242,7 +242,11 @@
         </dl>
         <div class="inspector-actions">
           @if (nextTransition(appointment); as action) {
-            <button mat-flat-button class="nexa-btn-primary" (click)="transition(appointment, action)">
+            <button
+              mat-flat-button
+              class="nexa-btn-primary"
+              (click)="transition(appointment, action)"
+            >
               {{ action.label }}
             </button>
           }

@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "ng test --watch=false"
+    "test:ci": "ng test --no-watch"
   },
   "private": true,
   "packageManager": "pnpm@11.9.0",

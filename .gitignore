@@ -3,6 +3,8 @@ node_modules/
 dist/
 coverage/
 .angular/
+apps/api/vendor/
+.playwright-cli/
 .turbo/
 playwright-report/
 test-results/

@@ -88,8 +88,7 @@
 .invoice-ledger > article button {
   color: var(--nexa-primary);
 }
-.billing-help,
-.privacy-contact {
+.billing-help {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -100,18 +99,15 @@
   color: var(--nexa-primary);
   background: var(--nexa-primary-pale);
 }
-.billing-help > div,
-.privacy-contact > div {
+.billing-help > div {
   min-width: 0;
   flex: 1;
   color: var(--nexa-ink);
 }
-.billing-help strong,
-.privacy-contact strong {
+.billing-help strong {
   font-size: 0.64rem;
 }
-.billing-help p,
-.privacy-contact p {
+.billing-help p {
   margin: 3px 0 0;
   color: var(--nexa-ink-soft);
   font-size: 0.55rem;

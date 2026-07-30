@@ -21,6 +21,14 @@ RUN composer install \
     --no-progress \
     --prefer-dist \
     --no-scripts \
+    --optimize-autoloader
+
+FROM vendor-production AS vendor-production-autoload
+COPY app ./app
+RUN composer dump-autoload \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
     --classmap-authoritative
 
 FROM php:${PHP_VERSION}-fpm-alpine AS php-runtime
@@ -103,4 +111,4 @@ COPY --from=vendor-development --chown=nexasalud:nexasalud /build/vendor ./vendo
 COPY --chown=nexasalud:nexasalud tests ./tests
 
 FROM php-runtime AS production
-COPY --from=vendor-production --chown=nexasalud:nexasalud /build/vendor ./vendor
+COPY --from=vendor-production-autoload --chown=nexasalud:nexasalud /build/vendor ./vendor

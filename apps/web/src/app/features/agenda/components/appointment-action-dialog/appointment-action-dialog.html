@@ -2,7 +2,8 @@
 
 <mat-dialog-content>
   <p>
-    Vas a aplicar esta acción a la cita autorizada de <strong>{{ data.patientName }}</strong>.
+    Vas a aplicar esta acción a la cita autorizada de <strong>{{ data.patientName }}</strong
+    >.
   </p>
   <p class="appointment-action-dialog__description">{{ description }}</p>
 
@@ -18,7 +19,9 @@
         formControlName="reason"
         aria-describedby="appointment-action-reason-help"
       ></textarea>
-      <mat-hint id="appointment-action-reason-help">No incluyas datos clínicos innecesarios.</mat-hint>
+      <mat-hint id="appointment-action-reason-help"
+        >No incluyas datos clínicos innecesarios.</mat-hint
+      >
       @if (form.controls.reason.hasError('required')) {
         <mat-error>Indica el motivo de esta acción.</mat-error>
       } @else if (form.controls.reason.hasError('minlength')) {

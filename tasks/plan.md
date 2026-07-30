@@ -41,6 +41,7 @@ flowchart TD
 **Description:** Capture dependency versions, test results, known scope gaps and the local runtime assumptions before making more product changes.
 
 **Acceptance criteria:**
+
 - [x] Local Laravel, Angular and Docker commands are documented and reproducible.
 - [x] Production and development dependency audits have no known vulnerabilities at the selected audit thresholds.
 - [x] The baseline test counts and remaining gaps are recorded in this plan and backlog.
@@ -54,6 +55,7 @@ flowchart TD
 **Description:** Configure the Codex MCP to invoke `php artisan boost:mcp` through the `api` Docker container and validate the JSON-RPC handshake.
 
 **Acceptance criteria:**
+
 - [x] `laravel/boost` is present in Composer development dependencies.
 - [x] Project configuration contains the Docker-backed `laravel-boost` MCP entry.
 - [x] The Docker-backed server returns a successful MCP `initialize` JSON-RPC response.
@@ -75,6 +77,7 @@ flowchart TD
 **Description:** Establish a versioned API contract for the routes used by Angular and validate it in CI.
 
 **Acceptance criteria:**
+
 - [ ] Every browser-consumed endpoint has documented request, response and error schemas.
 - [ ] Tenant, authorization and pagination semantics are explicit.
 - [ ] Generated TypeScript types or contract tests detect backend/frontend drift.
@@ -88,6 +91,7 @@ flowchart TD
 **Description:** Implement and test the complete transition policy for pending, confirmed, arrived, waiting, in consultation, completed, cancelled and no-show appointments.
 
 **Acceptance criteria:**
+
 - [ ] Invalid state transitions are rejected server-side with stable problem responses.
 - [ ] Every valid transition enforces role, clinic scope, concurrency/version checks and audit events.
 - [ ] Agenda UI offers only permitted transitions and renders conflict recovery.
@@ -101,6 +105,7 @@ flowchart TD
 **Description:** Complete the booking workflow around availability, policy windows, idempotency and concurrent edits.
 
 **Acceptance criteria:**
+
 - [ ] Double booking of practitioner, room or constrained resource is prevented by database-backed logic.
 - [ ] Cancellation and rescheduling enforce the configured policy and retain an auditable reason.
 - [ ] UI exposes an accessible error path and refreshes stale availability after a conflict.
@@ -122,6 +127,7 @@ flowchart TD
 **Description:** Complete the patient-owned flows currently visible in the portal: appointment management, waitlist, privacy/export request, invoice access, prescription renewal request and help.
 
 **Acceptance criteria:**
+
 - [ ] Each enabled portal action is backed by a patient-scoped API endpoint, policy and audit event.
 - [ ] A patient can never enumerate or alter another patient's information.
 - [ ] Every action has loading, validation, success and failure states that work by keyboard and on small screens.
@@ -135,6 +141,7 @@ flowchart TD
 **Description:** Extend the existing waitlist creation/listing flow with deterministic matching, expiring offers, acceptance/rejection and appointment conversion.
 
 **Acceptance criteria:**
+
 - [ ] Matching respects clinic, type, window, allowed preferences and configured priority policy.
 - [ ] Offer expiry and conversion are atomic and cannot create duplicate bookings.
 - [ ] Staff and patient views only reveal the minimum necessary data and all decisions are audited.
@@ -148,6 +155,7 @@ flowchart TD
 **Description:** Finish patient administration capabilities required for scheduling without expanding into an uncontrolled electronic health record.
 
 **Acceptance criteria:**
+
 - [ ] Patient create/update/search has scoped authorization, duplicate detection and data minimization.
 - [ ] Consent capture, withdrawal and version history are immutable/audited as appropriate.
 - [ ] Sensitive fields are masked in listings and reveal actions require the defined permission and rationale.
@@ -161,6 +169,7 @@ flowchart TD
 **Description:** Implement provider-agnostic, consent-aware reminders and internal notifications with delivery observability.
 
 **Acceptance criteria:**
+
 - [ ] Templates use an allowlisted variable set and cannot introduce clinical content into unsafe channels.
 - [ ] Communication preferences, retries, bounce/failure handling and opt-out behaviour are enforced.
 - [ ] Delivery attempts are idempotent, observable and auditable.
@@ -174,6 +183,7 @@ flowchart TD
 **Description:** Decide and implement the supported payment/invoice flow, rather than retaining decorative UI or placeholder claims.
 
 **Acceptance criteria:**
+
 - [ ] Product owner selects the payment model and provider, or the feature is hidden behind a documented out-of-scope decision.
 - [ ] If implemented, payment webhooks are signature-verified, idempotent and reconciled server-side.
 - [ ] Invoices/downloads have authorization, retention, audit and privacy controls.
@@ -195,6 +205,7 @@ flowchart TD
 **Description:** Reconcile the existing threat model with the implementation, run a deep repository security scan and remediate validated findings by severity.
 
 **Acceptance criteria:**
+
 - [ ] Trust boundaries, assets, abuse cases and mitigating controls are evidence-backed.
 - [ ] Critical and high validated findings are fixed or release-blocked with an approved exception.
 - [ ] SECURITY.md, disclosure path and vulnerability response ownership are defined.
@@ -208,6 +219,7 @@ flowchart TD
 **Description:** Test OIDC, session, CSRF, origin, reauthentication and MFA requirements as attack-resistant workflows.
 
 **Acceptance criteria:**
+
 - [ ] Session fixation, login CSRF, OIDC replay, unsafe return URLs and privilege changes are rejected.
 - [ ] Production cookies use `__Host-`, Secure and appropriate SameSite settings on a single HTTPS origin.
 - [ ] Reauthentication and audit rationale protect exports, role changes and sensitive reveals.
@@ -221,6 +233,7 @@ flowchart TD
 **Description:** Implement the defined privacy request lifecycle, retention/deletion policy, encrypted sensitive data boundaries and evidence exports.
 
 **Acceptance criteria:**
+
 - [ ] Subject access, rectification/restriction and deletion requests have authorised, auditable workflows.
 - [ ] Retention jobs are safe, reversible where required and tested against legal-hold scenarios.
 - [ ] Logs, traces, backups and exports exclude or minimise health data by design.
@@ -234,6 +247,7 @@ flowchart TD
 **Description:** Make dependency, action and container provenance continuously verifiable.
 
 **Acceptance criteria:**
+
 - [ ] CI performs dependency audit, secret scanning, SAST, SBOM generation and container vulnerability scanning.
 - [ ] GitHub Actions are pinned by immutable commit SHA and updated through a controlled process.
 - [ ] Production images are non-root, minimal, signed/attested and rebuilt from locked dependencies.
@@ -255,6 +269,7 @@ flowchart TD
 **Description:** Audit all authenticated, portal and error journeys and remove accessibility blockers.
 
 **Acceptance criteria:**
+
 - [ ] Keyboard operation, focus order, labels, errors, dialogs, tables, contrast and reduced motion pass the defined audit.
 - [ ] Calendar drag/drop has an equivalent keyboard workflow.
 - [ ] Automated axe checks run in CI for critical routes.
@@ -268,6 +283,7 @@ flowchart TD
 **Description:** Add stable Playwright coverage for authentication, appointment lifecycle, portal ownership and failure recovery.
 
 **Acceptance criteria:**
+
 - [ ] Tests use deterministic seed data and isolated identities.
 - [ ] Critical browser flows run headlessly in CI with screenshots/traces on failure.
 - [ ] The suite covers unauthorized, conflict and service-unavailable paths, not only happy paths.
@@ -281,6 +297,7 @@ flowchart TD
 **Description:** Establish measurable budgets for route loading, interaction responsiveness and visual stability, then remediate the largest contributors.
 
 **Acceptance criteria:**
+
 - [ ] LCP, INP and CLS budgets are defined for representative authenticated and portal routes.
 - [ ] Bundle budgets, lazy loading and image/font delivery are enforced in CI.
 - [ ] Monitoring captures errors and performance without leaking protected data.
@@ -302,6 +319,7 @@ flowchart TD
 **Description:** Replace development Compose assumptions with a reviewed production deployment design.
 
 **Acceptance criteria:**
+
 - [ ] HTTPS, HSTS, trusted proxies, single-origin routing, network segmentation and service identities are defined.
 - [ ] Keycloak runs in production mode behind TLS with hardened hostname/proxy and administrator controls.
 - [ ] Infrastructure, environment configuration and changes are reproducible through version-controlled IaC.
@@ -315,6 +333,7 @@ flowchart TD
 **Description:** Introduce a managed secret store and prove that protected data can be recovered without exposing it.
 
 **Acceptance criteria:**
+
 - [ ] Secrets are injected at runtime, rotated, access-scoped and absent from repository/logs/images.
 - [ ] PostgreSQL, Redis/session and Keycloak backup strategy has retention, encryption and ownership.
 - [ ] A restore test meets a stated RPO/RTO and includes application-level validation.
@@ -328,6 +347,7 @@ flowchart TD
 **Description:** Instrument the application and write the operating procedures needed to detect, triage and recover from a production incident.
 
 **Acceptance criteria:**
+
 - [ ] Health/readiness, metrics, structured redacted logs, traces and correlation IDs are available.
 - [ ] Alerts cover authentication failure spikes, queue failures, backup failures, latency, saturation and error budgets.
 - [ ] Runbooks cover rollback, incident response, breach escalation, degraded dependencies and maintenance.
@@ -341,6 +361,7 @@ flowchart TD
 **Description:** Build an immutable, gated delivery pipeline from source to staging and production.
 
 **Acceptance criteria:**
+
 - [ ] CI gates linting, tests, contracts, accessibility, E2E, SAST/SCA/SBOM and image scanning.
 - [ ] Database migrations have preflight, backup, rollback/forward-fix and compatibility strategy.
 - [ ] Releases support approval, canary/blue-green strategy where applicable, rollback and post-deploy smoke tests.
@@ -362,6 +383,7 @@ flowchart TD
 **Description:** Gather evidence from all checkpoints into a release decision record.
 
 **Acceptance criteria:**
+
 - [ ] Every task is completed, formally deferred with owner/date, or treated as a release blocker.
 - [ ] Product, security, privacy and operations owners approve their respective responsibilities.
 - [ ] Known limitations and support commitments are communicated before enabling users.
@@ -375,6 +397,7 @@ flowchart TD
 **Description:** Launch a limited cohort, monitor it closely and expand only after objective success criteria are met.
 
 **Acceptance criteria:**
+
 - [ ] Rollout cohort, success metrics and abort thresholds are agreed before release.
 - [ ] Monitoring and support queues are staffed for the hypercare window.
 - [ ] A post-launch review produces prioritised corrective actions.
@@ -385,15 +408,15 @@ flowchart TD
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Unresolved medical, privacy or payment policy | High | Name an accountable owner and keep related UI/API disabled until approved. |
-| Treating local Compose as production infrastructure | Critical | Build and rehearse a separate staging/production topology before release. |
-| Cross-tenant or patient data disclosure | Critical | Policy tests, database scoping, negative E2E tests, audit and privacy review. |
-| Placeholder UI mistaken for shipped functionality | High | Phase 2 requires every enabled navigation capability to have an end-to-end slice. |
-| Security controls not exercised under attack paths | High | Threat-model-driven negative tests and deep security scan remediation. |
-| Unsafe migration or failed recovery | Critical | Backups, migration preflight and recurring restore/rollback drills. |
-| Late accessibility defects | High | Phase 4 begins audit before final UI polish and makes it a CI gate. |
+| Risk                                                | Impact   | Mitigation                                                                        |
+| --------------------------------------------------- | -------- | --------------------------------------------------------------------------------- |
+| Unresolved medical, privacy or payment policy       | High     | Name an accountable owner and keep related UI/API disabled until approved.        |
+| Treating local Compose as production infrastructure | Critical | Build and rehearse a separate staging/production topology before release.         |
+| Cross-tenant or patient data disclosure             | Critical | Policy tests, database scoping, negative E2E tests, audit and privacy review.     |
+| Placeholder UI mistaken for shipped functionality   | High     | Phase 2 requires every enabled navigation capability to have an end-to-end slice. |
+| Security controls not exercised under attack paths  | High     | Threat-model-driven negative tests and deep security scan remediation.            |
+| Unsafe migration or failed recovery                 | Critical | Backups, migration preflight and recurring restore/rollback drills.               |
+| Late accessibility defects                          | High     | Phase 4 begins audit before final UI polish and makes it a CI gate.               |
 
 ## Definition of done for each implementation task
 

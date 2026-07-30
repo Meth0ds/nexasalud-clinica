@@ -6,10 +6,14 @@ namespace Tests\Feature;
 
 use App\Models\AppointmentType;
 use App\Models\Clinic;
+use App\Models\ClinicalDocument;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Membership;
 use App\Models\Patient;
 use App\Models\PatientCommunication;
 use App\Models\PatientUserLink;
+use App\Models\Prescription;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\Tenant;
@@ -17,6 +21,7 @@ use App\Models\User;
 use App\Models\WaitlistEntry;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class PortalBookingFlowTest extends TestCase
@@ -42,6 +47,7 @@ final class PortalBookingFlowTest extends TestCase
         parent::setUp();
 
         config()->set('app.key', 'base64:'.base64_encode(str_repeat('b', 32)));
+        config()->set('demo.portal_simulations', true);
         config()->set('session.absolute_lifetime', 480);
         $this->withoutMiddleware(ValidateCsrfToken::class);
         $this->withHeader('Origin', 'http://localhost:4200');
@@ -264,6 +270,102 @@ final class PortalBookingFlowTest extends TestCase
             'clinic_id' => $this->clinic->getKey(),
             'priority' => 3,
             'status' => 'waiting',
+        ]);
+    }
+
+    public function test_a_patient_can_submit_one_simulated_medication_review_for_their_own_prescription(): void
+    {
+        app()->instance('currentTenant', $this->tenant);
+        $link = PatientUserLink::query()->where('user_id', $this->patientUser->getKey())->firstOrFail();
+        $prescription = Prescription::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'clinic_id' => $this->clinic->getKey(),
+            'patient_id' => $link->patient_id,
+            'prescriber_user_id' => $this->clinician->getKey(),
+        ]);
+        $otherPrescription = Prescription::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'clinic_id' => $this->clinic->getKey(),
+            'patient_id' => Patient::factory()->create(['tenant_id' => $this->tenant->getKey()])->getKey(),
+            'prescriber_user_id' => $this->clinician->getKey(),
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $this->actingAs($this->patientUser);
+        $session = $this->sessionContext($this->patientMembership);
+        $created = $this->withSession($session)
+            ->withHeader('Idempotency-Key', 'portal-demo-review-0001')
+            ->postJson('/api/v1/portal/prescriptions/'.$prescription->getKey().'/demo-review-requests');
+
+        $created->assertCreated()
+            ->assertJsonPath('data.simulated', true)
+            ->assertJsonPath('data.status', 'submitted');
+        $this->assertDatabaseHas('portal_demo_requests', [
+            'tenant_id' => $this->tenant->getKey(),
+            'patient_id' => $link->patient_id,
+            'prescription_id' => $prescription->getKey(),
+            'request_type' => 'medication_review',
+            'status' => 'submitted',
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $this->tenant->getKey(),
+            'event_type' => 'portal.demo_medication_review_requested',
+            'actor_user_id' => $this->patientUser->getKey(),
+        ]);
+
+        $repeated = $this->withSession($session)
+            ->withHeader('Idempotency-Key', 'portal-demo-review-0002')
+            ->postJson('/api/v1/portal/prescriptions/'.$prescription->getKey().'/demo-review-requests');
+        $repeated->assertOk()->assertJsonPath('data.simulated', true);
+
+        $this->withSession($session)
+            ->withHeader('Idempotency-Key', 'portal-demo-review-0003')
+            ->postJson('/api/v1/portal/prescriptions/'.$otherPrescription->getKey().'/demo-review-requests')
+            ->assertNotFound();
+    }
+
+    public function test_a_patient_can_generate_and_download_a_simulated_non_fiscal_invoice_preview(): void
+    {
+        Storage::fake('clinical');
+        app()->instance('currentTenant', $this->tenant);
+        $link = PatientUserLink::query()->where('user_id', $this->patientUser->getKey())->firstOrFail();
+        $invoice = Invoice::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'clinic_id' => $this->clinic->getKey(),
+            'patient_id' => $link->patient_id,
+        ]);
+        InvoiceItem::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'invoice_id' => $invoice->getKey(),
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $this->actingAs($this->patientUser);
+        $session = $this->sessionContext($this->patientMembership);
+        $created = $this->withSession($session)
+            ->withHeader('Idempotency-Key', 'portal-demo-invoice-0001')
+            ->postJson('/api/v1/portal/invoices/'.$invoice->getKey().'/demo-preview');
+
+        $created->assertCreated()
+            ->assertJsonPath('data.simulated', true)
+            ->assertJsonPath('data.documentType', 'demo_invoice_preview');
+        $documentId = $created->json('data.id');
+        $this->assertIsString($documentId);
+        $this->assertDatabaseHas('clinical_documents', [
+            'id' => $documentId,
+            'patient_id' => $link->patient_id,
+            'document_type' => 'demo_invoice_preview',
+        ]);
+
+        $this->withSession($session)
+            ->get('/api/v1/documents/'.$documentId.'/download')
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+        $this->assertDatabaseHas('audit_events', [
+            'tenant_id' => $this->tenant->getKey(),
+            'event_type' => 'portal.demo_invoice_preview_generated',
+            'auditable_type' => ClinicalDocument::class,
+            'auditable_id' => $documentId,
         ]);
     }
 

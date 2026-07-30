@@ -39,8 +39,7 @@ import {
   PortalSlotHold,
 } from '../../data-access/portal-api';
 
-type PortalSection =
-  'inicio' | 'reservar' | 'citas' | 'espera' | 'salud' | 'pagos' | 'mensajes' | 'privacidad';
+type PortalSection = 'inicio' | 'reservar' | 'citas' | 'espera' | 'salud' | 'pagos' | 'mensajes';
 type HealthTab = 'medicacion' | 'documentos';
 
 interface PortalNavItem {
@@ -48,7 +47,6 @@ interface PortalNavItem {
   readonly label: string;
   readonly shortLabel: string;
   readonly icon: AppIconName;
-  readonly available: boolean;
 }
 
 interface BookingDateOption {
@@ -92,7 +90,6 @@ interface BookingDateOption {
     './patient-portal-billing.scss',
     './patient-portal-messages.scss',
     './patient-portal-message-reader.scss',
-    './patient-portal-privacy.scss',
     './patient-portal-common.scss',
     './patient-portal-responsive-tablet.scss',
     './patient-portal-responsive-mobile-a.scss',
@@ -109,49 +106,37 @@ export class PatientPortal {
   private readonly session = inject(SessionService);
 
   protected readonly navItems: readonly PortalNavItem[] = [
-    { id: 'inicio', label: 'Mi salud', shortLabel: 'Inicio', icon: 'home', available: true },
+    { id: 'inicio', label: 'Mi salud', shortLabel: 'Inicio', icon: 'home' },
     {
       id: 'reservar',
       label: 'Pedir cita',
       shortLabel: 'Pedir cita',
       icon: 'plus',
-      available: true,
     },
-    { id: 'citas', label: 'Mis citas', shortLabel: 'Citas', icon: 'calendar', available: true },
+    { id: 'citas', label: 'Mis citas', shortLabel: 'Citas', icon: 'calendar' },
     {
       id: 'espera',
       label: 'Lista de espera',
       shortLabel: 'Espera',
       icon: 'waitlist',
-      available: true,
     },
     {
       id: 'salud',
       label: 'Medicación y documentos',
       shortLabel: 'Salud',
       icon: 'patients',
-      available: true,
     },
     {
       id: 'pagos',
       label: 'Facturas y pagos',
       shortLabel: 'Pagos',
       icon: 'download',
-      available: true,
     },
     {
       id: 'mensajes',
       label: 'Mensajes seguros',
       shortLabel: 'Mensajes',
       icon: 'bell',
-      available: true,
-    },
-    {
-      id: 'privacidad',
-      label: 'Privacidad y solicitudes',
-      shortLabel: 'Privacidad',
-      icon: 'shield',
-      available: false,
     },
   ];
 
@@ -212,6 +197,16 @@ export class PatientPortal {
   protected readonly prescriptions = computed(() => this.overview()?.prescriptions ?? []);
   protected readonly documents = computed(() => this.overview()?.documents ?? []);
   protected readonly invoices = computed(() => this.overview()?.invoices ?? []);
+  protected readonly demoCapabilities = computed(
+    () =>
+      this.overview()?.demoCapabilities ?? {
+        medicationReview: false,
+        invoicePreview: false,
+      },
+  );
+  protected readonly demoMedicationReviewPrescriptionIds = computed(
+    () => new Set(this.overview()?.demoMedicationReviewPrescriptionIds ?? []),
+  );
   protected readonly selectedMessage = computed(
     () =>
       this.messages()?.find((message) => message.id === this.selectedMessageId()) ??
@@ -299,10 +294,8 @@ export class PatientPortal {
 
   protected activateSection(section: PortalSection): void {
     const item = this.navItems.find((entry) => entry.id === section);
-    if (!item?.available) {
-      this.announce(`${item?.label ?? 'Esta sección'} no está disponible actualmente.`);
-      return;
-    }
+    if (!item) return;
+    const wasMobileNavOpen = this.mobileNavOpen();
     this.activeSection.set(section);
     this.mobileNavOpen.set(false);
     if (section === 'mensajes' && this.messages() === null && !this.messagesLoading()) {
@@ -312,6 +305,18 @@ export class PatientPortal {
       this.loadWaitlist();
     }
     globalThis.scrollTo?.({ top: 0, behavior: 'smooth' });
+    if (wasMobileNavOpen) {
+      globalThis.requestAnimationFrame?.(() =>
+        this.document.getElementById('portal-main')?.focus(),
+      );
+    }
+  }
+
+  protected closeMobileNavigation(): void {
+    this.mobileNavOpen.set(false);
+    globalThis.requestAnimationFrame?.(() =>
+      this.document.getElementById('portal-menu-toggle')?.focus(),
+    );
   }
 
   protected loadOverview(): void {
@@ -557,9 +562,60 @@ export class PatientPortal {
   }
 
   protected downloadDocument(document: PortalDocument): void {
-    this.downloadingDocumentId.set(document.id);
+    this.downloadDocumentById(document.id, 'El documento se ha descargado de forma segura.');
+  }
+
+  protected submitDemoMedicationReview(prescription: PortalPrescription): void {
+    if (
+      !this.demoCapabilities().medicationReview ||
+      this.demoMedicationReviewPrescriptionIds().has(prescription.id)
+    ) {
+      return;
+    }
+
+    this.actionBusy.set(`demo-review:${prescription.id}`);
     this.api
-      .downloadDocument(document.id)
+      .submitDemoMedicationReview(prescription.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.actionBusy.set(null)),
+      )
+      .subscribe({
+        next: () => {
+          this.notifications.success('Solicitud simulada registrada para la demostración.');
+          this.announce('Solicitud simulada registrada; no modifica la medicación.');
+          this.loadOverview();
+        },
+        error: (error: unknown) => this.handleMutationError(error),
+      });
+  }
+
+  protected generateDemoInvoicePreview(invoice: PortalInvoice): void {
+    if (!this.demoCapabilities().invoicePreview) return;
+
+    this.actionBusy.set(`demo-invoice:${invoice.id}`);
+    this.api
+      .generateDemoInvoicePreview(invoice.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.actionBusy.set(null)),
+      )
+      .subscribe({
+        next: (preview) => {
+          this.downloadDocumentById(
+            preview.id,
+            'PDF simulado descargado; no tiene validez fiscal ni efecto de pago.',
+          );
+          this.loadOverview();
+        },
+        error: (error: unknown) => this.handleMutationError(error),
+      });
+  }
+
+  private downloadDocumentById(documentId: string, successMessage: string): void {
+    this.downloadingDocumentId.set(documentId);
+    this.api
+      .downloadDocument(documentId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.downloadingDocumentId.set(null)),
@@ -573,14 +629,10 @@ export class PatientPortal {
           anchor.rel = 'noopener';
           anchor.click();
           globalThis.setTimeout(() => globalThis.URL.revokeObjectURL(url), 0);
-          this.announce('El documento se ha descargado de forma segura.');
+          this.announce(successMessage);
         },
         error: (error: unknown) => this.handleMutationError(error),
       });
-  }
-
-  protected announceUnavailable(label: string): void {
-    this.announce(`${label} no está disponible actualmente.`);
   }
 
   protected announce(message: string): void {
@@ -663,6 +715,10 @@ export class PatientPortal {
   }
 
   protected documentLabel(document: PortalDocument): string {
+    if (document.type === 'demo_invoice_preview') {
+      return 'Vista previa de factura simulada';
+    }
+
     return humanize(document.type);
   }
 

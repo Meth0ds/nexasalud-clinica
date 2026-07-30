@@ -46,6 +46,9 @@ class ProblemDetailsTest extends TestCase
             ->assertHeader('Content-Type', 'application/problem+json')
             ->assertHeader('Cache-Control', 'no-store, private')
             ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+            ->assertHeader('Referrer-Policy', 'no-referrer')
             ->assertJsonPath('type', '/problems/internal-error')
             ->assertJsonPath('status', 500)
             ->assertJsonStructure(['type', 'title', 'status', 'detail', 'instance', 'traceId']);

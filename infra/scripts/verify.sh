@@ -27,12 +27,17 @@ cd "${INFRA_DIRECTORY}"
 docker compose config --quiet
 docker compose ps --status running
 
+worker_container=$(docker compose ps -q worker)
+[ -n "${worker_container}" ] || fail 'Queue worker container is not running.'
+[ "$(docker inspect --format '{{.State.Health.Status}}' "${worker_container}")" = 'healthy' ] \
+    || fail 'Queue worker is not healthy.'
+
 [ "$(docker compose port postgres 5432)" = "127.0.0.1:$(read_environment_value POSTGRES_HOST_PORT 5432)" ] \
     || fail 'PostgreSQL is not bound to the configured localhost port.'
 [ "$(docker compose port redis 6379)" = "127.0.0.1:$(read_environment_value REDIS_HOST_PORT 6379)" ] \
     || fail 'Redis is not bound to the configured localhost port.'
 
-curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${api_port}/up" >/dev/null
+curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${api_port}/ready" >/dev/null
 oidc_document=$(curl --fail --silent --show-error --max-time 5 \
     "http://keycloak.localhost:${keycloak_port}/realms/nexasalud-dev/.well-known/openid-configuration")
 normalized_oidc_document=$(printf '%s' "${oidc_document}" | tr -d '[:space:]')

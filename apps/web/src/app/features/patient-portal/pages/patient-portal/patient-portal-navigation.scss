@@ -41,14 +41,6 @@
   color: #fff;
   background: linear-gradient(110deg, rgba(117, 197, 180, 0.28), rgba(117, 197, 180, 0.11));
 }
-.portal-nav > button.is-unavailable {
-  cursor: not-allowed;
-  opacity: 0.58;
-}
-.portal-nav > button.is-unavailable:hover {
-  background: transparent;
-  transform: none;
-}
 .portal-nav__icon {
   display: grid;
   width: 30px;
@@ -77,12 +69,6 @@
   background: #8ed0c2;
   font-size: 0.53rem;
   font-weight: 820;
-}
-.portal-nav > button .unavailable-label {
-  min-width: 0;
-  color: #91aea8;
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 0.43rem;
 }
 
 .portal-help {

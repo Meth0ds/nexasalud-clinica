@@ -97,13 +97,6 @@
   font-size: 0.58rem;
   text-align: center;
 }
-.is-unavailable,
-.portal-mobile-nav button.is-unavailable {
-  opacity: 0.58;
-}
-.unavailable-view .portal-empty {
-  min-height: min(580px, calc(100dvh - 180px));
-}
 .portal-footer {
   display: flex;
   align-items: center;

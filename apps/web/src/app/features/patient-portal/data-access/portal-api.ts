@@ -55,6 +55,28 @@ export interface PortalInvoice {
   readonly balanceMinor: number;
 }
 
+export interface PortalDemoCapabilities {
+  readonly medicationReview: boolean;
+  readonly invoicePreview: boolean;
+}
+
+export interface PortalDemoMedicationReview {
+  readonly id: string;
+  readonly status: string;
+  readonly simulated: true;
+  readonly submittedAt: string | null;
+}
+
+export interface PortalDemoInvoicePreview {
+  readonly id: string;
+  readonly documentType: 'demo_invoice_preview';
+  readonly status: string;
+  readonly revision: number;
+  readonly simulated: true;
+  readonly generatedAt: string | null;
+  readonly downloadPath: string;
+}
+
 export interface PortalMessage {
   readonly id: string;
   readonly subject: string;
@@ -70,6 +92,8 @@ export interface PortalOverview {
   readonly prescriptions: readonly PortalPrescription[];
   readonly documents: readonly PortalDocument[];
   readonly invoices: readonly PortalInvoice[];
+  readonly demoCapabilities?: PortalDemoCapabilities;
+  readonly demoMedicationReviewPrescriptionIds?: readonly string[];
 }
 
 export interface PortalClinic {
@@ -197,9 +221,7 @@ export class PortalApiService {
       .pipe(map((response) => response.data));
   }
 
-  createWaitlistEntry(
-    input: CreatePortalWaitlistEntryInput,
-  ): Observable<PortalWaitlistEntry> {
+  createWaitlistEntry(input: CreatePortalWaitlistEntryInput): Observable<PortalWaitlistEntry> {
     return this.api
       .post<ApiData<PortalWaitlistEntry>, CreatePortalWaitlistEntryInput>(
         '/api/v1/portal/waitlist-entries',
@@ -285,6 +307,26 @@ export class PortalApiService {
       { version, holdId, reason },
       { silent: true, idempotencyKey: createIdempotencyKey() },
     );
+  }
+
+  submitDemoMedicationReview(prescriptionId: string): Observable<PortalDemoMedicationReview> {
+    return this.api
+      .post<ApiData<PortalDemoMedicationReview>>(
+        `/api/v1/portal/prescriptions/${encodeURIComponent(prescriptionId)}/demo-review-requests`,
+        {},
+        { silent: true, idempotencyKey: createIdempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  generateDemoInvoicePreview(invoiceId: string): Observable<PortalDemoInvoicePreview> {
+    return this.api
+      .post<ApiData<PortalDemoInvoicePreview>>(
+        `/api/v1/portal/invoices/${encodeURIComponent(invoiceId)}/demo-preview`,
+        {},
+        { silent: true, idempotencyKey: createIdempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
   }
 
   downloadDocument(documentId: string): Observable<PortalDownloadedDocument> {

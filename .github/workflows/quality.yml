@@ -15,21 +15,90 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  codeql:
+    name: Static application security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        with:
+          languages: javascript-typescript, php
+          build-mode: none
+          queries: security-extended
+
+      - name: Analyze application source
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        with:
+          category: /language:application
+
+  supply-chain:
+    name: Supply-chain security
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out full history for secret scanning
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect verified secrets in changed history
+        uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26 # v3.95.2
+        with:
+          path: ./
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.after }}
+          extra_args: --only-verified
+
+      - name: Build API production image for scanning
+        run: docker build --target production --tag nexasalud-api:ci apps/api
+
+      - name: Scan repository configuration and unverified secret patterns
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Scan API production image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: nexasalud-api:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Generate a software bill of materials
+        uses: anchore/sbom-action@62ad5284b8ced813296287a0b63906cb364b73ee # v0.22.0
+        with:
+          image: nexasalud-api:ci
+          artifact-name: nexasalud-api-sbom
+
   frontend:
     name: Frontend quality
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: 11.9.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: pnpm
@@ -62,17 +131,17 @@ jobs:
         working-directory: apps/api
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
         with:
           php-version: 8.4
           extensions: intl, mbstring, pdo_sqlite, sodium, zip
           coverage: none
 
       - name: Restore Composer cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/composer/files
           key: composer-${{ runner.os }}-${{ hashFiles('apps/api/composer.lock') }}
@@ -107,7 +176,29 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Build API production image
         run: docker build --target production --tag nexasalud-api:ci apps/api
+
+      - name: Verify the production image autoloads and boots with hardened configuration
+        run: |
+          docker run --rm --entrypoint php nexasalud-api:ci \
+            -r 'require "vendor/autoload.php"; exit(class_exists("App\\Http\\Controllers\\Api\\V1\\DashboardController") ? 0 : 1);'
+          docker run --rm \
+            -e APP_ENV=production \
+            -e APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+            -e APP_DEBUG=false \
+            -e APP_URL=https://portal.example.test \
+            -e DB_PASSWORD=ci-placeholder \
+            -e REDIS_PASSWORD=ci-placeholder \
+            -e CACHE_STORE=redis \
+            -e OIDC_ISSUER=https://identity.example.test/realms/nexasalud \
+            -e OIDC_CLIENT_ID=nexasalud-bff \
+            -e OIDC_CLIENT_SECRET=ci-placeholder \
+            -e OIDC_REDIRECT_URI=https://portal.example.test/auth/callback \
+            -e OIDC_FRONTEND_URL=https://portal.example.test \
+            -e OIDC_POST_LOGOUT_REDIRECT_URI=https://portal.example.test/login \
+            -e OIDC_ALLOW_INSECURE_HTTP=false \
+            -e CORS_ALLOWED_ORIGINS=https://portal.example.test \
+            nexasalud-api:ci php -v

@@ -18,13 +18,15 @@ esac
 
 mkdir -p storage/app/openapi
 
-php artisan package:discover --ansi --no-interaction
+if [ "${PREPARE_APPLICATION:-true}" = 'true' ]; then
+    php artisan package:discover --ansi --no-interaction
 
-if [ "${RUN_MIGRATIONS:-false}" = 'true' ]; then
-    php artisan migrate --force --no-interaction
+    if [ "${RUN_MIGRATIONS:-false}" = 'true' ]; then
+        php artisan migrate --force --no-interaction
+    fi
+
+    php artisan config:cache --no-interaction
+    php artisan route:cache --no-interaction
 fi
-
-php artisan config:cache --no-interaction
-php artisan route:cache --no-interaction
 
 exec "$@"

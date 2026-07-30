@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ProblemDetailsFactory;
+use App\Http\Controllers\ReadinessController;
 use App\Http\Middleware\AssignTraceId;
 use App\Http\Middleware\EnforceAbsoluteSessionLifetime;
 use App\Http\Middleware\EnforceIdempotency;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function (): void {
+            Route::get('/ready', ReadinessController::class);
             Route::middleware('web')->group(base_path('routes/auth.php'));
         },
     )

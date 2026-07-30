@@ -164,6 +164,41 @@ final class ClinicalPdfGenerator
         );
     }
 
+    /**
+     * Generate a clearly non-fiscal invoice preview for a demonstration environment.
+     */
+    public function generateDemoInvoicePreview(Invoice $invoice, User $actor): ClinicalDocument
+    {
+        $invoice->loadMissing(['patient.tenant', 'clinic', 'items']);
+        $patient = $this->requirePatient($invoice->patient);
+
+        return $this->renderAndStore(
+            view: 'documents.demo-invoice-preview',
+            documentType: 'demo_invoice_preview',
+            patient: $patient,
+            actor: $actor,
+            associations: [],
+            payload: [
+                'organization' => $this->organizationData($patient, $invoice->clinic?->name),
+                'patient' => $this->patientData($patient),
+                'invoice' => [
+                    'number' => $invoice->invoice_number,
+                    'status' => $this->invoiceStatusLabel($invoice->status),
+                    'issuedOn' => $invoice->issued_on?->format('d/m/Y'),
+                    'dueOn' => $invoice->due_on?->format('d/m/Y'),
+                    'currency' => $invoice->currency,
+                    'items' => $invoice->items->map(fn ($item): array => [
+                        'description' => (string) $item->description,
+                        'quantity' => $this->decimal((string) $item->quantity),
+                        'total' => $this->money($item->total_minor, $invoice->currency),
+                    ])->all(),
+                    'total' => $this->money($invoice->total_minor, $invoice->currency),
+                    'balance' => $this->money($invoice->balance_minor, $invoice->currency),
+                ],
+            ],
+        );
+    }
+
     public function verifiedContents(ClinicalDocument $document): string
     {
         if ($document->status !== ClinicalDocumentStatus::Ready
@@ -204,6 +239,7 @@ final class ClinicalPdfGenerator
             'appointment_confirmation' => 'confirmacion-cita',
             'prescription_plan' => 'plan-medicacion',
             'invoice' => 'factura',
+            'demo_invoice_preview' => 'vista-factura-simulada',
             default => 'documento-clinico',
         };
         $date = $document->generated_at?->format('Ymd') ?? 'sin-fecha';

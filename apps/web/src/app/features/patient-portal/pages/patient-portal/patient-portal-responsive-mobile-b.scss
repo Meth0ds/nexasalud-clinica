@@ -17,14 +17,12 @@
     justify-self: start;
   }
   .appointment-policy,
-  .billing-help,
-  .privacy-contact {
+  .billing-help {
     align-items: start;
     flex-wrap: wrap;
   }
   .appointment-policy button,
-  .billing-help button,
-  .privacy-contact button {
+  .billing-help button {
     width: 100%;
   }
   .waitlist-explainer {

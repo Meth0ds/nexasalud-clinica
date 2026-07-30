@@ -2,6 +2,8 @@ node_modules
 dist
 coverage
 .angular
+apps/api/vendor
+.playwright-cli
 pnpm-lock.yaml
 apps/web/public/favicon.ico
 infra/keycloak/*.json

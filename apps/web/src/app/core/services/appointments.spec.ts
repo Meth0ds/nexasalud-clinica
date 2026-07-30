@@ -65,7 +65,9 @@ describe('AppointmentsService', () => {
   });
 
   it('maps frontend lifecycle states to the protected idempotent transition endpoint', async () => {
-    const result = firstValueFrom(service.transition(appointment.id, appointment.version, 'waiting'));
+    const result = firstValueFrom(
+      service.transition(appointment.id, appointment.version, 'waiting'),
+    );
     const request = http.expectOne(`/api/v1/appointments/${appointment.id}/transition`);
     expect(request.request.method).toBe('POST');
     expect(request.request.headers.has('Idempotency-Key')).toBe(true);

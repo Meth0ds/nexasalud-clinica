@@ -29,9 +29,8 @@ export interface AppointmentActionDialogResult {
 })
 export class AppointmentActionDialog {
   protected readonly data = inject<AppointmentActionDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject<
-    MatDialogRef<AppointmentActionDialog, AppointmentActionDialogResult>
-  >(MatDialogRef);
+  private readonly dialogRef =
+    inject<MatDialogRef<AppointmentActionDialog, AppointmentActionDialogResult>>(MatDialogRef);
   private readonly formBuilder = inject(FormBuilder);
 
   protected readonly form = this.formBuilder.nonNullable.group({

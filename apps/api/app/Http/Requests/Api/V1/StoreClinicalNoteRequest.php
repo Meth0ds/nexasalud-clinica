@@ -20,8 +20,9 @@ final class StoreClinicalNoteRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $patient = $this->route('patient');
+        $ability = $this->route()?->getActionMethod() === 'sign' ? 'sign' : 'create';
 
-        return $patient instanceof Patient && $this->authenticatedUser()->can('create', [ClinicalNote::class, $patient]);
+        return $patient instanceof Patient && $this->authenticatedUser()->can($ability, [ClinicalNote::class, $patient]);
     }
 
     /**

@@ -1,0 +1,39 @@
+name: Staging DAST
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: HTTPS base URL of the isolated staging environment
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: OWASP ZAP baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Run ZAP against explicitly supplied staging URL
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          docker run --rm \
+            -v "$PWD:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:2.15.0 \
+            zap-baseline.py \
+            -t "$TARGET_URL" \
+            -m 5 \
+            -r zap-report.html \
+            -J zap-report.json
+      - name: Upload DAST reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: |
+            zap-report.html
+            zap-report.json

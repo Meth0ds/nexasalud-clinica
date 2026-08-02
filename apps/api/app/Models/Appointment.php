@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 #[Fillable(['tenant_id', 'clinic_id', 'room_id', 'appointment_type_id', 'patient_id', 'clinician_user_id', 'starts_at', 'ends_at', 'status', 'channel', 'reason', 'clinical_notes', 'lock_version', 'created_by', 'updated_by', 'cancelled_at'])]
 #[Hidden(['reason', 'clinical_notes'])]
@@ -97,11 +98,16 @@ class Appointment extends Model
     /**
      * Perform an allowed status transition under a database lock and record its history.
      */
-    public function transitionTo(AppointmentStatus $next, User $actor, ?string $reason = null): self
+    public function transitionTo(AppointmentStatus $next, User $actor, ?string $reason = null, ?int $expectedVersion = null): self
     {
-        return DB::transaction(function () use ($next, $actor, $reason): self {
+        return DB::transaction(function () use ($next, $actor, $reason, $expectedVersion): self {
             /** @var self $appointment */
             $appointment = self::query()->lockForUpdate()->findOrFail($this->getKey());
+
+            if ($expectedVersion !== null && $appointment->lock_version !== $expectedVersion) {
+                throw new ConflictHttpException('The appointment version is stale.');
+            }
+
             $current = $appointment->status;
 
             if (! $current->canTransitionTo($next)) {
@@ -152,6 +158,7 @@ class Appointment extends Model
         ?Room $room = null,
         ?User $clinician = null,
         ?string $reason = null,
+        ?int $expectedVersion = null,
     ): self {
         if (! $this->status->blocksAvailability()) {
             throw new DomainException('Cannot reschedule a terminal appointment.');
@@ -161,9 +168,18 @@ class Appointment extends Model
             throw new DomainException('Appointment end time must be after its start time.');
         }
 
-        return DB::transaction(function () use ($startsAt, $endsAt, $actor, $room, $clinician, $reason): self {
+        return DB::transaction(function () use ($startsAt, $endsAt, $actor, $room, $clinician, $reason, $expectedVersion): self {
             /** @var self $appointment */
             $appointment = self::query()->lockForUpdate()->findOrFail($this->getKey());
+
+            if ($expectedVersion !== null && $appointment->lock_version !== $expectedVersion) {
+                throw new ConflictHttpException('The appointment version is stale.');
+            }
+
+            if (! $appointment->status->blocksAvailability()) {
+                throw new DomainException('Cannot reschedule a terminal appointment.');
+            }
+
             $before = [
                 'starts_at' => $appointment->starts_at,
                 'ends_at' => $appointment->ends_at,

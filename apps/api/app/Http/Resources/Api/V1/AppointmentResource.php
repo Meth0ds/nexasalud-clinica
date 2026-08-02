@@ -3,6 +3,8 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Enums\AppointmentStatus;
+use App\Models\User;
+use App\Support\Authorization\PermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -20,8 +22,7 @@ class AppointmentResource extends JsonResource
     public function toArray(Request $request): array
     {
         $patientName = trim((string) $this->patient?->first_name.' '.(string) $this->patient?->last_name);
-
-        return [
+        $data = [
             'id' => $this->getKey(),
             'version' => $this->lock_version,
             'patientId' => $this->patient_id,
@@ -42,9 +43,33 @@ class AppointmentResource extends JsonResource
                 default => 'in-person',
             },
             'status' => self::frontendStatus($this->status),
-            'reasonSummary' => $this->reason ? Str::limit((string) $this->reason, 140) : null,
             'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
+
+        if ($this->canViewReason($request)) {
+            $data['reasonSummary'] = $this->reason ? Str::limit((string) $this->reason, 140) : null;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Determine whether this request may receive the appointment's potentially sensitive reason.
+     */
+    private function canViewReason(Request $request): bool
+    {
+        $cached = $request->attributes->get('appointments.can_view_reason');
+        if (is_bool($cached)) {
+            return $cached;
+        }
+
+        $actor = $request->user();
+        $allowed = $actor instanceof User
+            && app(PermissionService::class)->allows($actor, 'appointments.reason.read');
+
+        $request->attributes->set('appointments.can_view_reason', $allowed);
+
+        return $allowed;
     }
 
     /**

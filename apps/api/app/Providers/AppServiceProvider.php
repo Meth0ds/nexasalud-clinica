@@ -69,6 +69,8 @@ class AppServiceProvider extends ServiceProvider
         $requiredAmrValues = config('services.keycloak.required_amr_values');
         $allowedAlgorithms = config('services.keycloak.allowed_algorithms');
         $allowedOrigins = config('cors.allowed_origins');
+        $trustedHosts = config('app.trusted_hosts');
+        $trustedProxies = config('app.trusted_proxies');
         $absoluteLifetime = config('session.absolute_lifetime');
         $idleLifetime = config('session.lifetime');
 
@@ -109,6 +111,8 @@ class AppServiceProvider extends ServiceProvider
             && count(array_filter($allowedOrigins, $this->isExactSecureOrigin(...))) === count($allowedOrigins)
             && in_array($this->origin($frontendUrl), $allowedOrigins, true)
             && config('cors.allowed_origins_patterns') === []
+            && is_array($trustedHosts) && $trustedHosts !== []
+            && is_array($trustedProxies) && $trustedProxies !== []
             && config('app.debug') === false;
 
         if (! $valid) {

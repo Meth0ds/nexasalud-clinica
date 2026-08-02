@@ -124,6 +124,28 @@ final class AppointmentsApiTest extends TestCase
         $this->assertNotSame($otherAppointment->getKey(), $response->json('data.1.id'));
     }
 
+    public function test_appointment_reason_is_only_returned_with_the_explicit_reason_permission(): void
+    {
+        $appointment = $this->appointment(now()->addDay()->startOfHour());
+        $appointment->update(['reason' => 'Seguimiento clínico de dolor torácico.']);
+        $this->actingAs($this->coordinator);
+
+        $withoutReasonPermission = $this->withSession($this->sessionContext())
+            ->getJson('/api/v1/appointments?from='.now()->toDateString().'&to='.now()->addDays(2)->toDateString());
+
+        $withoutReasonPermission->assertOk()->assertJsonMissingPath('data.0.reasonSummary');
+
+        app()->instance('currentTenant', $this->tenant);
+        $role = $this->membership->roles()->firstOrFail();
+        app()->forgetInstance('currentTenant');
+        $role->update(['permissions' => ['appointments.read', 'appointments.reason.read']]);
+
+        $withReasonPermission = $this->withSession($this->sessionContext())
+            ->getJson('/api/v1/appointments?from='.now()->toDateString().'&to='.now()->addDays(2)->toDateString());
+
+        $withReasonPermission->assertOk()->assertJsonPath('data.0.reasonSummary', 'Seguimiento clínico de dolor torácico.');
+    }
+
     public function test_transition_records_audit_evidence_and_rejects_stale_or_invalid_lifecycle_changes(): void
     {
         $appointment = $this->appointment(now()->addDays(2)->startOfHour());
@@ -260,6 +282,42 @@ final class AppointmentsApiTest extends TestCase
             ->where('event_type', 'appointment.cancelled')
             ->where('auditable_id', $appointment->getKey())
             ->count());
+    }
+
+    public function test_transition_to_cancelled_requires_the_dedicated_cancellation_permission(): void
+    {
+        $writeOnly = User::factory()->create(['is_active' => true]);
+        $membership = Membership::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'user_id' => $writeOnly->getKey(),
+            'is_active' => true,
+        ]);
+        $role = Role::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'permissions' => ['appointments.read', 'appointments.write'],
+        ]);
+        $membership->roles()->attach($role, [
+            'tenant_id' => $this->tenant->getKey(),
+            'granted_by' => $this->coordinator->getKey(),
+            'granted_at' => now(),
+        ]);
+        $appointment = $this->appointment(now()->addDays(6)->startOfHour());
+
+        $this->actingAs($writeOnly)
+            ->withSession($this->sessionContext($membership))
+            ->withHeader('Idempotency-Key', 'appointment-transition-cancel-denied')
+            ->postJson('/api/v1/appointments/'.$appointment->getKey().'/transition', [
+                'version' => 1,
+                'status' => AppointmentStatus::Cancelled->value,
+                'reason' => 'Cancelación no autorizada.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('appointments', [
+            'id' => $appointment->getKey(),
+            'status' => AppointmentStatus::Scheduled->value,
+            'lock_version' => 1,
+        ]);
     }
 
     public function test_no_show_requires_a_reason_and_finalizes_the_appointment(): void

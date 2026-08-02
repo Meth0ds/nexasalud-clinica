@@ -56,6 +56,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Hosts and Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Production deployments must provide explicit regular expressions for
+    | accepted Host headers and the IP ranges of the TLS/load-balancing layer.
+    | Keeping these values outside the code prevents Host-header URL poisoning
+    | while still supporting managed ingress providers.
+    |
+    */
+
+    'trusted_hosts' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('TRUSTED_HOSTS', '')),
+    ))),
+
+    'trusted_proxies' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('TRUSTED_PROXIES', '')),
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

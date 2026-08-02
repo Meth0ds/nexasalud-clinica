@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\User;
 use App\Support\Authorization\PermissionService;
@@ -46,6 +47,18 @@ class AppointmentPolicy
     public function update(User $user, Appointment $appointment): bool
     {
         return $this->sameTenant($appointment) && $this->permissions->allows($user, 'appointments.write');
+    }
+
+    /**
+     * Determine whether the requested status transition needs ordinary write or cancellation access.
+     */
+    public function transition(User $user, Appointment $appointment, string $status): bool
+    {
+        if (in_array($status, [AppointmentStatus::Cancelled->value, AppointmentStatus::NoShow->value], true)) {
+            return $this->delete($user, $appointment);
+        }
+
+        return $this->update($user, $appointment);
     }
 
     /**

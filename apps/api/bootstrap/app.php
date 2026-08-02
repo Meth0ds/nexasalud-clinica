@@ -27,6 +27,16 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $trustedHosts = config('app.trusted_hosts', []);
+        if ($trustedHosts !== []) {
+            $middleware->trustHosts(at: $trustedHosts, subdomains: false);
+        }
+
+        $trustedProxies = config('app.trusted_proxies', []);
+        if ($trustedProxies !== []) {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
+
         $middleware->statefulApi();
         $middleware->preventRequestForgery();
         $middleware->alias([

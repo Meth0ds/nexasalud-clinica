@@ -67,7 +67,8 @@ x-api-environment: &api-environment
   OIDC_REQUIRED_ACR_VALUES: '2'
   OIDC_REQUIRED_AMR_VALUES: otp
   OIDC_ALLOW_INSECURE_HTTP: 'true'
-  DEMO_PORTAL_SIMULATIONS: ${DEMO_PORTAL_SIMULATIONS:-true}
+  # Demonstration-only medication/PDF flows must be explicitly enabled locally.
+  DEMO_PORTAL_SIMULATIONS: ${DEMO_PORTAL_SIMULATIONS:-false}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
 
 services:

@@ -53,6 +53,7 @@ create_environment() {
         printf 'APP_KEY=%s\n' "${app_key}"
         printf '%s\n' 'APP_DEBUG=false'
         printf '%s\n' 'RUN_MIGRATIONS=true'
+        printf '%s\n' 'DEMO_PORTAL_SIMULATIONS=true'
         printf '%s\n' 'POSTGRES_SUPERUSER=postgres'
         printf 'POSTGRES_SUPERUSER_PASSWORD=%s\n' "${postgres_superuser_password}"
         printf '%s\n' 'POSTGRES_DB=nexasalud'

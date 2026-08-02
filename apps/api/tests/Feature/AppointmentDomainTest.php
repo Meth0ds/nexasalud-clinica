@@ -13,6 +13,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 use DomainException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
 class AppointmentDomainTest extends TestCase
@@ -95,6 +96,19 @@ class AppointmentDomainTest extends TestCase
             $user,
             'Cambio no permitido.',
         );
+    }
+
+    public function test_locked_mutations_reject_a_stale_expected_version(): void
+    {
+        [$tenant, $user, $clinic, $room, $type, $patient] = $this->clinicalContext();
+        $start = now()->addDays(3)->startOfHour();
+        $appointment = $this->appointment($tenant, $user, $clinic, $room, $type, $patient, $start, $start->clone()->addMinutes(30));
+        $stale = Appointment::query()->findOrFail($appointment->getKey());
+
+        $appointment->transitionTo(AppointmentStatus::Confirmed, $user, 'Confirmación concurrente.', 1);
+
+        $this->expectException(ConflictHttpException::class);
+        $stale->transitionTo(AppointmentStatus::Cancelled, $user, 'Cancelación concurrente.', 1);
     }
 
     /** @return array{Tenant, User, Clinic, Room, AppointmentType, Patient} */

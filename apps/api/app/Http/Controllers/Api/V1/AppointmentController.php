@@ -170,6 +170,7 @@ final class AppointmentController extends Controller
             $room,
             $clinician,
             $data['reason'],
+            (int) $data['version'],
         );
 
         $this->audit->record($request, 'appointment.rescheduled', $rescheduled, ['version' => $rescheduled->lock_version]);
@@ -185,7 +186,12 @@ final class AppointmentController extends Controller
         $data = $request->validated();
         $this->requireVersion($appointment, (int) $data['version']);
         $next = AppointmentStatus::from($data['status']);
-        $transitioned = $appointment->transitionTo($next, $this->actor($request), $data['reason'] ?? null);
+        $transitioned = $appointment->transitionTo(
+            $next,
+            $this->actor($request),
+            $data['reason'] ?? null,
+            (int) $data['version'],
+        );
 
         $this->audit->record($request, 'appointment.status_changed', $transitioned, [
             'status' => $next->value,
@@ -212,6 +218,7 @@ final class AppointmentController extends Controller
             AppointmentStatus::Cancelled,
             $this->actor($request),
             $data['reason'],
+            (int) $data['version'],
         );
         $this->audit->record($request, 'appointment.cancelled', $cancelled, ['version' => $cancelled->lock_version]);
 

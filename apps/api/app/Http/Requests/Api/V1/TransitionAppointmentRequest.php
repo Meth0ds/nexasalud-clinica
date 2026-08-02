@@ -17,8 +17,12 @@ class TransitionAppointmentRequest extends TenantFormRequest
     public function authorize(): bool
     {
         $appointment = $this->route('appointment');
+        $status = $this->input('status');
 
-        return $appointment instanceof Appointment && $this->authenticatedUser()->can('update', $appointment);
+        return $appointment instanceof Appointment
+            && is_string($status)
+            && in_array($status, AppointmentStatus::values(), true)
+            && $this->authenticatedUser()->can('transition', [$appointment, $status]);
     }
 
     /**

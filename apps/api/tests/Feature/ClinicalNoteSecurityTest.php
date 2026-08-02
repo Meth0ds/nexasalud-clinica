@@ -51,7 +51,7 @@ final class ClinicalNoteSecurityTest extends TestCase
         ]);
         $role = Role::factory()->create([
             'tenant_id' => $this->tenant->getKey(),
-            'permissions' => ['patients.read', 'patients.write', 'patients.sign'],
+            'permissions' => ['clinical_notes.*'],
         ]);
         $this->membership->roles()->attach($role, [
             'tenant_id' => $this->tenant->getKey(),
@@ -124,6 +124,35 @@ final class ClinicalNoteSecurityTest extends TestCase
         ]);
     }
 
+    public function test_operational_patient_write_access_does_not_grant_clinical_note_creation(): void
+    {
+        $receptionist = User::factory()->create(['is_active' => true]);
+        $membership = Membership::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'user_id' => $receptionist->getKey(),
+            'is_active' => true,
+        ]);
+        $role = Role::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'permissions' => ['patients.read', 'patients.write'],
+        ]);
+        $membership->roles()->attach($role, [
+            'tenant_id' => $this->tenant->getKey(),
+            'granted_by' => $this->clinician->getKey(),
+            'granted_at' => now(),
+        ]);
+
+        $this->actingAs($receptionist)
+            ->withSession($this->sessionContextFor($membership))
+            ->withHeader('Idempotency-Key', 'clinical-note-reception-denied')
+            ->postJson('/api/v1/patients/'.$this->patient->getKey().'/clinical-notes', [
+                'content' => 'Contenido clínico que no debe crear recepción.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('clinical_notes', 0);
+    }
+
     /** @param array<string, int|string|array<int, string>> $assurance */
     private function sessionContext(array $assurance = []): array
     {
@@ -132,6 +161,16 @@ final class ClinicalNoteSecurityTest extends TestCase
             'auth.context.membership_id' => $this->membership->getKey(),
             'auth.context.clinic_id' => $this->clinic->getKey(),
             ...$assurance,
+        ];
+    }
+
+    /** @return array<string, int|string> */
+    private function sessionContextFor(Membership $membership): array
+    {
+        return [
+            'auth.session.absolute_expires_at' => time() + 3600,
+            'auth.context.membership_id' => $membership->getKey(),
+            'auth.context.clinic_id' => $this->clinic->getKey(),
         ];
     }
 }

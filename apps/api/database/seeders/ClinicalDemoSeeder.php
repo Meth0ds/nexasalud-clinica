@@ -202,7 +202,9 @@ class ClinicalDemoSeeder extends Seeder
                 'name' => 'Profesional sanitario',
                 'permissions' => [
                     'appointments.*',
+                    'appointments.reason.read',
                     'patients.*',
+                    'clinical_notes.*',
                     'prescriptions.*',
                     'documents.*',
                     'analytics.read',
@@ -212,7 +214,9 @@ class ClinicalDemoSeeder extends Seeder
             'receptionist' => [
                 'name' => 'Recepción y admisión',
                 'permissions' => [
-                    'appointments.*',
+                    'appointments.read',
+                    'appointments.write',
+                    'appointments.cancel',
                     'patients.read',
                     'patients.write',
                     'billing.*',

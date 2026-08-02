@@ -455,7 +455,12 @@ final class PortalController extends Controller
         abort_unless(in_array($appointment->status, [AppointmentStatus::Scheduled, AppointmentStatus::Confirmed], true), Response::HTTP_CONFLICT);
         abort_unless($appointment->starts_at?->isAfter(now()->addHours(4)), Response::HTTP_CONFLICT);
 
-        $cancelled = $appointment->transitionTo(AppointmentStatus::Cancelled, $this->actor($request), $data['reason']);
+        $cancelled = $appointment->transitionTo(
+            AppointmentStatus::Cancelled,
+            $this->actor($request),
+            $data['reason'],
+            (int) $data['version'],
+        );
         $this->audit->record($request, 'portal.appointment_cancelled', $cancelled, ['source' => 'patient_portal']);
 
         return new AppointmentResource($cancelled->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']));
@@ -482,7 +487,15 @@ final class PortalController extends Controller
 
             $room = $hold->room_id ? Room::query()->findOrFail($hold->room_id) : null;
             $clinician = User::query()->findOrFail($hold->clinician_user_id);
-            $updated = $appointment->reschedule($hold->starts_at, $hold->ends_at, $actor, $room, $clinician, $data['reason']);
+            $updated = $appointment->reschedule(
+                $hold->starts_at,
+                $hold->ends_at,
+                $actor,
+                $room,
+                $clinician,
+                $data['reason'],
+                (int) $data['version'],
+            );
             $hold->appointment_id = $updated->getKey();
             $hold->save();
 

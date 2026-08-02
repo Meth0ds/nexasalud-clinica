@@ -1,0 +1,27 @@
+groups:
+  - name: nexasalud-production
+    rules:
+      - alert: NexaSaludApiErrorRateHigh
+        expr: sum(rate(http_requests_total{service="nexasalud-api",status=~"5.."}[5m])) / sum(rate(http_requests_total{service="nexasalud-api"}[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: API error rate above 1%
+          runbook: https://REPLACE_WITH_RUNBOOK_HOST/nexasalud/api-errors
+      - alert: NexaSaludReadinessUnavailable
+        expr: max_over_time(probe_success{job="nexasalud-ready"}[2m]) == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: API readiness probe is unavailable
+          runbook: https://REPLACE_WITH_RUNBOOK_HOST/nexasalud/readiness
+      - alert: NexaSaludQueueAgeHigh
+        expr: max(queue_oldest_job_age_seconds{service="nexasalud-worker"}) > 600
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: Queue oldest job is older than 10 minutes
+          runbook: https://REPLACE_WITH_RUNBOOK_HOST/nexasalud/queue

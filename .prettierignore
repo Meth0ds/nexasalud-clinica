@@ -3,6 +3,7 @@ dist
 coverage
 .angular
 apps/api/vendor
+apps/api/public/build
 .playwright-cli
 pnpm-lock.yaml
 apps/web/public/favicon.ico

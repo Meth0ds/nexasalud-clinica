@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ClinicalDocument;
+use App\Models\Clinic;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,6 +24,10 @@ class ClinicalDocumentFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'tenant_id' => fn (array $attributes): string => Patient::withoutGlobalScope('tenant')->findOrFail($attributes['patient_id'])->tenant_id,
+            'clinic_id' => fn (array $attributes): ?string => Clinic::withoutGlobalScope('tenant')
+                ->where('tenant_id', $attributes['tenant_id'])
+                ->orderBy('id')
+                ->value('id'),
             'document_type' => 'synthetic_clinical_summary',
             'status' => 'ready',
             'sha256' => hash('sha256', 'synthetic-document-content-'.fake()->unique()->uuid()),

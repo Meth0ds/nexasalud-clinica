@@ -21,52 +21,66 @@
     </div>
   </header>
 
+  @if (actionError(); as error) {
+    <app-state-panel
+      kind="error"
+      title="La operación no se ha completado"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Cerrar aviso"
+      (action)="actionError.set(null)"
+    />
+  }
+
   @if (loading()) {
-    <section class="billing-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando documentos económicos autorizados…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando documentos económicos"
+      message="Recuperando facturas autorizadas y sus estados desde el servidor."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="billing-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Facturación no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Facturación no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
   } @else {
     <section class="nexa-grid nexa-grid--4 finance-metrics" appScrollReveal>
-      <article class="nexa-card">
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="finance-icon"><app-icon name="chart" /></span>
         <div>
           <small>Emitido</small><strong>{{ money(metrics().total) }}</strong>
           <p>Documentos activos del contexto</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="finance-icon finance-icon--green"><app-icon name="check" /></span>
         <div>
           <small>Cobrado</small><strong>{{ money(metrics().collected) }}</strong>
           <p>Pagos ya registrados</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="finance-icon finance-icon--coral"><app-icon name="clock" /></span>
         <div>
           <small>Saldo pendiente</small><strong>{{ money(metrics().outstanding) }}</strong>
           <p>Sin cobros estimados</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="finance-icon finance-icon--blue"><app-icon name="shield" /></span>
         <div>
           <small>Facturas activas</small><strong>{{ metrics().documents }}</strong>
           <p>Solo datos autorizados</p>
         </div>
-      </article>
+      </mat-card>
     </section>
 
     <section class="billing-layout nexa-section">
-      <article class="nexa-card invoice-list" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card invoice-list" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Facturas recientes</h2>
@@ -110,9 +124,9 @@
                   </td>
                   <td>{{ money(invoice.balanceMinor, invoice.currency) }}</td>
                   <td>
-                    <span class="nexa-chip nexa-chip--{{ statusTone(invoice.status) }}">{{
-                      statusLabel(invoice.status)
-                    }}</span>
+                    <app-status-chip [tone]="statusTone(invoice.status)">
+                      {{ statusLabel(invoice.status) }}
+                    </app-status-chip>
                   </td>
                   <td>
                     <div class="invoice-actions">
@@ -163,9 +177,15 @@
             </tbody>
           </table>
         </div>
-      </article>
+      </mat-card>
       <aside class="billing-side">
-        <article class="nexa-card payment-card" appScrollReveal [revealDelay]="100">
+        <mat-card
+          appearance="outlined"
+          class="nexa-card payment-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="100"
+        >
           <app-icon name="shield" [size]="20" />
           <div>
             <strong>Pagos trazables</strong
@@ -174,8 +194,14 @@
               datos completos de tarjetas.</small
             >
           </div>
-        </article>
-        <article class="nexa-card finance-security" appScrollReveal [revealDelay]="160">
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="nexa-card finance-security"
+          role="article"
+          appScrollReveal
+          [revealDelay]="160"
+        >
           <app-icon name="lock" [size]="20" />
           <div>
             <h2>Control financiero</h2>
@@ -184,7 +210,7 @@
               auditoría en el servidor.
             </p>
           </div>
-        </article>
+        </mat-card>
       </aside>
     </section>
   }

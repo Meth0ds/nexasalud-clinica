@@ -109,6 +109,11 @@ FROM php-runtime AS development
 COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
 COPY --from=vendor-development --chown=nexasalud:nexasalud /build/vendor ./vendor
 COPY --chown=nexasalud:nexasalud tests ./tests
+# Laravel's testing bootstrap expects the conventional dotenv path. Keep an
+# empty file in the test image so a missing local secret file is not reported
+# as a PHPUnit warning; PHPUnit supplies every testing value explicitly.
+RUN touch .env
 
 FROM php-runtime AS production
 COPY --from=vendor-production-autoload --chown=nexasalud:nexasalud /build/vendor ./vendor
+COPY docker/php-production.ini /usr/local/etc/php/conf.d/100-nexasalud-production.ini

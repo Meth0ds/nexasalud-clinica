@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, switchMap } from 'rxjs';
+import { Observable, filter, map, switchMap, take, throwError, timer } from 'rxjs';
 
 import { SILENT_HTTP_ERROR } from '../../../core/http/http-context';
 import { ApiClientService } from '../../../core/services/api-client';
@@ -65,7 +65,11 @@ interface InvoiceCollection {
 }
 
 interface GeneratedDocument {
-  readonly downloadPath: string;
+  readonly id?: string;
+  readonly status?: 'generating' | 'ready' | 'failed' | 'voided' | 'expired';
+  readonly downloadPath?: string | null;
+  readonly statusPath?: string;
+  readonly pollAfterSeconds?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -129,7 +133,32 @@ export class InvoiceApiService {
         {},
         { idempotencyKey: idempotencyKey(), longRunning: true },
       )
-      .pipe(switchMap((response) => this.downloadDocument(response.data.downloadPath)));
+      .pipe(switchMap((response) => this.waitForReady(response.data)));
+  }
+
+  private waitForReady(document: GeneratedDocument): Observable<DownloadedInvoiceDocument> {
+    if (document.status === undefined || document.status === 'ready') {
+      return document.downloadPath
+        ? this.downloadDocument(document.downloadPath)
+        : throwError(() => new Error('La factura no tiene una descarga disponible.'));
+    }
+
+    const statusPath = document.statusPath ?? (document.id ? `/api/v1/documents/${encodeURIComponent(document.id)}` : null);
+    if (!statusPath) {
+      return throwError(() => new Error('La factura no tiene un estado consultable.'));
+    }
+
+    const interval = Math.max(1, document.pollAfterSeconds ?? 2) * 1000;
+
+    return timer(0, interval).pipe(
+      switchMap(() => this.api.get<ApiData<GeneratedDocument>>(statusPath, { silent: true })),
+      map((response) => response.data),
+      filter((current) => current.status === 'ready' || current.status === 'failed' || current.status === 'voided' || current.status === 'expired'),
+      take(1),
+      switchMap((current) => current.status === 'ready' && current.downloadPath
+        ? this.downloadDocument(current.downloadPath)
+        : throwError(() => new Error('No se pudo generar la factura.'))),
+    );
   }
 
   private downloadDocument(downloadPath: string): Observable<DownloadedInvoiceDocument> {

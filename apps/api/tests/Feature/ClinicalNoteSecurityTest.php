@@ -153,6 +153,59 @@ final class ClinicalNoteSecurityTest extends TestCase
         $this->assertDatabaseCount('clinical_notes', 0);
     }
 
+    public function test_note_timeline_requires_clinical_permission_and_is_not_cross_tenant_bindable(): void
+    {
+        app()->instance('currentTenant', $this->tenant);
+        $note = ClinicalNote::create([
+            'tenant_id' => $this->tenant->getKey(),
+            'patient_id' => $this->patient->getKey(),
+            'author_user_id' => $this->clinician->getKey(),
+            'status' => 'draft',
+            'content' => 'Contenido clínico de prueba para autorización.',
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $receptionist = User::factory()->create(['is_active' => true]);
+        $receptionistMembership = Membership::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'user_id' => $receptionist->getKey(),
+            'is_active' => true,
+        ]);
+        $receptionistRole = Role::factory()->create([
+            'tenant_id' => $this->tenant->getKey(),
+            'permissions' => ['patients.read'],
+        ]);
+        $receptionistMembership->roles()->attach($receptionistRole, [
+            'tenant_id' => $this->tenant->getKey(),
+            'granted_by' => $this->clinician->getKey(),
+            'granted_at' => now(),
+        ]);
+
+        $this->actingAs($receptionist)
+            ->withSession($this->sessionContextFor($receptionistMembership))
+            ->getJson('/api/v1/patients/'.$this->patient->getKey().'/clinical-notes')
+            ->assertForbidden();
+
+        $otherTenant = Tenant::factory()->create();
+        app()->instance('currentTenant', $otherTenant);
+        $otherPatient = Patient::factory()->create(['tenant_id' => $otherTenant->getKey()]);
+        ClinicalNote::create([
+            'tenant_id' => $otherTenant->getKey(),
+            'patient_id' => $otherPatient->getKey(),
+            'author_user_id' => $this->clinician->getKey(),
+            'status' => 'draft',
+            'content' => 'Contenido de otro tenant que no debe resolverse.',
+        ]);
+        app()->forgetInstance('currentTenant');
+
+        $this->actingAs($this->clinician)
+            ->withSession($this->sessionContext())
+            ->getJson('/api/v1/patients/'.$otherPatient->getKey().'/clinical-notes')
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('clinical_notes', ['id' => $note->getKey()]);
+    }
+
     /** @param array<string, int|string|array<int, string>> $assurance */
     private function sessionContext(array $assurance = []): array
     {

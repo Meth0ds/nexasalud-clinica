@@ -10,7 +10,7 @@ export class GlobalErrorHandler implements ErrorHandler {
   private readonly router = inject(Router);
 
   handleError(error: unknown): void {
-    this.notifications.notify(error);
+    this.notifications.notify(error, 'runtime');
     const appError = toAppError(error);
 
     if (appError.status >= 500 && this.router.url !== '/indisponible') {

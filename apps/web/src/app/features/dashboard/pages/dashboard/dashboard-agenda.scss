@@ -121,6 +121,11 @@
   color: var(--nexa-ink-soft);
   font-size: 0.64rem;
 }
+.appointment-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
 .appointment-peek {
   display: grid;
   align-items: center;

@@ -63,7 +63,7 @@
   .document-list article {
     grid-template-columns: 38px 1fr auto;
   }
-  .document-list article > .nexa-chip {
+  .document-list article > app-status-chip {
     display: none;
   }
   .document-list article button {
@@ -84,7 +84,7 @@
   .invoice-ledger > article {
     grid-template-columns: 39px 1fr auto;
   }
-  .invoice-ledger > article > .nexa-chip {
+  .invoice-ledger > article > app-status-chip {
     grid-column: 2;
     justify-self: start;
   }

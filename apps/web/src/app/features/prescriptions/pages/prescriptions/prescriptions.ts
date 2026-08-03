@@ -10,17 +10,21 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { forkJoin, finalize } from 'rxjs';
+import { finalize, forkJoin, switchMap } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { Patient, ReferenceData } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { PatientsService } from '../../../../core/services/patients';
 import { ReferenceDataService } from '../../../../core/services/reference-data';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   PrescriptionApiService,
@@ -34,11 +38,14 @@ import {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './prescriptions.html',
@@ -64,7 +71,8 @@ export class Prescriptions {
   protected readonly saving = signal(false);
   protected readonly transitioningId = signal<string | null>(null);
   protected readonly pdfId = signal<string | null>(null);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly query = signal('');
   protected readonly signingPrescription = signal<PrescriptionRecord | null>(null);
   protected readonly draftLines = signal<readonly PrescriptionMedication[]>([]);
@@ -135,6 +143,7 @@ export class Prescriptions {
   }
 
   protected openBuilder(): void {
+    this.actionError.set(null);
     this.builderOpen.set(true);
   }
 
@@ -201,6 +210,7 @@ export class Prescriptions {
 
     const header = this.headerForm.getRawValue();
     this.saving.set(true);
+    this.actionError.set(null);
     this.prescriptionApi
       .create({
         clinicId,
@@ -220,6 +230,8 @@ export class Prescriptions {
           this.resetBuilder();
           this.notifications.success('Borrador de prescripción creado y registrado.');
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido crear el borrador de prescripción.'),
       });
   }
 
@@ -236,6 +248,7 @@ export class Prescriptions {
         : [Validators.maxLength(500)],
     );
     reasonControl.updateValueAndValidity();
+    this.actionError.set(null);
     this.signingPrescription.set(prescription);
   }
 
@@ -258,6 +271,7 @@ export class Prescriptions {
 
     const reason = this.signatureForm.controls.reason.value.trim();
     this.transitioningId.set(prescription.id);
+    this.actionError.set(null);
     this.prescriptionApi
       .transition(prescription.id, prescription.version, 'signed', reason ? { reason } : {})
       .pipe(
@@ -274,6 +288,8 @@ export class Prescriptions {
             'Prescripción firmada. La MFA, el permiso y la trazabilidad han sido verificados por el servidor.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido firmar la prescripción.'),
       });
   }
 
@@ -286,17 +302,18 @@ export class Prescriptions {
     }
 
     this.pdfId.set(prescription.id);
+    this.actionError.set(null);
     this.prescriptionApi
       .generateMedicationPlan(prescription.id)
       .pipe(
+        switchMap((document) => this.prescriptionApi.downloadDocument(document.downloadPath)),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.pdfId.set(null)),
       )
       .subscribe({
-        next: (document) =>
-          this.prescriptionApi.downloadDocument(document.downloadPath).subscribe({
-            next: (download) => this.downloadBlob(download.blob, download.filename),
-          }),
+        next: (download) => this.downloadBlob(download.blob, download.filename),
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido generar o descargar el plan PDF.'),
       });
   }
 
@@ -332,6 +349,7 @@ export class Prescriptions {
 
   private transition(prescription: PrescriptionRecord, status: PrescriptionStatus): void {
     this.transitioningId.set(prescription.id);
+    this.actionError.set(null);
     this.prescriptionApi
       .transition(prescription.id, prescription.version, status)
       .pipe(
@@ -345,10 +363,15 @@ export class Prescriptions {
           );
           this.notifications.success('Prescripción enviada a revisión.');
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido cambiar el estado de la prescripción.'),
       });
   }
 
-  private load(): void {
+  protected load(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.actionError.set(null);
     forkJoin({
       prescriptions: this.prescriptionApi.list(),
       patients: this.patientsApi.search(),
@@ -365,9 +388,12 @@ export class Prescriptions {
           this.patients.set(patients.items);
           this.referenceData.set(referenceData);
         },
-        error: () =>
+        error: (error: unknown) =>
           this.errorMessage.set(
-            'No se pudieron cargar las prescripciones. Comprueba tu sesión, el contexto y los permisos clínicos.',
+            toAppError(
+              error,
+              'No se pudieron cargar las prescripciones. Comprueba tu sesión, el contexto y los permisos clínicos.',
+            ),
           ),
       });
   }
@@ -388,5 +414,11 @@ export class Prescriptions {
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
+  }
+
+  private reportActionError(error: unknown, fallback: string): void {
+    const appError = toAppError(error, fallback);
+    this.actionError.set(appError);
+    this.notifications.notify(appError);
   }
 }

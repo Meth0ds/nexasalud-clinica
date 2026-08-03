@@ -27,12 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $trustedHosts = config('app.trusted_hosts', []);
-        if ($trustedHosts !== []) {
-            $middleware->trustHosts(at: $trustedHosts, subdomains: false);
-        }
+        $middleware->trustHosts(
+            at: fn (): array => config('app.trusted_hosts', []),
+            subdomains: false,
+        );
 
-        $trustedProxies = config('app.trusted_proxies', []);
+        $trustedProxies = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', '')),
+        )));
         if ($trustedProxies !== []) {
             $middleware->trustProxies(at: $trustedProxies);
         }

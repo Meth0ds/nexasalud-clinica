@@ -23,36 +23,34 @@
   </header>
 
   @if (loading()) {
-    <section class="audit-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Verificando el registro de auditoría…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Verificando el registro de auditoría"
+      message="Consultando únicamente eventos minimizados del contexto actual."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="audit-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Auditoría no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
-        Reintentar
-      </button>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Auditoría no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="refresh()"
+    />
   } @else {
-    <section class="audit-integrity nexa-card" appScrollReveal>
-      <span><app-icon name="shield" [size]="22" /></span>
-      <div>
-        <strong>Registro de auditoría de solo inserción</strong
-        ><small
-          >Los recursos se minimizan en origen y la escritura sensible se audita en el
-          servidor.</small
-        >
-      </div>
-      <span class="nexa-chip nexa-chip--success"
-        ><app-icon name="check" [size]="13" /> Disponible</span
-      >
-    </section>
+    <app-security-banner
+      class="audit-integrity"
+      title="Registro de auditoría de solo inserción"
+      message="Los recursos se minimizan en origen y la escritura sensible se audita en el servidor."
+      label="Disponible"
+      appScrollReveal
+    />
 
-    <section class="audit-toolbar nexa-card nexa-card--flat nexa-section" appScrollReveal>
+    <mat-card
+      appearance="outlined"
+      class="audit-toolbar nexa-card nexa-card--flat nexa-section"
+      appScrollReveal
+    >
       <label class="nexa-search"
         ><app-icon name="search" [size]="16" /><span class="sr-only">Buscar eventos</span
         ><input
@@ -61,10 +59,10 @@
           [value]="query()"
           (input)="query.set($any($event.target).value)" /></label
       ><span>{{ filteredEvents().length }} de {{ total() }} eventos cargados</span>
-    </section>
+    </mat-card>
 
     <section class="audit-layout nexa-section">
-      <article class="nexa-card audit-stream" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card audit-stream" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Eventos recientes</h2>
@@ -83,19 +81,23 @@
             <span class="event-resource">{{
               event.resourceIdHint ?? 'Sin identificador expuesto'
             }}</span
-            ><span
-              class="nexa-chip"
-              [class.nexa-chip--success]="event.outcome === 'allowed'"
-              [class.nexa-chip--danger]="event.outcome === 'blocked'"
-              >{{ outcomeLabel(event.outcome) }}</span
-            ><code class="nexa-mono">{{ event.traceId ?? 'Sin traza' }}</code>
+            ><app-status-chip [tone]="event.outcome === 'allowed' ? 'success' : 'danger'">
+              {{ outcomeLabel(event.outcome) }}
+            </app-status-chip>
+            <code class="nexa-mono">{{ event.traceId ?? 'Sin traza' }}</code>
           </article>
         } @empty {
           <div class="audit-empty">No hay eventos que coincidan con la búsqueda.</div>
         }
-      </article>
+      </mat-card>
       <aside class="audit-side">
-        <article class="nexa-card risk-card" appScrollReveal [revealDelay]="100">
+        <mat-card
+          appearance="outlined"
+          class="nexa-card risk-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="100"
+        >
           <div class="nexa-card__header">
             <div>
               <h2>Señales bloqueadas</h2>
@@ -109,8 +111,14 @@
               ><small>La revisión se realiza sobre evidencia minimizada.</small>
             </div>
           </div>
-        </article>
-        <article class="nexa-card retention-card" appScrollReveal [revealDelay]="150">
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="nexa-card retention-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="150"
+        >
           <app-icon name="lock" [size]="20" />
           <div>
             <strong>Sin exportación en navegador</strong
@@ -119,7 +127,7 @@
               auditoría adicional.</small
             >
           </div>
-        </article>
+        </mat-card>
       </aside>
     </section>
   }

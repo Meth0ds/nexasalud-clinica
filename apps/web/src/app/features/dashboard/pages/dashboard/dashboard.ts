@@ -8,13 +8,19 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { AppointmentStatus } from '../../../../core/models/app.models';
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
+import { SecurityBanner } from '../../../../shared/components/security-banner/security-banner';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   DashboardApiService,
@@ -32,7 +38,18 @@ interface Metric {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MatButtonModule, MatProgressSpinnerModule, RouterLink, AppIcon, ScrollReveal],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatChipsModule,
+    MatProgressBarModule,
+    MatProgressSpinnerModule,
+    RouterLink,
+    AppIcon,
+    SecurityBanner,
+    StatePanel,
+    ScrollReveal,
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss', './dashboard-agenda.scss', './dashboard-panels.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,7 +60,7 @@ export class Dashboard {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly loading = signal(true);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
   protected readonly dashboard = signal<DashboardData | null>(null);
   protected readonly selectedAppointment = signal<string | null>(null);
   protected readonly metrics = computed<readonly Metric[]>(() => {
@@ -107,8 +124,10 @@ export class Dashboard {
           this.dashboard.set(data);
           this.selectedAppointment.set(data.dayAppointments[0]?.id ?? null);
         },
-        error: () =>
-          this.errorMessage.set('No se ha podido cargar el resumen operativo del centro activo.'),
+        error: (error: unknown) =>
+          this.errorMessage.set(
+            toAppError(error, 'No se ha podido cargar el resumen operativo del centro activo.'),
+          ),
       });
   }
 

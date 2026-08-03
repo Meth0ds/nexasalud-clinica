@@ -9,17 +9,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { Patient } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { PatientsService } from '../../../../core/services/patients';
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   CommunicationChannel,
@@ -64,11 +69,15 @@ const EXTERNAL_TEMPLATES: readonly {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatButtonToggleModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './communications.html',
@@ -90,7 +99,8 @@ export class Communications {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly composeOpen = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly activeFilter = signal<CommunicationFilter>('all');
   protected readonly selectedId = signal<string | null>(null);
@@ -153,6 +163,7 @@ export class Communications {
   protected load(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.actionError.set(null);
     forkJoin({ timeline: this.communicationsApi.list(), patients: this.patientsApi.search() })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -165,12 +176,15 @@ export class Communications {
           this.patients.set(patients.items);
           this.selectedId.set(communications[0]?.id ?? null);
         },
-        error: () =>
-          this.errorMessage.set('No se ha podido cargar la línea de comunicaciones autorizada.'),
+        error: (error: unknown) =>
+          this.errorMessage.set(
+            toAppError(error, 'No se ha podido cargar la línea de comunicaciones autorizada.'),
+          ),
       });
   }
 
   protected openCompose(): void {
+    this.actionError.set(null);
     if (this.patients().length === 0) {
       this.notifications.error('No hay pacientes autorizados disponibles para esta comunicación.');
       return;
@@ -235,6 +249,7 @@ export class Communications {
             templateKey: value.templateKey,
           };
     this.saving.set(true);
+    this.actionError.set(null);
     this.communicationsApi
       .create(input)
       .pipe(
@@ -254,6 +269,8 @@ export class Communications {
               : 'Comunicación validada y añadida a la cola segura. La entrega externa requiere proveedor configurado.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido guardar la comunicación de forma segura.'),
       });
   }
 
@@ -263,6 +280,7 @@ export class Communications {
     }
 
     this.saving.set(true);
+    this.actionError.set(null);
     this.communicationsApi
       .queue(record)
       .pipe(
@@ -276,6 +294,8 @@ export class Communications {
             'Borrador validado contra el consentimiento actual y añadido a la cola segura.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido añadir la comunicación a la cola segura.'),
       });
   }
 
@@ -285,6 +305,7 @@ export class Communications {
     }
 
     this.saving.set(true);
+    this.actionError.set(null);
     this.communicationsApi
       .cancel(record)
       .pipe(
@@ -298,7 +319,13 @@ export class Communications {
             'La comunicación se ha cancelado y queda registrada en la auditoría.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido cancelar la comunicación.'),
       });
+  }
+
+  protected setChannel(channel: CommunicationChannel): void {
+    this.composeForm.controls.channel.setValue(channel);
   }
 
   protected channelLabel(channel: CommunicationChannel): string {
@@ -367,6 +394,12 @@ export class Communications {
       items.map((item) => (item.id === updated.id ? updated : item)).sort(compareCommunications),
     );
     this.selectedId.set(updated.id);
+  }
+
+  private reportActionError(error: unknown, fallback: string): void {
+    const appError = toAppError(error, fallback);
+    this.actionError.set(appError);
+    this.notifications.notify(appError);
   }
 }
 

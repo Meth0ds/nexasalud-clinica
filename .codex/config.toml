@@ -1,5 +1,7 @@
 # Laravel Boost runs inside the local API container because PHP is not installed
 # on the Windows host. Start the Docker stack before using this MCP server.
+model_verbosity = "high"
+model_reasoning_summary = "detailed"
 [mcp_servers.laravel-boost]
 command = "docker"
 args = ["compose", "--project-directory", "infra", "--env-file", "infra/.env", "-f", "infra/compose.yaml", "exec", "-T", "api", "php", "artisan", "boost:mcp"]

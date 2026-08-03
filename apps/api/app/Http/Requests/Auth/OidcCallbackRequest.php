@@ -66,6 +66,7 @@ class OidcCallbackRequest extends FormRequest
     protected function failedValidation(Validator $validator): never
     {
         $this->session()->forget(SecureKeycloakProvider::TRANSACTION_SESSION_KEY);
+        $this->session()->forget(SecureKeycloakProvider::TRANSACTIONS_SESSION_KEY);
 
         throw new InvalidOidcTransactionException;
     }

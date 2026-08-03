@@ -2,9 +2,10 @@ import { DOCUMENT } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 
-import { AppError } from '../errors/app-error';
+import { AppError, toAppError } from '../errors/app-error';
+import { AppEventBus } from '../events/app-events';
 import { SILENT_HTTP_ERROR } from '../http/http-context';
 import { SessionData, TenantContextOptionsResponse } from '../models/app.models';
 
@@ -20,6 +21,7 @@ export class SessionService {
   private readonly http = inject(HttpClient);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
+  private readonly events = inject(AppEventBus);
   private readonly stateSignal = signal<SessionState>({ status: 'idle' });
   private activeRequest: Observable<SessionState> | null = null;
 
@@ -59,6 +61,12 @@ export class SessionService {
         map((data): SessionState => ({ status: 'authenticated', data })),
         tap((state) => {
           this.stateSignal.set(state);
+          if (state.status === 'authenticated') {
+            this.events.emit({
+              type: 'auth.session.loaded',
+              assuranceLevel: state.data.assuranceLevel,
+            });
+          }
         }),
         catchError((error: AppError): Observable<SessionState> => {
           if (error.status === 409 && error.type === '/problems/tenant-selection-required') {
@@ -68,6 +76,16 @@ export class SessionService {
             error.status === 401 || error.status === 403
               ? { status: 'anonymous' }
               : { status: 'error', error };
+          if (nextState.status === 'anonymous') {
+            this.events.emit({ type: 'auth.session.expired', status: error.status });
+          } else {
+            this.events.emit({
+              type: 'auth.session.load.failed',
+              status: error.status,
+              code: error.code,
+              correlationId: error.correlationId,
+            });
+          }
           this.stateSignal.set(nextState);
           return of(nextState);
         }),
@@ -87,11 +105,35 @@ export class SessionService {
         { membershipId, clinicId },
         { context },
       )
-      .pipe(switchMap(() => this.ensureLoaded(true)));
+      .pipe(
+        tap(() => this.events.emit({ type: 'auth.context.selected', selected: true })),
+        switchMap(() => this.ensureLoaded(true)),
+        tap((state) => {
+          if (state.status === 'error') {
+            this.events.emit({
+              type: 'auth.context.selection.failed',
+              status: state.error.status,
+              code: state.error.code,
+              correlationId: state.error.correlationId,
+            });
+          }
+        }),
+        catchError((error: unknown) => {
+          const appError = toAppError(error);
+          this.events.emit({
+            type: 'auth.context.selection.failed',
+            status: appError.status,
+            code: appError.code,
+            correlationId: appError.correlationId,
+          });
+          return throwError(() => appError);
+        }),
+      );
   }
 
   login(returnTo = '/'): void {
     const safeReturnTo = returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/';
+    this.events.emit({ type: 'auth.login.started', returnTo: safeReturnTo });
     this.document.defaultView?.location.assign(
       `/auth/login?returnTo=${encodeURIComponent(safeReturnTo)}`,
     );
@@ -107,13 +149,26 @@ export class SessionService {
       .subscribe({
         next: (result) => {
           this.clearSession();
+          this.events.emit({
+            type: 'auth.logout.completed',
+            upstreamRedirect: Boolean(result.upstreamRedirect),
+          });
           if (result.upstreamRedirect) {
             this.document.defaultView?.location.assign(result.upstreamRedirect);
           } else {
             void this.router.navigate(['/login']);
           }
         },
-        error: () => this.clearAndNavigate(),
+        error: (error: unknown) => {
+          const appError = toAppError(error);
+          this.events.emit({
+            type: 'auth.logout.failed',
+            status: appError.status,
+            code: appError.code,
+            correlationId: appError.correlationId,
+          });
+          this.clearAndNavigate();
+        },
       });
   }
 
@@ -150,6 +205,12 @@ export class SessionService {
             error.status === 401 || error.status === 403
               ? { status: 'anonymous' }
               : { status: 'error', error };
+          this.events.emit({
+            type: 'auth.context.options.failed',
+            status: error.status,
+            code: error.code,
+            correlationId: error.correlationId,
+          });
           this.stateSignal.set(state);
           return of(state);
         }),

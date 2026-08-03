@@ -21,51 +21,71 @@
     </div>
   </header>
 
+  @if (actionError(); as error) {
+    <app-state-panel
+      kind="error"
+      title="La operación no se ha completado"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Cerrar aviso"
+      (action)="actionError.set(null)"
+    />
+  }
+
   @if (loading()) {
-    <section class="prescriptions-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando prescripciones autorizadas…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando prescripciones"
+      message="Recuperando recetas y alertas del contexto clínico autorizado."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="prescriptions-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Prescripción no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Prescripción no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
   } @else {
     <section class="nexa-grid nexa-grid--4 prescription-metrics" appScrollReveal>
-      <article class="nexa-card">
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="metric-icon"><app-icon name="clock" /></span>
         <div>
           <small>Pendientes de firma</small><strong>{{ counts().pendingReview }}</strong>
           <p>MFA reciente requerida</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="metric-icon metric-icon--green"><app-icon name="check" /></span>
         <div>
           <small>Firmadas</small><strong>{{ counts().signed }}</strong>
           <p>Listas para transmisión</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="metric-icon metric-icon--blue"><app-icon name="shield" /></span>
         <div>
           <small>Alertas clínicas</small><strong>{{ counts().safetyAlerts }}</strong>
           <p>Revisión obligatoria</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <span class="metric-icon metric-icon--coral"><app-icon name="spark" /></span>
         <div>
           <small>Enviadas</small><strong>{{ counts().sent }}</strong>
           <p>Proveedor configurado</p>
         </div>
-      </article>
+      </mat-card>
     </section>
 
-    <section class="nexa-card nexa-section" appScrollReveal [revealDelay]="90">
+    <mat-card
+      appearance="outlined"
+      class="nexa-card nexa-section"
+      role="article"
+      appScrollReveal
+      [revealDelay]="90"
+    >
       <div class="nexa-card__header">
         <div>
           <h2>Actividad reciente</h2>
@@ -121,9 +141,9 @@
                 </td>
                 <td>{{ prescription.prescriberName ?? 'No disponible' }}</td>
                 <td>
-                  <span class="nexa-chip nexa-chip--{{ statusTone(prescription.status) }}">{{
-                    statusLabel(prescription.status)
-                  }}</span>
+                  <app-status-chip [tone]="statusTone(prescription.status)">
+                    {{ statusLabel(prescription.status) }}
+                  </app-status-chip>
                 </td>
                 <td>
                   <div class="row-actions">
@@ -176,7 +196,7 @@
           </tbody>
         </table>
       </div>
-    </section>
+    </mat-card>
 
     <section class="safety-strip nexa-section" appScrollReveal>
       <div>

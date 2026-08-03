@@ -23,6 +23,10 @@ final class SecureKeycloakProvider extends Provider
 {
     public const TRANSACTION_SESSION_KEY = 'auth.oidc.transaction';
 
+    public const TRANSACTIONS_SESSION_KEY = 'auth.oidc.transactions';
+
+    private const MAX_PENDING_TRANSACTIONS = 5;
+
     private ?OidcTransaction $activeTransaction = null;
 
     /** @var array<string, mixed>|null */
@@ -71,6 +75,16 @@ final class SecureKeycloakProvider extends Provider
         }
 
         $transaction = OidcTransaction::issue($returnPath);
+        $transactions = $this->request->session()->get(self::TRANSACTIONS_SESSION_KEY, []);
+        $transactions = is_array($transactions) ? $transactions : [];
+        $transactions[$transaction->state] = $transaction->toSession();
+        if (count($transactions) > self::MAX_PENDING_TRANSACTIONS) {
+            $transactions = array_slice($transactions, -self::MAX_PENDING_TRANSACTIONS, null, true);
+        }
+        $this->request->session()->put(self::TRANSACTIONS_SESSION_KEY, $transactions);
+        // Keep the legacy key for sessions created by older releases. New callbacks
+        // consume the state-indexed collection first, so parallel tabs do not overwrite
+        // each other's nonce and PKCE verifier.
         $this->request->session()->put(self::TRANSACTION_SESSION_KEY, $transaction->toSession());
         $this->activeTransaction = $transaction;
         $this->parameters = ['nonce' => $transaction->nonce];
@@ -94,7 +108,7 @@ final class SecureKeycloakProvider extends Provider
         try {
             return new RedirectResponse($this->getAuthUrl($transaction->state));
         } catch (\Throwable $exception) {
-            $this->request->session()->forget(self::TRANSACTION_SESSION_KEY);
+            $this->forgetPendingTransaction($transaction->state);
 
             throw $exception;
         } finally {
@@ -108,8 +122,25 @@ final class SecureKeycloakProvider extends Provider
      */
     public function user(): ManagerUser
     {
+        $state = $this->request->query('state');
+        $transactionValue = null;
+
+        if (is_string($state) && $state !== '') {
+            $transactions = $this->request->session()->get(self::TRANSACTIONS_SESSION_KEY, []);
+            if (is_array($transactions) && array_key_exists($state, $transactions)) {
+                $transactionValue = $transactions[$state];
+                unset($transactions[$state]);
+                if ($transactions === []) {
+                    $this->request->session()->forget(self::TRANSACTIONS_SESSION_KEY);
+                } else {
+                    $this->request->session()->put(self::TRANSACTIONS_SESSION_KEY, $transactions);
+                }
+            }
+        }
+
+        $legacyTransaction = $this->request->session()->pull(self::TRANSACTION_SESSION_KEY);
         $transaction = OidcTransaction::fromSession(
-            $this->request->session()->pull(self::TRANSACTION_SESSION_KEY),
+            $transactionValue ?? $legacyTransaction,
         );
 
         $lifetime = config('services.keycloak.transaction_ttl_seconds');
@@ -117,8 +148,6 @@ final class SecureKeycloakProvider extends Provider
         if (! is_int($lifetime) || $lifetime < 30 || $lifetime > 900 || $transaction->isExpired(time(), $lifetime)) {
             throw new InvalidOidcTransactionException;
         }
-
-        $state = $this->request->query('state');
 
         if (! is_string($state) || ! hash_equals($transaction->state, $state)) {
             throw new InvalidOidcTransactionException;
@@ -360,5 +389,22 @@ final class SecureKeycloakProvider extends Provider
         }
 
         return array_values(array_filter(explode(' ', $scopes)));
+    }
+
+    /**
+     * Remove one pending transaction and the legacy compatibility value.
+     */
+    private function forgetPendingTransaction(string $state): void
+    {
+        $transactions = $this->request->session()->get(self::TRANSACTIONS_SESSION_KEY, []);
+        if (is_array($transactions)) {
+            unset($transactions[$state]);
+            if ($transactions === []) {
+                $this->request->session()->forget(self::TRANSACTIONS_SESSION_KEY);
+            } else {
+                $this->request->session()->put(self::TRANSACTIONS_SESSION_KEY, $transactions);
+            }
+        }
+        $this->request->session()->forget(self::TRANSACTION_SESSION_KEY);
     }
 }

@@ -24,7 +24,7 @@ final class ClinicalNotePolicy
      */
     public function viewAny(User $user, Patient $patient): bool
     {
-        return $this->permissions->belongsToCurrentTenant($patient)
+        return $this->permissions->belongsToCurrentClinic($patient)
             && $this->permissions->allows($user, 'clinical_notes.read');
     }
 
@@ -33,7 +33,7 @@ final class ClinicalNotePolicy
      */
     public function view(User $user, ClinicalNote $note): bool
     {
-        return $this->permissions->belongsToCurrentTenant($note)
+        return $this->permissions->belongsToCurrentClinic($note)
             && $this->permissions->allows($user, 'clinical_notes.read');
     }
 
@@ -42,7 +42,7 @@ final class ClinicalNotePolicy
      */
     public function create(User $user, Patient $patient): bool
     {
-        return $this->permissions->belongsToCurrentTenant($patient)
+        return $this->permissions->belongsToCurrentClinic($patient)
             && $this->permissions->allows($user, 'clinical_notes.write');
     }
 
@@ -51,7 +51,7 @@ final class ClinicalNotePolicy
      */
     public function sign(User $user, Patient $patient): bool
     {
-        return $this->permissions->belongsToCurrentTenant($patient)
+        return $this->permissions->belongsToCurrentClinic($patient)
             && $this->permissions->allows($user, 'clinical_notes.sign');
     }
 

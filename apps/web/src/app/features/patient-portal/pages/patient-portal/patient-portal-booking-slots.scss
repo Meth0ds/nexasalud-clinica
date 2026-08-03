@@ -24,30 +24,14 @@
 }
 .segmented-choice {
   display: flex;
-  padding: 4px;
+  width: 100%;
+  padding: 3px;
   border: 1px solid var(--nexa-border);
   border-radius: 13px;
   background: var(--nexa-surface-muted);
 }
-.segmented-choice button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 39px;
+.segmented-choice mat-button-toggle {
   flex: 1;
-  gap: 7px;
-  border: 0;
-  border-radius: 9px;
-  color: var(--nexa-ink-soft);
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.61rem;
-  font-weight: 680;
-}
-.segmented-choice button.is-selected {
-  color: var(--nexa-primary);
-  background: var(--nexa-surface);
-  box-shadow: 0 3px 10px rgba(25, 62, 57, 0.07);
 }
 .date-strip {
   display: grid;

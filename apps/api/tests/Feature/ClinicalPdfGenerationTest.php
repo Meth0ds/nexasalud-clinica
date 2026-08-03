@@ -73,13 +73,14 @@ class ClinicalPdfGenerationTest extends TestCase
         ]);
         $role = Role::factory()->create([
             'tenant_id' => $this->tenant->getKey(),
-            'permissions' => ['appointments.read', 'patients.*', 'prescriptions.read', 'billing.read'],
+            'permissions' => ['appointments.read', 'patients.*', 'documents.read', 'prescriptions.read', 'billing.read'],
         ]);
         $this->membership->roles()->attach($role->getKey(), [
             'tenant_id' => $this->tenant->getKey(),
             'granted_by' => $this->actor->getKey(),
             'granted_at' => now(),
         ]);
+        app()->instance('currentClinic', $this->clinic);
         app()->instance('currentMembership', $this->membership);
         $this->generator = app(ClinicalPdfGenerator::class);
     }
@@ -88,6 +89,7 @@ class ClinicalPdfGenerationTest extends TestCase
     {
         app()->forgetInstance('currentTenant');
         app()->forgetInstance('currentMembership');
+        app()->forgetInstance('currentClinic');
 
         parent::tearDown();
     }

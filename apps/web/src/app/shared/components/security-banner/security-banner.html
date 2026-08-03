@@ -1,1 +1,18 @@
-<p>security-banner works!</p>
+<mat-card
+  appearance="outlined"
+  class="security-banner"
+  [class.security-banner--warning]="tone() === 'warning'"
+  [class.security-banner--info]="tone() === 'info'"
+  role="status"
+>
+  <mat-card-content>
+    <span class="security-banner__icon" aria-hidden="true"
+      ><app-icon [name]="icon()" [size]="21"
+    /></span>
+    <span class="security-banner__copy"
+      ><strong>{{ title() }}</strong
+      ><small>{{ message() }}</small></span
+    >
+    <mat-chip>{{ label() }}</mat-chip>
+  </mat-card-content>
+</mat-card>

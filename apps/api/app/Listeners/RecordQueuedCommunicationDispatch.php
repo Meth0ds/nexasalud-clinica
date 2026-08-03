@@ -11,7 +11,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -50,9 +52,11 @@ final class RecordQueuedCommunicationDispatch implements ShouldQueue
      */
     public function middleware(CommunicationQueued $event): array
     {
+        $throttleKey = 'communication-dispatch:'.$event->communicationId;
+
         return [
-            (new WithoutOverlapping('communication-dispatch:'.$event->communicationId))->expireAfter(120),
-            new ThrottlesExceptions(5, 300),
+            (new WithoutOverlapping($throttleKey))->releaseAfter(5)->expireAfter(120),
+            (new ThrottlesExceptions(5, 300))->by($throttleKey)->backoff(1),
         ];
     }
 
@@ -61,33 +65,65 @@ final class RecordQueuedCommunicationDispatch implements ShouldQueue
      */
     public function handle(CommunicationQueued $event): void
     {
-        $alreadyRecorded = AuditEvent::query()
-            ->withoutGlobalScope('tenant')
-            ->where('tenant_id', $event->tenantId)
-            ->where('event_type', 'communication.dispatch_registered')
-            ->where('auditable_type', PatientCommunication::class)
-            ->where('auditable_id', $event->communicationId)
-            ->exists();
+        try {
+            $this->setDatabaseTenantContext($event->tenantId);
 
-        if ($alreadyRecorded) {
-            return;
+            $alreadyRecorded = AuditEvent::query()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $event->tenantId)
+                ->where('event_type', 'communication.dispatch_registered')
+                ->where('auditable_type', PatientCommunication::class)
+                ->where('auditable_id', $event->communicationId)
+                ->exists();
+
+            if ($alreadyRecorded) {
+                return;
+            }
+
+            try {
+                AuditEvent::create([
+                    'tenant_id' => $event->tenantId,
+                    'actor_user_id' => $event->actorUserId,
+                    'actor_subject' => $event->actorSubject,
+                    'event_type' => 'communication.dispatch_registered',
+                    'auditable_type' => PatientCommunication::class,
+                    'auditable_id' => $event->communicationId,
+                    'request_id' => $event->traceId,
+                    'metadata' => [
+                        'channel' => $event->channel,
+                        'content_class' => $event->contentClass,
+                        'uses_external_template' => $event->usesExternalTemplate,
+                    ],
+                    'occurred_at' => now(),
+                ]);
+            } catch (QueryException $exception) {
+                if (! str_contains($exception->getMessage(), 'audit_events_dispatch_unique')) {
+                    throw $exception;
+                }
+            }
+        } finally {
+            $this->clearDatabaseTenantContext();
         }
+    }
 
-        AuditEvent::create([
-            'tenant_id' => $event->tenantId,
-            'actor_user_id' => $event->actorUserId,
-            'actor_subject' => $event->actorSubject,
-            'event_type' => 'communication.dispatch_registered',
-            'auditable_type' => PatientCommunication::class,
-            'auditable_id' => $event->communicationId,
-            'request_id' => $event->traceId,
-            'metadata' => [
-                'channel' => $event->channel,
-                'content_class' => $event->contentClass,
-                'uses_external_template' => $event->usesExternalTemplate,
-            ],
-            'occurred_at' => now(),
-        ]);
+    /**
+     * Set the PostgreSQL tenant setting for this serialized queue job.
+     */
+    private function setDatabaseTenantContext(string $tenantId): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.tenant_id', ?, false)", [$tenantId]);
+        }
+    }
+
+    /**
+     * Clear the setting before the worker handles another tenant's job.
+     */
+    private function clearDatabaseTenantContext(): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.tenant_id', '', false)");
+        }
     }
 
     /**

@@ -1,12 +1,23 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 
 @Component({
   selector: 'app-login',
-  imports: [MatButtonModule, AppIcon],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatChipsModule,
+    MatDividerModule,
+    MatProgressSpinnerModule,
+    AppIcon,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

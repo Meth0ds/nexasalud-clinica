@@ -32,7 +32,7 @@ final class PatientCommunicationPolicy
      */
     public function view(User $user, PatientCommunication $communication): bool
     {
-        return $this->permissions->belongsToCurrentTenant($communication)
+        return $this->permissions->belongsToCurrentClinic($communication)
             && $this->viewAny($user)
             && $this->canAccessClinicalContent($user, $communication);
     }
@@ -50,7 +50,7 @@ final class PatientCommunicationPolicy
      */
     public function update(User $user, PatientCommunication $communication): bool
     {
-        return $this->permissions->belongsToCurrentTenant($communication)
+        return $this->permissions->belongsToCurrentClinic($communication)
             && $this->permissions->allows($user, 'communications.write')
             && $this->canAccessClinicalContent($user, $communication, 'communications.clinical.write');
     }

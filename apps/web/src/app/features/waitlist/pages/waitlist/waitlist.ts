@@ -9,17 +9,21 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { Patient, ReferenceData } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { PatientsService } from '../../../../core/services/patients';
 import { ReferenceDataService } from '../../../../core/services/reference-data';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   CreateWaitlistEntryInput,
@@ -33,11 +37,14 @@ import {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './waitlist.html',
@@ -55,7 +62,8 @@ export class Waitlist {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly creating = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly selectedId = signal<string | null>(null);
   protected readonly entries = signal<readonly WaitlistEntryRecord[]>([]);
@@ -112,6 +120,7 @@ export class Waitlist {
   }
 
   protected openCreate(): void {
+    this.actionError.set(null);
     const referenceData = this.referenceData();
     if (!referenceData || this.patients().length === 0) {
       this.notifications.error(
@@ -161,6 +170,7 @@ export class Waitlist {
       priority: value.priority,
       ...(value.notes.trim() ? { notes: value.notes.trim() } : {}),
     };
+    this.actionError.set(null);
     this.saving.set(true);
     this.waitlistApi
       .create(input)
@@ -177,6 +187,11 @@ export class Waitlist {
             'Solicitud incorporada a la lista de espera y auditada en el centro activo.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(
+            error,
+            'No se ha podido incorporar la solicitud a la lista de espera.',
+          ),
       });
   }
 
@@ -185,6 +200,7 @@ export class Waitlist {
       return;
     }
 
+    this.actionError.set(null);
     this.saving.set(true);
     this.waitlistApi
       .offer(entry)
@@ -202,7 +218,15 @@ export class Waitlist {
             'Oferta temporal registrada durante 20 minutos. Confirma el canal autorizado antes de comunicarla al paciente.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido registrar la oferta temporal.'),
       });
+  }
+
+  private reportActionError(error: unknown, fallback: string): void {
+    const appError = toAppError(error, fallback);
+    this.actionError.set(appError);
+    this.notifications.notify(appError);
   }
 
   protected statusLabel(status: WaitlistStatus): string {
@@ -252,6 +276,9 @@ export class Waitlist {
   }
 
   protected load(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.actionError.set(null);
     forkJoin({
       queue: this.waitlistApi.list(),
       patients: this.patientsApi.search(),
@@ -269,7 +296,10 @@ export class Waitlist {
           this.referenceData.set(referenceData);
           this.selectedId.set(entries[0]?.id ?? null);
         },
-        error: () => this.errorMessage.set('No se ha podido cargar la lista de espera autorizada.'),
+        error: (error: unknown) =>
+          this.errorMessage.set(
+            toAppError(error, 'No se ha podido cargar la lista de espera autorizada.'),
+          ),
       });
   }
 }

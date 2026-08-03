@@ -1,1 +1,31 @@
-<p>state-panel works!</p>
+<mat-card
+  appearance="outlined"
+  class="state-panel"
+  [class.state-panel--error]="kind() === 'error'"
+  [class.state-panel--success]="kind() === 'success'"
+  [class.state-panel--empty]="kind() === 'empty'"
+  [attr.role]="kind() === 'error' ? 'alert' : 'status'"
+  [attr.aria-busy]="kind() === 'loading' ? 'true' : null"
+>
+  <mat-card-content>
+    <div class="state-panel__icon" aria-hidden="true">
+      @if (kind() === 'loading') {
+        <mat-progress-spinner mode="indeterminate" diameter="28" />
+      } @else {
+        <app-icon [name]="icon()" [size]="23" />
+      }
+    </div>
+    <div class="state-panel__copy">
+      <h2>{{ title() }}</h2>
+      <p>{{ message() }}</p>
+      @if (reference(); as value) {
+        <small class="state-panel__reference">Referencia: {{ value }}</small>
+      }
+    </div>
+    @if (actionLabel(); as label) {
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="action.emit()">
+        {{ label }}
+      </button>
+    }
+  </mat-card-content>
+</mat-card>

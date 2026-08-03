@@ -23,41 +23,61 @@
     </div>
   </header>
 
+  @if (actionError(); as error) {
+    <app-state-panel
+      kind="error"
+      title="La operación no se ha completado"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Cerrar aviso"
+      (action)="actionError.set(null)"
+    />
+  }
+
   @if (loading()) {
-    <section class="communications-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando comunicaciones autorizadas…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando comunicaciones"
+      message="Recuperando colas y conversaciones del contexto autorizado."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="communications-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Comunicaciones no disponibles</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Comunicaciones no disponibles"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
   } @else {
     <section class="nexa-grid nexa-grid--4 message-metrics" appScrollReveal>
-      <article class="nexa-card">
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Borradores</small><strong>{{ draftCount() }}</strong>
         <p>No se han enviado</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Cola segura</small><strong>{{ queuedCount() }}</strong>
         <p>Consentimiento validado</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Programadas</small><strong>{{ scheduledCount() }}</strong>
         <p>Fecha futura</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Canceladas</small><strong>{{ cancelledCount() }}</strong>
         <p>Trazabilidad conservada</p>
-      </article>
+      </mat-card>
     </section>
 
     <section class="communications-layout nexa-section">
-      <aside class="message-folders nexa-card" appScrollReveal>
+      <mat-card
+        appearance="outlined"
+        class="message-folders nexa-card"
+        role="article"
+        appScrollReveal
+      >
         <button
+          mat-button
           type="button"
           [class.is-active]="activeFilter() === 'all'"
           (click)="setFilter('all')"
@@ -65,6 +85,7 @@
           <app-icon name="bell" [size]="17" /> Todas <span>{{ communications().length }}</span>
         </button>
         <button
+          mat-button
           type="button"
           [class.is-active]="activeFilter() === 'draft'"
           (click)="setFilter('draft')"
@@ -72,6 +93,7 @@
           <app-icon name="more" [size]="17" /> Borradores <span>{{ draftCount() }}</span>
         </button>
         <button
+          mat-button
           type="button"
           [class.is-active]="activeFilter() === 'queued'"
           (click)="setFilter('queued')"
@@ -79,6 +101,7 @@
           <app-icon name="clock" [size]="17" /> Cola segura <span>{{ queuedCount() }}</span>
         </button>
         <button
+          mat-button
           type="button"
           [class.is-active]="activeFilter() === 'cancelled'"
           (click)="setFilter('cancelled')"
@@ -95,9 +118,15 @@
         <label
           ><i class="channel-dot channel-dot--email"></i> Correo <span>Solo plantilla</span></label
         >
-      </aside>
+      </mat-card>
 
-      <article class="message-list nexa-card" appScrollReveal [revealDelay]="70">
+      <mat-card
+        appearance="outlined"
+        class="message-list nexa-card"
+        role="article"
+        appScrollReveal
+        [revealDelay]="70"
+      >
         <div class="nexa-card__header">
           <div>
             <h2>Línea de comunicaciones</h2>
@@ -113,6 +142,7 @@
         </div>
         @for (record of filteredCommunications(); track record.id) {
           <button
+            mat-button
             class="conversation"
             type="button"
             [class.is-unread]="record.status === 'draft'"
@@ -146,9 +176,15 @@
             </div>
           </div>
         }
-      </article>
+      </mat-card>
 
-      <aside class="automation-panel nexa-card" appScrollReveal [revealDelay]="120">
+      <mat-card
+        appearance="outlined"
+        class="automation-panel nexa-card"
+        role="article"
+        appScrollReveal
+        [revealDelay]="120"
+      >
         @if (selected(); as record) {
           <div class="nexa-card__header">
             <div>
@@ -156,9 +192,9 @@
               <h2>{{ statusLabel(record.status) }}</h2>
               <p>{{ channelLabel(record.channel) }}</p>
             </div>
-            <span class="nexa-chip nexa-chip--{{ statusTone(record.status) }}">{{
-              record.status
-            }}</span>
+            <app-status-chip [tone]="statusTone(record.status)">
+              {{ record.status }}
+            </app-status-chip>
           </div>
           <div class="automation-row">
             <span><app-icon name="shield" [size]="17" /></span>
@@ -223,7 +259,7 @@
             ></span
           >
         </div>
-      </aside>
+      </mat-card>
     </section>
   }
 </div>
@@ -264,25 +300,16 @@
       >
       <fieldset>
         <legend>Canal</legend>
-        <button
-          type="button"
-          [class.is-selected]="currentChannel() === 'portal'"
-          (click)="composeForm.controls.channel.setValue('portal')"
+        <mat-button-toggle-group
+          class="channel-toggle"
+          [value]="currentChannel()"
+          aria-label="Canal de comunicación"
+          (change)="setChannel($event.value)"
         >
-          Portal seguro</button
-        ><button
-          type="button"
-          [class.is-selected]="currentChannel() === 'sms'"
-          (click)="composeForm.controls.channel.setValue('sms')"
-        >
-          SMS</button
-        ><button
-          type="button"
-          [class.is-selected]="currentChannel() === 'email'"
-          (click)="composeForm.controls.channel.setValue('email')"
-        >
-          Correo
-        </button>
+          <mat-button-toggle value="portal">Portal seguro</mat-button-toggle>
+          <mat-button-toggle value="sms">SMS</mat-button-toggle>
+          <mat-button-toggle value="email">Correo</mat-button-toggle>
+        </mat-button-toggle-group>
       </fieldset>
       @if (!isExternalChannel()) {
         <mat-form-field appearance="outline"

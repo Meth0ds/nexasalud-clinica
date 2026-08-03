@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -17,10 +18,13 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { Patient } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { PatientsService } from '../../../../core/services/patients';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   ClinicalNoteRecord,
@@ -33,6 +37,7 @@ import {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
@@ -40,6 +45,8 @@ import {
     MatTabsModule,
     RouterLink,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './clinical-records.html',
@@ -63,13 +70,18 @@ export class ClinicalRecords {
   protected readonly saving = signal(false);
   protected readonly editingNote = signal(false);
   protected readonly privacyVisible = signal(true);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly selectedPatientId = signal<string | null>(null);
   protected readonly patients = signal<readonly Patient[]>([]);
   protected readonly notes = signal<readonly ClinicalNoteRecord[]>([]);
   protected readonly selectedPatient = computed(
     () => this.patients().find((patient) => patient.id === this.selectedPatientId()) ?? null,
   );
+
+  protected retry(): void {
+    this.loadPatients();
+  }
   protected readonly signedNotes = computed(
     () => this.notes().filter((note) => note.status === 'signed').length,
   );
@@ -94,6 +106,7 @@ export class ClinicalRecords {
   }
 
   protected openNoteEditor(): void {
+    this.actionError.set(null);
     if (!this.selectedPatient()) {
       this.notifications.error('Selecciona un paciente autorizado antes de registrar una nota.');
       return;
@@ -143,6 +156,7 @@ export class ClinicalRecords {
 
     const content = this.noteForm.controls.content.value.trim();
     this.saving.set(true);
+    this.actionError.set(null);
     const request =
       target === 'signed'
         ? this.notesApi.sign(patientId, content)
@@ -162,10 +176,20 @@ export class ClinicalRecords {
               : 'Borrador clínico guardado como registro inmutable.',
           );
         },
+        error: (error: unknown) =>
+          this.reportActionError(
+            error,
+            target === 'signed'
+              ? 'No se ha podido firmar la nota clínica.'
+              : 'No se ha podido guardar el borrador clínico.',
+          ),
       });
   }
 
   private loadPatients(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.actionError.set(null);
     forkJoin({ patients: this.patientsApi.search() })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -173,8 +197,10 @@ export class ClinicalRecords {
       )
       .subscribe({
         next: ({ patients }) => this.patients.set(patients.items),
-        error: () =>
-          this.errorMessage.set('No se ha podido cargar el directorio de pacientes autorizado.'),
+        error: (error: unknown) =>
+          this.errorMessage.set(
+            toAppError(error, 'No se ha podido cargar el directorio de pacientes autorizado.'),
+          ),
       });
   }
 
@@ -188,10 +214,16 @@ export class ClinicalRecords {
       )
       .subscribe({
         next: ({ notes }) => this.notes.set(notes),
-        error: () =>
+        error: (error: unknown) =>
           this.errorMessage.set(
-            'No se ha podido cargar la línea clínica del paciente seleccionado.',
+            toAppError(error, 'No se ha podido cargar la línea clínica del paciente seleccionado.'),
           ),
       });
+  }
+
+  private reportActionError(error: unknown, fallback: string): void {
+    const appError = toAppError(error, fallback);
+    this.actionError.set(appError);
+    this.notifications.notify(appError);
   }
 }

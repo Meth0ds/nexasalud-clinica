@@ -12,6 +12,7 @@ use App\Http\Requests\Api\V1\UpdatePrescriptionRequest;
 use App\Http\Resources\Api\V1\PrescriptionResource;
 use App\Models\Appointment;
 use App\Models\PatientAllergy;
+use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\Tenant;
 use App\Models\User;
@@ -48,6 +49,7 @@ final class PrescriptionController extends Controller
 
         $prescriptions = Prescription::query()
             ->with(['patient.allergies', 'prescriber', 'items', 'appointment'])
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->when(isset($filters['patientId']), fn ($query) => $query->where('patient_id', $filters['patientId']))
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->when(isset($filters['prescriberId']), fn ($query) => $query->where('prescriber_user_id', $filters['prescriberId']))
@@ -64,6 +66,8 @@ final class PrescriptionController extends Controller
     {
         $data = $request->validated();
         $actor = $this->actor($request);
+        $this->requireCurrentClinic($data['clinicId']);
+        $this->requirePatientInCurrentClinic(Patient::query()->findOrFail($data['patientId']));
         $this->validateAppointmentContext($data);
 
         $prescription = DB::transaction(function () use ($actor, $data): Prescription {
@@ -109,11 +113,22 @@ final class PrescriptionController extends Controller
     {
         $data = $request->validated();
         abort_unless($prescription->status === PrescriptionStatus::Draft, Response::HTTP_CONFLICT);
+        $this->requireCurrentClinic($prescription->clinic_id);
+        $this->requirePatientInCurrentClinic(Patient::query()->findOrFail($prescription->patient_id));
+        $this->validateAppointmentContextForPrescription($prescription, $data);
 
         $updated = DB::transaction(function () use ($data, $prescription): Prescription {
             $locked = Prescription::query()->lockForUpdate()->findOrFail($prescription->getKey());
             $this->requireVersion($locked, (int) $data['version']);
             abort_unless($locked->status === PrescriptionStatus::Draft, Response::HTTP_CONFLICT);
+
+            if (isset($data['appointmentId'])) {
+                $appointment = Appointment::query()->findOrFail($data['appointmentId']);
+                abort_if(
+                    $appointment->patient_id !== $locked->patient_id || $appointment->clinic_id !== $locked->clinic_id,
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                );
+            }
 
             $locked->clinical_indication = $data['clinicalIndication'];
             $locked->appointment_id = $data['appointmentId'] ?? null;
@@ -240,6 +255,24 @@ final class PrescriptionController extends Controller
         $appointment = Appointment::query()->findOrFail($data['appointmentId']);
         abort_if(
             $appointment->patient_id !== $data['patientId'] || $appointment->clinic_id !== $data['clinicId'],
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+        );
+    }
+
+    /**
+     * Ensure a draft update cannot rebind an existing prescription to another patient or clinic.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function validateAppointmentContextForPrescription(Prescription $prescription, array $data): void
+    {
+        if (! isset($data['appointmentId'])) {
+            return;
+        }
+
+        $appointment = Appointment::query()->findOrFail($data['appointmentId']);
+        abort_if(
+            $appointment->patient_id !== $prescription->patient_id || $appointment->clinic_id !== $prescription->clinic_id,
             Response::HTTP_UNPROCESSABLE_ENTITY,
         );
     }

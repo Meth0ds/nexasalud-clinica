@@ -36,22 +36,28 @@
   </header>
 
   @if (loading()) {
-    <section class="dashboard-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando datos operativos autorizados…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando jornada asistencial"
+      message="Recuperando únicamente los datos operativos autorizados del centro activo."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="dashboard-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Resumen no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      icon="shield"
+      title="Resumen no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
   } @else if (dashboard(); as data) {
     <section class="nexa-grid nexa-grid--4 metrics" aria-label="Resumen diario">
       @for (metric of metrics(); track metric.label; let index = $index) {
-        <article
+        <mat-card
+          appearance="outlined"
           class="nexa-card metric-card metric-card--{{ metric.tone }}"
+          role="article"
           appScrollReveal
           [revealDelay]="index * 70"
         >
@@ -61,12 +67,12 @@
             <strong>{{ metric.value }}</strong
             ><small>{{ metric.note }}</small>
           </div>
-        </article>
+        </mat-card>
       }
     </section>
 
     <section class="dashboard-layout nexa-section">
-      <article class="nexa-card day-card" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card day-card" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Agenda del día</h2>
@@ -84,6 +90,7 @@
           <div class="timeline__rail" aria-hidden="true"><span></span></div>
           @for (appointment of appointments(); track appointment.id) {
             <button
+              mat-button
               class="appointment-row"
               [class.is-selected]="selectedAppointment() === appointment.id"
               type="button"
@@ -106,9 +113,12 @@
               ><span class="appointment-row__place"
                 ><app-icon [name]="appointment.roomName ? 'location' : 'video'" [size]="14" />
                 {{ appointment.roomName ?? 'Canal remoto' }}</span
-              ><span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}">{{
-                statusLabel(appointment.status)
-              }}</span
+              ><mat-chip-set class="appointment-status" role="list"
+                ><mat-chip
+                  role="listitem"
+                  class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}"
+                  >{{ statusLabel(appointment.status) }}</mat-chip
+                ></mat-chip-set
               ><app-icon name="chevron" [size]="16" />
             </button>
             @if (selectedAppointment() === appointment.id) {
@@ -158,10 +168,16 @@
             </div>
           }
         </div>
-      </article>
+      </mat-card>
 
       <aside class="dashboard-side">
-        <article class="nexa-card pulse-card" appScrollReveal [revealDelay]="100">
+        <mat-card
+          appearance="outlined"
+          class="nexa-card pulse-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="100"
+        >
           <div class="pulse-card__top">
             <div>
               <p class="nexa-eyebrow">Capacidad del día</p>
@@ -169,9 +185,12 @@
             </div>
             <span class="pulse-score">{{ data.metrics.occupancyPercent }}</span>
           </div>
-          <div class="occupancy-track" aria-label="Ocupación de agenda">
-            <i [style.width.%]="data.metrics.occupancyPercent"></i>
-          </div>
+          <mat-progress-bar
+            class="occupancy-track"
+            mode="determinate"
+            [value]="data.metrics.occupancyPercent"
+            aria-label="Ocupación de agenda"
+          />
           <div class="pulse-axis">
             <span>0%</span><span>Capacidad ocupada</span><span>100%</span>
           </div>
@@ -179,15 +198,23 @@
             <app-icon name="spark" [size]="15" /> {{ data.metrics.active }} citas están activas;
             {{ data.metrics.completed }} ya se han completado.
           </p>
-        </article>
-        <article class="nexa-card attention-card" appScrollReveal [revealDelay]="160">
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="nexa-card attention-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="160"
+        >
           <div class="nexa-card__header">
             <div>
               <h2>Requiere seguimiento</h2>
               <p>Datos operativos actuales</p>
             </div>
-            <span class="nexa-chip nexa-chip--warning"
-              >{{ data.metrics.waitingList + data.metrics.cancelledOrNoShow }} asuntos</span
+            <mat-chip-set role="list" aria-label="Asuntos que requieren seguimiento"
+              ><mat-chip role="listitem" class="nexa-chip nexa-chip--warning">
+                {{ data.metrics.waitingList + data.metrics.cancelledOrNoShow }} asuntos
+              </mat-chip></mat-chip-set
             >
           </div>
           <div class="attention-list">
@@ -206,17 +233,13 @@
               ><app-icon name="chevron" [size]="15"
             /></a>
           </div>
-        </article>
-        <article class="nexa-card privacy-card" appScrollReveal [revealDelay]="220">
-          <app-icon name="shield" [size]="21" />
-          <div>
-            <strong>Acceso asistencial auditado</strong
-            ><small
-              >Este resumen se calcula para el tenant y centro seleccionados; no conserva datos al
-              cambiar de contexto.</small
-            >
-          </div>
-        </article>
+        </mat-card>
+        <app-security-banner
+          class="privacy-card"
+          title="Acceso asistencial auditado"
+          message="Este resumen se calcula para el tenant y centro seleccionados; no conserva datos al cambiar de contexto."
+          label="Auditado"
+        />
       </aside>
     </section>
   }

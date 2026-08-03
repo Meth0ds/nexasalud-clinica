@@ -23,40 +23,54 @@
     </div>
   </header>
 
+  @if (actionError(); as error) {
+    <app-state-panel
+      kind="error"
+      title="La operación no se ha completado"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Cerrar aviso"
+      (action)="actionError.set(null)"
+    />
+  }
+
   @if (loading()) {
-    <section class="waitlist-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando lista de espera autorizada…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando lista de espera"
+      message="Recuperando solicitudes y prioridades del centro activo."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="waitlist-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Lista de espera no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Lista de espera no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="load()"
+    />
   } @else {
     <section class="nexa-grid nexa-grid--4 queue-summary" appScrollReveal>
-      <article class="nexa-card">
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>En espera</small><strong>{{ waitingCount() }}</strong>
         <p>Solicitudes pendientes</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Prioridad clínica</small><strong>{{ clinicalPriorityCount() }}</strong>
         <p>Prioridad 1 o 2</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Espera mediana</small><strong>{{ medianWaitingDays() }} días</strong>
         <p>Solicitudes pendientes</p>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <small>Ofertas temporales</small><strong>{{ offeredCount() }}</strong>
         <p>Requieren seguimiento</p>
-      </article>
+      </mat-card>
     </section>
 
     <section class="waitlist-layout nexa-section">
-      <article class="nexa-card queue-list" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card queue-list" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Solicitudes activas</h2>
@@ -72,6 +86,7 @@
         </div>
         @for (entry of filteredEntries(); track entry.id) {
           <button
+            mat-button
             class="queue-row"
             type="button"
             [class.is-selected]="selectedId() === entry.id"
@@ -86,13 +101,13 @@
               ><app-icon name="calendar" [size]="14" /> {{ windowLabel(entry) }}</span
             ><span
               ><small>En espera</small><strong>{{ waitingLabel(entry.waitingSince) }}</strong></span
-            ><span class="nexa-chip nexa-chip--{{ priorityTone(entry.priority) }}">{{
-              priorityLabel(entry.priority)
-            }}</span
-            ><span class="nexa-chip nexa-chip--{{ statusTone(entry.status) }}">{{
-              statusLabel(entry.status)
-            }}</span
-            ><app-icon name="chevron" [size]="15" />
+            ><app-status-chip [tone]="priorityTone(entry.priority)">
+              {{ priorityLabel(entry.priority) }}
+            </app-status-chip>
+            <app-status-chip [tone]="statusTone(entry.status)">
+              {{ statusLabel(entry.status) }}
+            </app-status-chip>
+            <app-icon name="chevron" [size]="15" />
           </button>
         } @empty {
           <div class="nexa-empty">
@@ -109,10 +124,16 @@
             </div>
           </div>
         }
-      </article>
+      </mat-card>
 
       @if (selected(); as entry) {
-        <aside class="match-panel nexa-card" appScrollReveal [revealDelay]="90">
+        <mat-card
+          appearance="outlined"
+          class="match-panel nexa-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="90"
+        >
           <div class="match-panel__top">
             <span><app-icon name="spark" [size]="22" /></span>
             <div>
@@ -166,7 +187,7 @@
             <app-icon name="clock" [size]="14" /> La oferta vence en 20 minutos. Comunícala solo por
             el canal autorizado del paciente.
           </p>
-        </aside>
+        </mat-card>
       }
     </section>
   }

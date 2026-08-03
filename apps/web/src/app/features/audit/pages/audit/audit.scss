@@ -72,19 +72,6 @@
 .audit-toolbar .nexa-search {
   flex: 1;
 }
-.audit-toolbar > button:not(.mat-mdc-button-base) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 11px;
-  border: 1px solid var(--nexa-border);
-  border-radius: 10px;
-  color: var(--nexa-ink-soft);
-  background: var(--nexa-surface);
-  cursor: pointer;
-  font-size: 0.55rem;
-}
 .audit-layout {
   display: grid;
   align-items: start;

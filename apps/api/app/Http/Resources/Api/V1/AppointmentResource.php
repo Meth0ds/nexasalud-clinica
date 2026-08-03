@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Enums\AppointmentStatus;
+use App\Models\Appointment;
 use App\Models\User;
 use App\Support\Authorization\PermissionService;
 use Illuminate\Http\Request;
@@ -64,8 +65,11 @@ class AppointmentResource extends JsonResource
         }
 
         $actor = $request->user();
+        $permissions = app(PermissionService::class);
         $allowed = $actor instanceof User
-            && app(PermissionService::class)->allows($actor, 'appointments.reason.read');
+            && $this->resource instanceof Appointment
+            && $permissions->belongsToCurrentTenant($this->resource)
+            && $permissions->allows($actor, 'appointments.reason.read');
 
         $request->attributes->set('appointments.can_view_reason', $allowed);
 

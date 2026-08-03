@@ -29,7 +29,7 @@ class WaitlistEntryPolicy
      */
     public function view(User $user, WaitlistEntry $entry): bool
     {
-        return $this->permissions->belongsToCurrentTenant($entry) && $this->viewAny($user);
+        return $this->permissions->belongsToCurrentClinic($entry) && $this->viewAny($user);
     }
 
     /**
@@ -45,7 +45,7 @@ class WaitlistEntryPolicy
      */
     public function update(User $user, WaitlistEntry $entry): bool
     {
-        return $this->permissions->belongsToCurrentTenant($entry) && $this->permissions->allows($user, 'appointments.write');
+        return $this->permissions->belongsToCurrentClinic($entry) && $this->permissions->allows($user, 'appointments.write');
     }
 
     /**

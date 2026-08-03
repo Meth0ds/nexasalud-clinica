@@ -24,22 +24,23 @@
   </header>
 
   @if (loading()) {
-    <section class="loading-card nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando controles de administración…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando controles de administración"
+      message="Verificando el contexto, MFA y permisos efectivos del centro activo."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="error-card nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>No se pudo cargar el centro de control</strong>
-        <p>{{ error }}</p>
-      </div>
-      <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
-        Reintentar
-      </button>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="No se pudo cargar el centro de control"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="refresh()"
+    />
   } @else {
-    <section
+    <mat-card
+      appearance="outlined"
       class="posture-strip nexa-card nexa-card--flat"
       aria-label="Controles de acceso activos"
       appScrollReveal
@@ -66,16 +67,17 @@
         <strong>{{ overview()?.auditEventsLast24Hours ?? 0 }}</strong
         ><small>eventos / 24 h</small>
       </div>
-    </section>
+    </mat-card>
 
     <div class="control-shell nexa-section">
-      <aside class="control-nav nexa-card nexa-card--flat" appScrollReveal>
+      <mat-card appearance="outlined" class="control-nav nexa-card nexa-card--flat" appScrollReveal>
         <div class="control-nav__head">
           <span>Ámbitos de control</span><small>{{ sections.length }} módulos</small>
         </div>
         <nav aria-label="Secciones de administración">
           @for (section of sections; track section.id) {
             <button
+              mat-button
               type="button"
               [class.is-active]="activeSection() === section.id"
               [attr.aria-current]="activeSection() === section.id ? 'page' : null"
@@ -96,7 +98,7 @@
             ><small>Motivo y MFA reciente obligatorios.</small></span
           >
         </div>
-      </aside>
+      </mat-card>
 
       <main class="control-stage" tabindex="-1">
         <header class="stage-heading" appScrollReveal>
@@ -125,7 +127,12 @@
                 ><span>mínimo privilegio</span>
               </article>
             </section>
-            <section class="nexa-card stage-card" appScrollReveal [revealDelay]="80">
+            <mat-card
+              appearance="outlined"
+              class="nexa-card stage-card"
+              appScrollReveal
+              [revealDelay]="80"
+            >
               <div class="nexa-card__header compact-head">
                 <div>
                   <h2>Directorio de acceso</h2>
@@ -176,12 +183,9 @@
                         </td>
                         <td>{{ formatTimestamp(user.lastLoginAt) }}</td>
                         <td>
-                          <span
-                            class="nexa-chip"
-                            [class.nexa-chip--success]="user.active"
-                            [class.nexa-chip--warning]="!user.active"
-                            >{{ user.active ? 'Activa' : 'Suspendida' }}</span
-                          >
+                          <app-status-chip [tone]="user.active ? 'success' : 'warning'">
+                            {{ user.active ? 'Activa' : 'Suspendida' }}
+                          </app-status-chip>
                         </td>
                         <td>
                           <button mat-button type="button" (click)="selectUser(user)">
@@ -199,10 +203,11 @@
                   </tbody>
                 </table>
               </div>
-            </section>
+            </mat-card>
 
             @if (selectedUser(); as user) {
-              <section
+              <mat-card
+                appearance="outlined"
                 class="nexa-card action-card"
                 appScrollReveal
                 [revealDelay]="100"
@@ -292,12 +297,12 @@
                     </button>
                   </div>
                 }
-              </section>
+              </mat-card>
             }
           }
 
           @case ('roles') {
-            <section class="nexa-card stage-card" appScrollReveal>
+            <mat-card appearance="outlined" class="nexa-card stage-card" appScrollReveal>
               <div class="nexa-card__header">
                 <div>
                   <h2>Matriz de privilegio mínimo</h2>
@@ -306,19 +311,16 @@
                     flujo de gobierno explícito.
                   </p>
                 </div>
-                <span class="nexa-chip nexa-chip--info">Solo lectura</span>
+                <app-status-chip tone="info">Solo lectura</app-status-chip>
               </div>
               <div class="role-cards">
                 @for (role of roles(); track role.id) {
                   <article class="role-card">
                     <div>
                       <span class="role-code">{{ role.code }}</span
-                      ><span
-                        class="nexa-chip"
-                        [class.nexa-chip--success]="role.system"
-                        [class.nexa-chip--info]="!role.system"
-                        >{{ role.system ? 'Sistema' : 'Personalizado' }}</span
-                      >
+                      ><app-status-chip [tone]="role.system ? 'success' : 'info'">
+                        {{ role.system ? 'Sistema' : 'Personalizado' }}
+                      </app-status-chip>
                     </div>
                     <h3>{{ role.name }}</h3>
                     <p>
@@ -339,12 +341,12 @@
                   <p class="empty-cell">No hay roles disponibles para este tenant.</p>
                 }
               </div>
-            </section>
+            </mat-card>
           }
 
           @case ('security') {
             <section class="split-layout security-layout">
-              <article class="nexa-card security-hero" appScrollReveal>
+              <mat-card appearance="outlined" class="nexa-card security-hero" appScrollReveal>
                 <span class="security-mark"><app-icon name="shield" [size]="26" /></span>
                 <div>
                   <p class="nexa-eyebrow">Política aplicada</p>
@@ -364,8 +366,13 @@
                     <dd>{{ overview()?.mfaPolicy?.methods?.join(', ') }}</dd>
                   </div>
                 </dl>
-              </article>
-              <aside class="nexa-card review-card" appScrollReveal [revealDelay]="90">
+              </mat-card>
+              <mat-card
+                appearance="outlined"
+                class="nexa-card review-card"
+                appScrollReveal
+                [revealDelay]="90"
+              >
                 <app-icon name="eye" [size]="21" />
                 <div>
                   <strong>Revisión operacional</strong>
@@ -377,9 +384,14 @@
                 <button mat-stroked-button type="button" (click)="selectSection('users')">
                   Revisar usuarios
                 </button>
-              </aside>
+              </mat-card>
             </section>
-            <section class="nexa-card session-card" appScrollReveal [revealDelay]="110">
+            <mat-card
+              appearance="outlined"
+              class="nexa-card session-card"
+              appScrollReveal
+              [revealDelay]="110"
+            >
               <div class="nexa-card__header">
                 <div>
                   <h2>Revocación de sesiones</h2>
@@ -388,7 +400,7 @@
                     sesiones mediante el servidor.
                   </p>
                 </div>
-                <span class="nexa-chip nexa-chip--success">Auditable</span>
+                <app-status-chip tone="success">Auditable</app-status-chip>
               </div>
               <div class="session-table">
                 @for (user of users(); track user.userId) {
@@ -400,12 +412,10 @@
                         >Última revocación: {{ formatTimestamp(user.sessionsRevokedAt) }}</small
                       >
                     </div>
-                    <span
-                      class="nexa-chip"
-                      [class.nexa-chip--success]="user.active"
-                      [class.nexa-chip--warning]="!user.active"
-                      >{{ user.active ? 'Activa' : 'Suspendida' }}</span
-                    ><button
+                    <app-status-chip [tone]="user.active ? 'success' : 'warning'">
+                      {{ user.active ? 'Activa' : 'Suspendida' }}
+                    </app-status-chip>
+                    <button
                       mat-stroked-button
                       type="button"
                       (click)="prepareSessionRevocation(user)"
@@ -417,10 +427,18 @@
                   <p class="empty-cell">No hay cuentas disponibles.</p>
                 }
               </div>
-            </section>
+            </mat-card>
           }
         }
 
+        @if (actionError(); as error) {
+          <app-state-panel
+            kind="error"
+            title="No se ha podido aplicar el cambio"
+            [message]="error.message"
+            [reference]="error.correlationId ?? null"
+          />
+        }
         <p class="local-notice" role="status" aria-live="polite">
           <app-icon name="shield" [size]="14" /> {{ actionMessage() }}
         </p>

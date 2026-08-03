@@ -56,11 +56,13 @@ export interface CreatePrescriptionInput {
 export interface GeneratedDocument {
   readonly id: string;
   readonly documentType: string;
-  readonly status: string;
+  readonly status: 'generating' | 'ready' | 'failed' | 'voided' | 'expired';
   readonly revision: number;
   readonly templateVersion: string;
   readonly generatedAt: string | null;
-  readonly downloadPath: string;
+  readonly downloadPath: string | null;
+  readonly statusPath?: string;
+  readonly pollAfterSeconds?: number;
 }
 
 export interface DownloadedDocument {

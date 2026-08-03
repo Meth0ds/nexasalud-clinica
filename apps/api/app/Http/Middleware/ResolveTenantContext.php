@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Resolves one authorized tenant membership and clinic for the request lifetime only.
@@ -50,7 +51,8 @@ class ResolveTenantContext
                 throw new TenantAccessDeniedException;
             }
 
-            $clinic = $this->resolveClinic($request, $tenant);
+            $clinic = $this->resolveClinic($request, $tenant, $membership);
+            $this->setDatabaseTenantContext($tenant->getKey());
             app()->instance('currentTenant', $tenant);
             app()->instance('currentMembership', $membership);
             app()->instance('currentClinic', $clinic);
@@ -58,6 +60,7 @@ class ResolveTenantContext
 
             return $next($request);
         } finally {
+            $this->clearDatabaseTenantContext();
             $this->forgetContext();
         }
     }
@@ -105,12 +108,21 @@ class ResolveTenantContext
     /**
      * Selects an active clinic within the resolved tenant without trusting arbitrary request input.
      */
-    private function resolveClinic(Request $request, Tenant $tenant): Clinic
+    private function resolveClinic(Request $request, Tenant $tenant, Membership $membership): Clinic
     {
         $query = Clinic::query()
             ->withoutGlobalScope('tenant')
             ->where('tenant_id', $tenant->getKey())
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->whereExists(function ($grantQuery) use ($membership, $tenant): void {
+                $grantQuery->selectRaw('1')
+                    ->from('membership_clinic')
+                    ->whereColumn('membership_clinic.clinic_id', 'clinics.id')
+                    ->where('membership_clinic.membership_id', $membership->getKey())
+                    ->where('membership_clinic.tenant_id', $tenant->getKey())
+                    ->where('membership_clinic.is_active', true);
+            });
         $selectedClinicId = $request->session()->get(self::CLINIC_SESSION_KEY);
 
         if (is_string($selectedClinicId) && $selectedClinicId !== '') {
@@ -148,5 +160,29 @@ class ResolveTenantContext
         app()->forgetInstance('currentClinic');
         app()->forgetInstance('currentMembership');
         app()->forgetInstance('currentTenant');
+    }
+
+    /**
+     * Set the PostgreSQL session setting consumed by FORCE ROW LEVEL SECURITY policies.
+     */
+    private function setDatabaseTenantContext(string $tenantId): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        DB::statement("SELECT set_config('app.tenant_id', ?, false)", [$tenantId]);
+    }
+
+    /**
+     * Clear the session setting before a pooled/long-lived connection can serve another request.
+     */
+    private function clearDatabaseTenantContext(): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        DB::statement("SELECT set_config('app.tenant_id', '', false)");
     }
 }

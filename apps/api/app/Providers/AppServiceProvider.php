@@ -71,6 +71,9 @@ class AppServiceProvider extends ServiceProvider
         $allowedOrigins = config('cors.allowed_origins');
         $trustedHosts = config('app.trusted_hosts');
         $trustedProxies = config('app.trusted_proxies');
+        $clinicalFilesystem = config('filesystems.disks.clinical');
+        $postgresConnection = config('database.connections.pgsql');
+        $redisConnection = config('database.redis.default');
         $absoluteLifetime = config('session.absolute_lifetime');
         $idleLifetime = config('session.lifetime');
 
@@ -88,7 +91,7 @@ class AppServiceProvider extends ServiceProvider
             && is_array($requiredAcrValues) && $requiredAcrValues !== []
             && count(array_filter($requiredAcrValues, $this->isStrongAcrValue(...))) === count($requiredAcrValues)
             && is_array($requiredAmrValues) && $requiredAmrValues !== []
-            && array_intersect($requiredAmrValues, ['fido', 'hwk', 'mfa', 'otp', 'passkey', 'webauthn']) !== []
+            && array_intersect($requiredAmrValues, ['fido', 'hwk', 'passkey', 'webauthn']) !== []
             && is_array($allowedAlgorithms) && $allowedAlgorithms !== []
             && array_diff($allowedAlgorithms, ['RS256', 'RS384', 'RS512', 'PS256', 'ES256', 'ES384']) === []
             && config('session.driver') === 'redis'
@@ -99,6 +102,16 @@ class AppServiceProvider extends ServiceProvider
             && $absoluteLifetime >= $idleLifetime
             && $absoluteLifetime <= 1440
             && config('cache.default') === 'redis'
+            && is_array($postgresConnection)
+            && ($postgresConnection['sslmode'] ?? null) === 'verify-full'
+            && is_string($postgresConnection['sslrootcert'] ?? null)
+            && $postgresConnection['sslrootcert'] !== ''
+            && is_array($redisConnection)
+            && ($redisConnection['scheme'] ?? null) === 'tls'
+            && is_array($clinicalFilesystem)
+            && ($clinicalFilesystem['driver'] ?? null) === 's3'
+            && is_string($clinicalFilesystem['bucket'] ?? null)
+            && $clinicalFilesystem['bucket'] !== ''
             && config('session.cookie') === '__Host-nexasalud_session'
             && config('session.secure') === true
             && config('session.http_only') === true
@@ -112,7 +125,9 @@ class AppServiceProvider extends ServiceProvider
             && in_array($this->origin($frontendUrl), $allowedOrigins, true)
             && config('cors.allowed_origins_patterns') === []
             && is_array($trustedHosts) && $trustedHosts !== []
+            && ! in_array('*', $trustedHosts, true)
             && is_array($trustedProxies) && $trustedProxies !== []
+            && ! in_array('*', $trustedProxies, true)
             && config('app.debug') === false;
 
         if (! $valid) {

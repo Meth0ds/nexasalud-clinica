@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreInvoiceRequest;
 use App\Http\Resources\Api\V1\InvoiceResource;
 use App\Models\Invoice;
+use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\PatientCoverage;
 use App\Models\Payment;
 use App\Models\Tenant;
@@ -46,6 +48,7 @@ final class InvoiceController extends Controller
 
         $invoices = Invoice::query()
             ->with(['patient', 'items', 'payments', 'coverage.insurer', 'clinic'])
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->when(isset($filters['patientId']), fn ($query) => $query->where('patient_id', $filters['patientId']))
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->latest('created_at')
@@ -60,6 +63,9 @@ final class InvoiceController extends Controller
     public function store(StoreInvoiceRequest $request): InvoiceResource
     {
         $data = $request->validated();
+        $this->requireCurrentClinic($data['clinicId']);
+        $this->requirePatientInCurrentClinic(Patient::query()->findOrFail($data['patientId']));
+        $this->validateAppointmentContext($data);
         $this->validateCoverage($data['coverageId'] ?? null, $data['patientId']);
 
         $invoice = DB::transaction(function () use ($data): Invoice {
@@ -282,6 +288,24 @@ final class InvoiceController extends Controller
 
         $coverage = PatientCoverage::query()->findOrFail($coverageId);
         abort_if($coverage->patient_id !== $patientId || ! $coverage->is_active, Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * Ensure an invoice cannot be linked to an appointment from another patient or clinic.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function validateAppointmentContext(array $data): void
+    {
+        if (! isset($data['appointmentId'])) {
+            return;
+        }
+
+        $appointment = Appointment::query()->findOrFail($data['appointmentId']);
+        abort_if(
+            $appointment->patient_id !== $data['patientId'] || $appointment->clinic_id !== $data['clinicId'],
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+        );
     }
 
     /**

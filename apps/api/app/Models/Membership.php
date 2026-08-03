@@ -40,6 +40,16 @@ class Membership extends Model
     }
 
     /**
+     * Return clinics explicitly granted to this membership.
+     */
+    public function clinics(): BelongsToMany
+    {
+        return $this->belongsToMany(Clinic::class, 'membership_clinic')
+            ->withPivot(['tenant_id', 'is_active'])
+            ->wherePivot('is_active', true);
+    }
+
+    /**
      * Define membership status and immutable join-date casts.
      *
      * @return array<string, string>

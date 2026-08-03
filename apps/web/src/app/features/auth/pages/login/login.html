@@ -1,103 +1,138 @@
 <main class="login-page">
-  <section class="login-assurance" aria-label="NexaSalud">
-    <header class="login-brand">
-      <span class="nexa-brand__mark" aria-hidden="true"><i></i><i></i></span>
-      <span><strong>NexaSalud</strong><small>Operación clínica</small></span>
-    </header>
+  <div class="login-backdrop" aria-hidden="true"></div>
 
-    <div class="login-assurance__content">
-      <p class="nexa-eyebrow">Entorno asistencial protegido</p>
-      <h2>Acceso diseñado para trabajar con rigor.</h2>
-      <p>
-        Una plataforma de coordinación clínica que reduce fricción operativa sin rebajar la
-        seguridad de pacientes, profesionales ni centros.
-      </p>
-
-      <ul class="assurance-list">
-        <li>
-          <app-icon name="shield" [size]="18" /><span
-            ><strong>Identidad verificada</strong
-            ><small>El acceso se completa en el proveedor de identidad del centro.</small></span
-          >
-        </li>
-        <li>
-          <app-icon name="lock" [size]="18" /><span
-            ><strong>Segundo factor obligatorio</strong
-            ><small>La verificación reforzada protege cada inicio de sesión.</small></span
-          >
-        </li>
-        <li>
-          <app-icon name="eye" [size]="18" /><span
-            ><strong>Trazabilidad operativa</strong
-            ><small>Las acciones sensibles quedan registradas por el servidor.</small></span
-          >
-        </li>
-      </ul>
-    </div>
-
-    <p class="login-assurance__foot">
-      La información clínica se muestra solo dentro del contexto autorizado.
-    </p>
-  </section>
-
-  <section class="login-panel">
-    <div class="login-card">
-      <div class="login-card__seal"><app-icon name="shield" [size]="24" /></div>
-      <p class="nexa-eyebrow">Identificación</p>
-      <h1>Acceso seguro</h1>
-      <p class="login-card__lead">
-        Continúa en el acceso centralizado de NexaSalud. Allí se validarán tus credenciales y el
-        segundo factor requerido para tu perfil.
-      </p>
-
-      @if (reason() === 'session') {
-        <div class="session-notice" role="status">
-          <app-icon name="clock" [size]="18" />
-          <span
-            ><strong>La sesión no está activa</strong
-            ><small>Vuelve a identificarte para continuar de forma segura.</small></span
-          >
-        </div>
-      }
-
-      @if (error()) {
-        <div class="session-notice session-notice--error" role="alert">
-          <app-icon name="shield" [size]="18" />
-          <span
-            ><strong>Acceso no completado</strong><small>{{ errorMessage() }}</small></span
-          >
-        </div>
-      }
-
-      <button
-        mat-flat-button
-        class="nexa-btn-primary login-action"
-        type="button"
-        [disabled]="busy()"
-        (click)="startLogin('/inicio')"
+  <header class="login-header">
+    <a class="login-brand" href="/login" aria-label="NexaSalud, inicio de sesión">
+      <span class="nexa-brand__mark" aria-hidden="true"><span></span><span></span></span>
+      <span class="login-brand__copy"
+        ><strong>NexaSalud</strong><small>Gestión clínica</small></span
       >
-        @if (busy()) {
-          Abriendo el acceso seguro…
-        } @else {
-          Continuar como profesional <app-icon name="arrow" [size]="18" />
-        }
-      </button>
-
-      <button
-        mat-stroked-button
-        class="nexa-btn-secondary login-action login-action--patient"
-        type="button"
-        [disabled]="busy()"
-        (click)="startLogin('/portal')"
+    </a>
+    <mat-chip-set aria-label="Estado del servicio">
+      <mat-chip class="service-chip"
+        ><span class="service-chip__dot" aria-hidden="true"></span>Servicio operativo</mat-chip
       >
-        Acceder al portal del paciente
-      </button>
+    </mat-chip-set>
+  </header>
 
-      <p class="login-card__privacy">
-        Solo para personas autorizadas. No compartas tu dispositivo ni tus códigos de verificación.
-      </p>
-    </div>
+  <div class="login-frame">
+    <mat-card appearance="outlined" class="login-hero">
+      <mat-card-content>
+        <div class="login-hero__topline">
+          <span>Entorno asistencial protegido</span><app-icon name="shield" [size]="17" />
+        </div>
+        <h1>Una entrada segura para cuidar mejor.</h1>
+        <p class="login-hero__lead">
+          Todo lo que necesitas para trabajar con precisión, dentro del centro y rol que te
+          corresponden.
+        </p>
 
-    <footer><span>© 2026 NexaSalud</span><span>Sesión cifrada · Acceso auditado</span></footer>
-  </section>
+        <div class="login-hero__assurance" aria-label="Controles de protección activos">
+          <div>
+            <span class="assurance-index">01</span
+            ><span><strong>Identidad verificada</strong><small>Proveedor centralizado</small></span
+            ><mat-chip>Activa</mat-chip>
+          </div>
+          <div>
+            <span class="assurance-index">02</span
+            ><span><strong>Segundo factor</strong><small>Protección reforzada</small></span
+            ><mat-chip>Requerido</mat-chip>
+          </div>
+          <div>
+            <span class="assurance-index">03</span
+            ><span><strong>Trazabilidad</strong><small>Auditoría continua</small></span
+            ><mat-chip>Activa</mat-chip>
+          </div>
+        </div>
+
+        <p class="login-hero__foot">
+          <app-icon name="lock" [size]="14" /> La información clínica solo aparece dentro del
+          contexto autorizado.
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+    <section class="login-access" aria-labelledby="login-title">
+      <p class="login-access__kicker">Acceso seguro · personal autorizado</p>
+      <mat-card appearance="outlined" class="login-card">
+        <mat-card-header>
+          <div mat-card-avatar class="login-card__avatar" aria-hidden="true">
+            <app-icon name="shield" [size]="23" />
+          </div>
+          <mat-card-title id="login-title">Identificación profesional</mat-card-title>
+          <mat-card-subtitle>Credenciales de tu organización · OIDC + MFA</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-chip-set class="login-card__status" aria-label="Estado de seguridad">
+            <mat-chip
+              ><span class="service-chip__dot" aria-hidden="true"></span>Acceso protegido</mat-chip
+            >
+          </mat-chip-set>
+          <p class="login-card__lead">
+            Te llevaremos al proveedor de identidad de tu organización. Allí se validarán tus
+            credenciales y el segundo factor requerido para tu perfil.
+          </p>
+
+          @if (reason() === 'session') {
+            <div class="session-notice" role="status" aria-live="polite">
+              <app-icon name="clock" [size]="18" />
+              <span
+                ><strong>La sesión no está activa</strong
+                ><small>Vuelve a identificarte para continuar de forma segura.</small></span
+              >
+            </div>
+          }
+          @if (error()) {
+            <div class="session-notice session-notice--error" role="alert" aria-live="assertive">
+              <app-icon name="shield" [size]="18" />
+              <span
+                ><strong>Acceso no completado</strong><small>{{ errorMessage() }}</small></span
+              >
+            </div>
+          }
+
+          <p class="sr-only" role="status" aria-live="polite">
+            {{ busy() ? 'Abriendo el acceso seguro' : '' }}
+          </p>
+          <div class="login-actions" aria-label="Elige el tipo de acceso">
+            <button
+              mat-flat-button
+              class="nexa-btn-primary login-action"
+              type="button"
+              [disabled]="busy()"
+              [attr.aria-busy]="busy()"
+              (click)="startLogin('/inicio')"
+            >
+              @if (busy()) {
+                <mat-progress-spinner mode="indeterminate" diameter="18" aria-label="Cargando" />
+                <span>Abriendo acceso seguro…</span>
+              } @else {
+                <span>Entrar como profesional</span><app-icon name="arrow" [size]="18" />
+              }
+            </button>
+            <button
+              mat-stroked-button
+              class="nexa-btn-secondary login-action login-action--patient"
+              type="button"
+              [disabled]="busy()"
+              (click)="startLogin('/portal')"
+            >
+              <app-icon name="patients" [size]="17" /><span>Acceder al portal del paciente</span>
+            </button>
+          </div>
+          <mat-divider class="login-divider" />
+          <p class="login-card__privacy">
+            Solo para personas autorizadas. No compartas tu dispositivo ni tus códigos de
+            verificación.
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </section>
+  </div>
+
+  <footer class="login-footer">
+    <span>© 2026 NexaSalud</span
+    ><span><app-icon name="shield" [size]="12" /> Sesión cifrada · Acceso auditado</span>
+  </footer>
 </main>

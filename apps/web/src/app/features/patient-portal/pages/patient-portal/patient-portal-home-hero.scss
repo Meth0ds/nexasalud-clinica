@@ -74,11 +74,8 @@
 .care-journey__main {
   align-self: center;
 }
-.care-journey__main .nexa-chip i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
+.care-journey__main app-status-chip {
+  margin-bottom: 4px;
 }
 .care-journey__main h2 {
   margin-top: 10px;

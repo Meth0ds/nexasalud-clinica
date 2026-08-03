@@ -40,6 +40,14 @@ class SelectTenantContextController extends Controller
             ->whereKey($clinicId)
             ->where('tenant_id', $membership->tenant_id)
             ->where('is_active', true)
+            ->whereExists(function ($grantQuery) use ($membership): void {
+                $grantQuery->selectRaw('1')
+                    ->from('membership_clinic')
+                    ->whereColumn('membership_clinic.clinic_id', 'clinics.id')
+                    ->where('membership_clinic.membership_id', $membership->getKey())
+                    ->where('membership_clinic.tenant_id', $membership->tenant_id)
+                    ->where('membership_clinic.is_active', true);
+            })
             ->first();
 
         if (! $clinic instanceof Clinic) {

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -15,6 +16,8 @@ import { finalize } from 'rxjs';
 
 import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import { TeamApiService, TeamMember } from '../../data-access/team-api';
 
@@ -22,10 +25,13 @@ import { TeamApiService, TeamMember } from '../../data-access/team-api';
   selector: 'app-team',
   imports: [
     MatButtonModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './team.html',

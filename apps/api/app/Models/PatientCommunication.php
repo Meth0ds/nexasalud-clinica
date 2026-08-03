@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['tenant_id', 'patient_id', 'author_user_id', 'consent_record_id', 'channel', 'content_class', 'template_key', 'subject', 'body', 'status', 'scheduled_at', 'queued_at', 'cancelled_at', 'cancellation_reason', 'compliance_snapshot', 'lock_version'])]
+#[Fillable(['tenant_id', 'clinic_id', 'patient_id', 'author_user_id', 'consent_record_id', 'channel', 'content_class', 'template_key', 'subject', 'body', 'status', 'scheduled_at', 'queued_at', 'cancelled_at', 'cancellation_reason', 'compliance_snapshot', 'lock_version'])]
 #[Hidden(['body', 'cancellation_reason', 'compliance_snapshot'])]
 /**
  * Represents a consent-aware patient communication with encrypted content and compliance metadata.
@@ -38,6 +38,14 @@ final class PatientCommunication extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    /**
+     * Return the clinic owning this communication thread.
+     */
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     /**

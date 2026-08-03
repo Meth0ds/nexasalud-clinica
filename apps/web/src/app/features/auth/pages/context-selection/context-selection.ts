@@ -1,13 +1,30 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
 import { Router } from '@angular/router';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
+import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
 
 @Component({
   selector: 'app-context-selection',
-  imports: [MatButtonModule, AppIcon],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatChipsModule,
+    MatDividerModule,
+    MatProgressSpinnerModule,
+    MatRadioModule,
+    AppIcon,
+    StatePanel,
+  ],
   templateUrl: './context-selection.html',
   styleUrl: './context-selection.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,8 +32,9 @@ import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
 export class ContextSelection {
   protected readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly notifications = inject(ErrorNotificationService);
   protected readonly busy = signal(false);
-  protected readonly error = signal(false);
+  protected readonly error = signal<AppError | null>(null);
   protected readonly membershipId = signal<string | null>(
     this.session.contextOptions()?.selected.membershipId ??
       this.session.contextOptions()?.items[0]?.membershipId ??
@@ -37,12 +55,12 @@ export class ContextSelection {
       .contextOptions()
       ?.items.find((item) => item.membershipId === id);
     this.clinicId.set(membership?.clinics[0]?.id ?? null);
-    this.error.set(false);
+    this.error.set(null);
   }
 
   protected chooseClinic(id: string): void {
     this.clinicId.set(id);
-    this.error.set(false);
+    this.error.set(null);
   }
 
   protected continue(): void {
@@ -58,14 +76,28 @@ export class ContextSelection {
         this.busy.set(false);
         if (state.status === 'authenticated') {
           void this.router.navigate(['/inicio']);
+        } else if (state.status === 'error') {
+          this.reportError(state.error);
         } else {
-          this.error.set(true);
+          this.reportError(
+            new AppError({
+              status: 409,
+              code: 'CONTEXT_NOT_READY',
+              message: 'El centro sigue pendiente de validación. Inténtalo de nuevo.',
+              retryable: true,
+            }),
+          );
         }
       },
-      error: () => {
+      error: (error: unknown) => {
         this.busy.set(false);
-        this.error.set(true);
+        this.reportError(toAppError(error));
       },
     });
+  }
+
+  private reportError(error: AppError): void {
+    this.error.set(error);
+    this.notifications.notify(error);
   }
 }

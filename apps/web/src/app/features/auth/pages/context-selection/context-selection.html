@@ -4,13 +4,15 @@
       <span class="nexa-brand__mark" aria-hidden="true"><i></i><i></i></span>
       <span><strong>NexaSalud</strong><small>Contexto asistencial seguro</small></span>
     </a>
-    <span class="assurance"
-      ><app-icon name="shield" [size]="17" /> Identidad verificada con 2FA</span
-    >
+    <mat-chip-set aria-label="Estado de la identidad">
+      <mat-chip class="assurance"
+        ><app-icon name="shield" [size]="16" /> Identidad verificada</mat-chip
+      >
+    </mat-chip-set>
   </header>
 
   <section class="context-layout" aria-labelledby="context-title">
-    <aside>
+    <aside class="context-intro">
       <p class="nexa-eyebrow">Antes de continuar</p>
       <h1 id="context-title">Elige dónde vas a trabajar</h1>
       <p>
@@ -26,74 +28,94 @@
       </div>
     </aside>
 
-    <div class="context-card">
-      <div class="context-step">
-        <span>01</span>
-        <div><strong>Organización</strong><small>Selecciona tu pertenencia activa.</small></div>
-      </div>
-      <div class="choice-list" role="radiogroup" aria-label="Organizaciones disponibles">
-        @for (option of session.contextOptions()?.items ?? []; track option.membershipId) {
-          <button
-            type="button"
-            role="radio"
-            [attr.aria-checked]="membershipId() === option.membershipId"
-            [class.is-selected]="membershipId() === option.membershipId"
-            (click)="chooseMembership(option.membershipId)"
-          >
-            <span class="choice-mark">{{ option.tenant.name.slice(0, 2).toUpperCase() }}</span>
-            <span
-              ><strong>{{ option.tenant.name }}</strong
-              ><small>{{ option.clinics.length }} centros disponibles</small></span
-            >
-            <i aria-hidden="true"></i>
-          </button>
-        }
-      </div>
-
-      <div class="context-step context-step--clinic">
-        <span>02</span>
-        <div>
-          <strong>Centro activo</strong
-          ><small>El contexto se valida de nuevo en el servidor.</small>
+    <mat-card appearance="outlined" class="context-card">
+      <mat-card-content>
+        <div class="context-step">
+          <span>01</span>
+          <div><strong>Organización</strong><small>Selecciona tu pertenencia activa.</small></div>
         </div>
-      </div>
-      <div class="clinic-grid" role="radiogroup" aria-label="Centros disponibles">
-        @for (clinic of selectedMembership()?.clinics ?? []; track clinic.id) {
-          <button
-            type="button"
-            role="radio"
-            [attr.aria-checked]="clinicId() === clinic.id"
-            [class.is-selected]="clinicId() === clinic.id"
-            (click)="chooseClinic(clinic.id)"
-          >
-            <app-icon name="home" [size]="19" />
-            <span
-              ><strong>{{ clinic.name }}</strong
-              ><small>Acceso según tu rol</small></span
-            >
-            <i aria-hidden="true"></i>
-          </button>
-        }
-      </div>
 
-      @if (error()) {
-        <p class="context-error" role="alert">
-          No se ha podido activar el centro. Tus permisos no han cambiado; inténtalo de nuevo.
-        </p>
-      }
+        <mat-radio-group
+          class="choice-list"
+          [value]="membershipId()"
+          (change)="chooseMembership($event.value)"
+          aria-label="Organizaciones disponibles"
+        >
+          @for (option of session.contextOptions()?.items ?? []; track option.membershipId) {
+            <mat-radio-button class="choice-option" [value]="option.membershipId">
+              <span class="choice-option__content">
+                <span class="choice-mark">{{ option.tenant.name.slice(0, 2).toUpperCase() }}</span>
+                <span class="choice-copy"
+                  ><strong>{{ option.tenant.name }}</strong
+                  ><small>{{ option.clinics.length }} centros disponibles</small></span
+                >
+              </span>
+            </mat-radio-button>
+          }
+        </mat-radio-group>
 
-      <button
-        mat-flat-button
-        class="nexa-btn-primary continue-button"
-        type="button"
-        [disabled]="!membershipId() || !clinicId() || busy()"
-        (click)="continue()"
-      >
-        {{ busy() ? 'Activando contexto…' : 'Entrar en el espacio clínico' }}
-        @if (!busy()) {
-          <app-icon name="arrow" [size]="18" />
+        <mat-divider />
+
+        <div class="context-step context-step--clinic">
+          <span>02</span>
+          <div>
+            <strong>Centro activo</strong
+            ><small>El contexto se valida de nuevo en el servidor.</small>
+          </div>
+        </div>
+
+        <mat-radio-group
+          class="clinic-grid"
+          [value]="clinicId()"
+          (change)="chooseClinic($event.value)"
+          aria-label="Centros disponibles"
+        >
+          @for (clinic of selectedMembership()?.clinics ?? []; track clinic.id) {
+            <mat-radio-button class="clinic-option" [value]="clinic.id">
+              <span class="clinic-option__content">
+                <app-icon name="home" [size]="18" />
+                <span
+                  ><strong>{{ clinic.name }}</strong
+                  ><small>Acceso según tu rol</small></span
+                >
+              </span>
+            </mat-radio-button>
+          }
+        </mat-radio-group>
+
+        @if (error(); as requestError) {
+          <app-state-panel
+            class="context-error"
+            kind="error"
+            title="No se pudo activar el centro"
+            [message]="requestError.message"
+            [reference]="requestError.correlationId ?? null"
+            actionLabel="Reintentar"
+            [busy]="busy()"
+            (action)="continue()"
+          />
         }
-      </button>
-    </div>
+
+        <button
+          mat-flat-button
+          class="nexa-btn-primary continue-button"
+          type="button"
+          [disabled]="!membershipId() || !clinicId() || busy()"
+          [attr.aria-busy]="busy()"
+          (click)="continue()"
+        >
+          @if (busy()) {
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="18"
+              aria-label="Activando contexto"
+            />
+            <span>Activando contexto…</span>
+          } @else {
+            <span>Entrar en el espacio clínico</span><app-icon name="arrow" [size]="18" />
+          }
+        </button>
+      </mat-card-content>
+    </mat-card>
   </section>
 </main>

@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { of } from 'rxjs';
 
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
+import { AppError } from '../../../../core/errors/app-error';
 import { SessionService } from '../../../../core/services/session';
 import { PortalApiService } from '../../data-access/portal-api';
 import { PatientPortal } from './patient-portal';
@@ -88,7 +89,10 @@ describe('PatientPortal', () => {
             assuranceLevel: signal('mfa'),
           },
         },
-        { provide: ErrorNotificationService, useValue: { success: vi.fn(), error: vi.fn() } },
+        {
+          provide: ErrorNotificationService,
+          useValue: { success: vi.fn(), error: vi.fn(), notify: vi.fn((value: unknown) => value) },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(PatientPortal);
@@ -145,6 +149,47 @@ describe('PatientPortal', () => {
     expect(navigation.getAttribute('aria-label')).toBeTruthy();
   });
 
+  it('supports roving keyboard selection for appointment type cards', () => {
+    const portal = fixture.componentInstance as unknown as {
+      catalog: { set(value: unknown): void };
+      activateSection(section: string): void;
+    };
+    portal.catalog.set({
+      clinics: [{ id: 'clinic-1', name: 'Centro Norte', timezone: 'Europe/Madrid' }],
+      appointmentTypes: [
+        {
+          id: 'care-1',
+          name: 'Consulta general',
+          durationMinutes: 30,
+          requiresRoom: true,
+          allowsVideo: false,
+        },
+        {
+          id: 'care-2',
+          name: 'Seguimiento',
+          durationMinutes: 20,
+          requiresRoom: false,
+          allowsVideo: true,
+        },
+      ],
+    });
+    portal.activateSection('reservar');
+    fixture.detectChanges();
+
+    const options = fixture.nativeElement.querySelectorAll(
+      '.care-options [role="radio"]',
+    ) as NodeListOf<HTMLButtonElement>;
+    expect(options).toHaveLength(2);
+    expect(options[0].getAttribute('tabindex')).toBe('0');
+    expect(options[1].getAttribute('tabindex')).toBe('-1');
+
+    options[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(options[1].getAttribute('aria-checked')).toBe('true');
+    expect(options[1].getAttribute('tabindex')).toBe('0');
+  });
+
   it('exposes clearly labelled, enabled simulation actions for medication and invoice previews', () => {
     const healthNavigation = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
@@ -181,6 +226,33 @@ describe('PatientPortal', () => {
 
     expect(portal.documentLabel({ type: 'demo_invoice_preview' })).toBe(
       'Vista previa de factura simulada',
+    );
+  });
+
+  it('surfaces mutation failures in a dismissible local state panel', () => {
+    const portal = fixture.componentInstance as unknown as {
+      handleMutationError(error: unknown): void;
+    };
+    const error = new AppError({
+      message: 'La operación necesita una actualización.',
+      status: 409,
+      code: 'CONFLICT',
+      correlationId: 'trace-portal-1',
+    });
+    portal.handleMutationError(error);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('La operación necesita una actualización.');
+    expect(fixture.nativeElement.textContent).toContain('trace-portal-1');
+
+    const dismiss = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('Cerrar aviso')) as HTMLButtonElement;
+    expect(dismiss).toBeTruthy();
+    dismiss.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'La operación necesita una actualización.',
     );
   });
 });

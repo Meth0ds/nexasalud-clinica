@@ -3,15 +3,15 @@ name: ${COMPOSE_PROJECT_NAME:-nexasalud-production}
 x-service-security: &service-security
   security_opt:
     - no-new-privileges:true
+  cap_drop:
+    - ALL
+  init: true
   restart: unless-stopped
 
 services:
   gateway:
     <<: *service-security
-    build:
-      context: ../..
-      dockerfile: infra/production/gateway.Dockerfile
-    image: ${GATEWAY_IMAGE:-nexasalud-gateway:release}
+    image: ${GATEWAY_IMAGE:?Set GATEWAY_IMAGE to an immutable production image digest}
     depends_on:
       api:
         condition: service_healthy
@@ -24,6 +24,18 @@ services:
       - /tmp:rw,noexec,nosuid,nodev,uid=101,gid=101
       - /var/cache/nginx:rw,noexec,nosuid,nodev,uid=101,gid=101
       - /var/run:rw,noexec,nosuid,nodev,uid=101,gid=101
+    deploy:
+      resources:
+        limits:
+          cpus: '${GATEWAY_CPU_LIMIT:-1.0}'
+          memory: '${GATEWAY_MEMORY_LIMIT:-256M}'
+          pids: 128
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -T 3 -O /dev/null http://127.0.0.1:8080/up || exit 1']
+      interval: 10s
+      timeout: 4s
+      start_period: 20s
+      retries: 6
 
   api:
     <<: *service-security
@@ -39,6 +51,22 @@ services:
       - api-bootstrap-cache:/var/www/html/bootstrap/cache
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    deploy:
+      resources:
+        limits:
+          cpus: '${API_CPU_LIMIT:-1.5}'
+          memory: '${API_MEMORY_LIMIT:-768M}'
+          pids: 256
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'SCRIPT_NAME=/fpm-ping SCRIPT_FILENAME=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 2>/dev/null | grep -q pong || exit 1',
+        ]
+      interval: 10s
+      timeout: 4s
+      start_period: 30s
+      retries: 6
 
   worker:
     <<: *service-security
@@ -66,8 +94,63 @@ services:
       - worker-bootstrap-cache:/var/www/html/bootstrap/cache
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    deploy:
+      resources:
+        limits:
+          cpus: '${WORKER_CPU_LIMIT:-1.0}'
+          memory: '${WORKER_MEMORY_LIMIT:-512M}'
+          pids: 128
     healthcheck:
-      test: ['CMD-SHELL', "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=communications'"]
+      test:
+        [
+          'CMD-SHELL',
+          "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=communications'",
+        ]
+      interval: 15s
+      timeout: 4s
+      start_period: 20s
+      retries: 3
+
+  pdf-worker:
+    <<: *service-security
+    image: ${API_IMAGE:?Set API_IMAGE to an immutable production image digest}
+    command:
+      [
+        'php',
+        'artisan',
+        'queue:work',
+        'redis',
+        '--queue=clinical-pdf',
+        '--sleep=1',
+        '--tries=3',
+        '--backoff=5,15,30',
+        '--timeout=75',
+        '--max-jobs=100',
+        '--max-time=3600',
+        '--no-interaction',
+      ]
+    env_file:
+      - ${PRODUCTION_ENV_FILE:-../.env.production}
+    networks:
+      - backend
+    read_only: true
+    volumes:
+      - pdf-worker-bootstrap-cache:/var/www/html/bootstrap/cache
+      - api-storage:/var/www/html/storage
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    deploy:
+      resources:
+        limits:
+          cpus: '${PDF_WORKER_CPU_LIMIT:-1.0}'
+          memory: '${PDF_WORKER_MEMORY_LIMIT:-512M}'
+          pids: 128
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=clinical-pdf'",
+        ]
       interval: 15s
       timeout: 4s
       start_period: 20s
@@ -82,3 +165,4 @@ volumes:
   api-storage:
   api-bootstrap-cache:
   worker-bootstrap-cache:
+  pdf-worker-bootstrap-cache:

@@ -136,6 +136,9 @@ Route::prefix('v1')
         Route::post('/invoices/{invoice}/documents/invoice', [DocumentController::class, 'generateInvoice'])
             ->middleware(['throttle:clinical-pdf', 'idempotent'])
             ->name('invoices.documents.invoice');
+        Route::get('/documents/{document}', [DocumentController::class, 'status'])
+            ->middleware('throttle:clinical-pdf')
+            ->name('documents.status');
         Route::get('/documents/{document}/download', [DocumentController::class, 'download'])
             ->middleware('throttle:clinical-pdf')
             ->name('documents.download');

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['tenant_id', 'patient_id', 'appointment_id', 'prescription_id', 'consent_record_id', 'document_type', 'status', 'sha256', 'template_version', 'storage_key', 'metadata', 'revision', 'generated_by', 'generated_at', 'expires_at', 'voided_at'])]
+#[Fillable(['tenant_id', 'clinic_id', 'patient_id', 'appointment_id', 'prescription_id', 'invoice_id', 'consent_record_id', 'document_type', 'status', 'sha256', 'template_version', 'storage_key', 'metadata', 'revision', 'generated_by', 'generated_at', 'expires_at', 'voided_at'])]
 #[Hidden(['storage_key'])]
 /**
  * Represents a tenant-scoped clinical artifact with integrity, storage and access-audit controls.
@@ -37,6 +37,14 @@ class ClinicalDocument extends Model
     }
 
     /**
+     * Return the clinic in which this document was generated.
+     */
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
+    }
+
+    /**
      * Return the optional appointment represented by this document.
      */
     public function appointment(): BelongsTo
@@ -50,6 +58,14 @@ class ClinicalDocument extends Model
     public function prescription(): BelongsTo
     {
         return $this->belongsTo(Prescription::class);
+    }
+
+    /**
+     * Return the optional invoice represented by this document.
+     */
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     /**

@@ -36,6 +36,14 @@ final class TeamController extends Controller
 
         $members = Membership::query()
             ->with(['user', 'roles'])
+            ->whereExists(function ($grantQuery): void {
+                $grantQuery->selectRaw('1')
+                    ->from('membership_clinic')
+                    ->whereColumn('membership_clinic.membership_id', 'memberships.id')
+                    ->where('membership_clinic.tenant_id', $this->currentTenant()->getKey())
+                    ->where('membership_clinic.clinic_id', $this->currentClinic()->getKey())
+                    ->where('membership_clinic.is_active', true);
+            })
             ->orderByDesc('is_active')
             ->orderBy('joined_at')
             ->get()

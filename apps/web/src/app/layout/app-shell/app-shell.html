@@ -31,38 +31,49 @@
       </span>
     </div>
 
-    <nav class="nexa-nav" aria-label="Navegación principal">
-      <p class="nexa-nav__label">Asistencia</p>
+    <mat-nav-list class="nexa-nav" aria-label="Navegación principal">
+      <div mat-subheader class="nexa-nav__label">Asistencia</div>
       @for (item of principalNavigation; track item.route) {
         <a
+          mat-list-item
           [routerLink]="item.route"
           routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: item.route === '/inicio' }"
           (click)="closeOnMobile(drawer)"
         >
           <app-icon [name]="item.icon" [size]="19" />
-          <span>{{ item.label }}</span>
+          <span matListItemTitle>{{ item.label }}</span>
         </a>
       }
 
-      <p class="nexa-nav__label">Operaciones</p>
+      <div mat-subheader class="nexa-nav__label">Operaciones</div>
       @for (item of operationsNavigation; track item.route) {
-        <a [routerLink]="item.route" routerLinkActive="is-active" (click)="closeOnMobile(drawer)">
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="is-active"
+          (click)="closeOnMobile(drawer)"
+        >
           <app-icon [name]="item.icon" [size]="19" />
-          <span>{{ item.label }}</span>
+          <span matListItemTitle>{{ item.label }}</span>
         </a>
       }
 
-      <p class="nexa-nav__label">Sistema</p>
+      <div mat-subheader class="nexa-nav__label">Sistema</div>
       @for (item of systemNavigation; track item.route) {
         @if (!item.permission || session.hasPermission(item.permission)) {
-          <a [routerLink]="item.route" routerLinkActive="is-active" (click)="closeOnMobile(drawer)">
+          <a
+            mat-list-item
+            [routerLink]="item.route"
+            routerLinkActive="is-active"
+            (click)="closeOnMobile(drawer)"
+          >
             <app-icon [name]="item.icon" [size]="19" />
-            <span>{{ item.label }}</span>
+            <span matListItemTitle>{{ item.label }}</span>
           </a>
         }
       }
-    </nav>
+    </mat-nav-list>
 
     <div class="security-status">
       <span class="security-status__icon"><app-icon name="shield" [size]="18" /></span>
@@ -97,7 +108,7 @@
         >
           <app-icon [name]="preferences.effectiveTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" />
         </button>
-        <button class="profile-button" type="button" [matMenuTriggerFor]="profileMenu">
+        <button mat-button class="profile-button" type="button" [matMenuTriggerFor]="profileMenu">
           <span class="nexa-avatar">{{ userInitials() }}</span>
           <span class="profile-button__copy">
             <strong>{{ session.user()?.displayName ?? 'Sesión en verificación' }}</strong>

@@ -181,6 +181,36 @@ jobs:
       - name: Build API production image
         run: docker build --target production --tag nexasalud-api:ci apps/api
 
+      - name: Build production gateway image
+        run: docker build --file infra/production/gateway.Dockerfile --tag nexasalud-gateway:ci .
+
+      - name: Validate production deployment manifest
+        run: API_IMAGE=nexasalud-api:ci GATEWAY_IMAGE=nexasalud-gateway:ci PRODUCTION_ENV_FILE=../production.env.example docker compose --env-file infra/production.env.example -f infra/production/compose.yaml config --quiet
+
+      - name: Validate secure production environment contract
+        run: |
+          docker run --rm \
+            -v "$PWD/infra/scripts/validate-production-env.sh:/validate-production-env.sh:ro" \
+            alpine:3.21 sh -eu -c '
+              apk add --no-cache ca-certificates >/dev/null
+              export APP_ENV=production
+              export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+              export APP_URL=https://portal.ci.invalid
+              export DB_CONNECTION=pgsql DB_HOST=postgres.ci.internal DB_DATABASE=nexasalud DB_USERNAME=ci DB_PASSWORD=ci
+              export DB_SSLMODE=verify-full DB_SSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
+              export REDIS_SCHEME=tls REDIS_HOST=redis.ci.internal REDIS_PASSWORD=ci
+              export CACHE_STORE=redis QUEUE_CONNECTION=redis SESSION_DRIVER=redis
+              export SESSION_COOKIE=__Host-nexasalud_session SESSION_SECURE_COOKIE=true SESSION_HTTP_ONLY=true SESSION_SAME_SITE=lax
+              export CORS_ALLOWED_ORIGINS=https://portal.ci.invalid
+              export OIDC_ISSUER=https://identity.ci.invalid/realms/nexasalud OIDC_CLIENT_ID=nexasalud-bff OIDC_CLIENT_SECRET=ci
+              export OIDC_REDIRECT_URI=https://portal.ci.invalid/auth/callback OIDC_FRONTEND_URL=https://portal.ci.invalid OIDC_POST_LOGOUT_REDIRECT_URI=https://portal.ci.invalid/login
+              export OIDC_ALLOW_INSECURE_HTTP=false OIDC_ALLOWED_ALGORITHMS=RS256 OIDC_REQUIRED_ACR_VALUES=2 OIDC_REQUIRED_AMR_VALUES=webauthn
+              export TRUSTED_HOSTS="^portal\\.ci\\.invalid$" TRUSTED_PROXIES=10.0.0.0/8
+              export CLINICAL_FILESYSTEM_DRIVER=s3 AWS_DEFAULT_REGION=eu-west-1 AWS_BUCKET=nexasalud-clinical-ci AWS_USE_PATH_STYLE_ENDPOINT=false
+              export DEMO_PORTAL_SIMULATIONS=false
+              sh /validate-production-env.sh
+            '
+
       - name: Verify the production image autoloads and boots with hardened configuration
         run: |
           docker run --rm --entrypoint php nexasalud-api:ci \
@@ -191,8 +221,14 @@ jobs:
             -e APP_DEBUG=false \
             -e APP_URL=https://portal.example.test \
             -e DB_PASSWORD=ci-placeholder \
+            -e DB_SSLMODE=verify-full \
+            -e DB_SSLROOTCERT=/tmp/postgres-ca.crt \
             -e REDIS_PASSWORD=ci-placeholder \
+            -e REDIS_SCHEME=tls \
             -e CACHE_STORE=redis \
+            -e CLINICAL_FILESYSTEM_DRIVER=s3 \
+            -e AWS_DEFAULT_REGION=eu-west-1 \
+            -e AWS_BUCKET=nexasalud-clinical-ci \
             -e OIDC_ISSUER=https://identity.example.test/realms/nexasalud \
             -e OIDC_CLIENT_ID=nexasalud-bff \
             -e OIDC_CLIENT_SECRET=ci-placeholder \
@@ -200,6 +236,9 @@ jobs:
             -e OIDC_FRONTEND_URL=https://portal.example.test \
             -e OIDC_POST_LOGOUT_REDIRECT_URI=https://portal.example.test/login \
             -e OIDC_ALLOW_INSECURE_HTTP=false \
+            -e OIDC_REQUIRED_ACR_VALUES=2 \
+            -e OIDC_REQUIRED_AMR_VALUES=webauthn \
+            -e SESSION_ABSOLUTE_LIFETIME=480 \
             -e CORS_ALLOWED_ORIGINS=https://portal.example.test \
             -e TRUSTED_HOSTS='^portal\\.example\\.test$' \
             -e TRUSTED_PROXIES=10.0.0.0/8 \

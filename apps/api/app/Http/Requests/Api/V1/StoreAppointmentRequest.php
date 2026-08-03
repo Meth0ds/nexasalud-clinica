@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1;
 
 use App\Models\Appointment;
 use Illuminate\Database\Query\Builder;
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
 
 /**
@@ -36,7 +37,23 @@ class StoreAppointmentRequest extends TenantFormRequest
             'roomId' => ['nullable', 'string', $tenantExists('rooms')],
             'appointmentTypeId' => ['required', 'string', $tenantExists('appointment_types')],
             'startsAt' => ['required', 'date'],
-            'endsAt' => ['required', 'date', 'after:startsAt'],
+            'endsAt' => [
+                'required',
+                'date',
+                'after:startsAt',
+                static function (string $attribute, mixed $value, \Closure $fail): void {
+                    try {
+                        $startsAt = CarbonImmutable::parse((string) request()->input('startsAt'));
+                        $endsAt = CarbonImmutable::parse((string) $value);
+                    } catch (\Throwable) {
+                        return;
+                    }
+
+                    if ($startsAt->diffInMinutes($endsAt) > 720) {
+                        $fail('The appointment cannot exceed 12 hours.');
+                    }
+                },
+            ],
             'timezone' => ['required', 'timezone:all'],
             'mode' => ['required', Rule::in(['in-person', 'video', 'phone'])],
             'reason' => ['nullable', 'string', 'max:500'],

@@ -90,6 +90,6 @@ class AppointmentPolicy
      */
     private function sameTenant(Appointment $appointment): bool
     {
-        return $this->permissions->belongsToCurrentTenant($appointment);
+        return $this->permissions->belongsToCurrentClinic($appointment);
     }
 }

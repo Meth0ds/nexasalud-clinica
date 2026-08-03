@@ -69,6 +69,13 @@ x-api-environment: &api-environment
   OIDC_ALLOW_INSECURE_HTTP: 'true'
   # Demonstration-only medication/PDF flows must be explicitly enabled locally.
   DEMO_PORTAL_SIMULATIONS: ${DEMO_PORTAL_SIMULATIONS:-false}
+  CLINICAL_PDF_ASYNC: ${CLINICAL_PDF_ASYNC:-false}
+  CLINICAL_PDF_QUEUE: ${CLINICAL_PDF_QUEUE:-clinical-pdf}
+  CLINICAL_PDF_TIMEOUT_SECONDS: ${CLINICAL_PDF_TIMEOUT_SECONDS:-60}
+  CLINICAL_PDF_RETRY_AFTER_SECONDS: ${CLINICAL_PDF_RETRY_AFTER_SECONDS:-90}
+  CLINICAL_PDF_MAX_ATTEMPTS: ${CLINICAL_PDF_MAX_ATTEMPTS:-3}
+  CLINICAL_PDF_MAX_PENDING_PER_ACTOR: ${CLINICAL_PDF_MAX_PENDING_PER_ACTOR:-3}
+  CLINICAL_PDF_MAX_CONCURRENT_PER_CLINIC: ${CLINICAL_PDF_MAX_CONCURRENT_PER_CLINIC:-1}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
 
 services:
@@ -128,6 +135,16 @@ services:
       - api-bootstrap-cache:/var/www/html/bootstrap/cache
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'SCRIPT_NAME=/fpm-ping SCRIPT_FILENAME=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 2>/dev/null | grep -q pong || exit 1',
+        ]
+      interval: 10s
+      timeout: 4s
+      start_period: 30s
+      retries: 6
 
   worker:
     <<: *service-security
@@ -173,6 +190,64 @@ services:
         [
           'CMD-SHELL',
           "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=communications'",
+        ]
+      interval: 15s
+      timeout: 4s
+      start_period: 20s
+      retries: 3
+
+  pdf-worker:
+    <<: *service-security
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+      target: development
+      args:
+        PHP_VERSION: '8.4'
+        APP_UID: '10001'
+        APP_GID: '10001'
+    command:
+      [
+        'php',
+        'artisan',
+        'queue:work',
+        'redis',
+        '--queue=clinical-pdf',
+        '--sleep=1',
+        '--tries=3',
+        '--backoff=5,15,30',
+        '--timeout=75',
+        '--max-jobs=100',
+        '--max-time=3600',
+        '--no-interaction',
+      ]
+    environment:
+      <<: *api-environment
+      RUN_MIGRATIONS: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    read_only: true
+    volumes:
+      - api-pdf-worker-bootstrap-cache:/var/www/html/bootstrap/cache
+      - api-storage:/var/www/html/storage
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001
+    deploy:
+      resources:
+        limits:
+          cpus: '${PDF_WORKER_CPU_LIMIT:-1.0}'
+          memory: '${PDF_WORKER_MEMORY_LIMIT:-512M}'
+          pids: 128
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "ps -o args= | grep -q '[p]hp artisan queue:work redis --queue=clinical-pdf'",
         ]
       interval: 15s
       timeout: 4s
@@ -333,6 +408,7 @@ volumes:
   api-storage:
   api-bootstrap-cache:
   api-worker-bootstrap-cache:
+  api-pdf-worker-bootstrap-cache:
   postgres-data:
   redis-data:
   keycloak-data:

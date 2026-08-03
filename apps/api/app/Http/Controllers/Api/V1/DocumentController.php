@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ClinicalDocumentStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateClinicalPdfJob;
 use App\Models\Appointment;
 use App\Models\ClinicalDocument;
 use App\Models\Invoice;
@@ -42,17 +43,28 @@ final class DocumentController extends Controller
         Gate::authorize('view', $appointment);
         Gate::authorize('create', ClinicalDocument::class);
 
-        $document = $this->pdfGenerator->generateAppointmentConfirmation(
-            $appointment,
-            $this->actor($request),
-        );
+        $actor = $this->actor($request);
+
+        if ($this->asyncGeneration()) {
+            $document = $this->pdfGenerator->queueAppointmentConfirmation($appointment, $actor);
+            $this->dispatch($document);
+
+            $this->audit->record($request, 'clinical_document.queued', $document, [
+                'document_type' => $document->document_type,
+                'queue' => config('documents.queue'),
+            ]);
+
+            return $this->documentResponse($document, HttpStatus::HTTP_ACCEPTED);
+        }
+
+        $document = $this->pdfGenerator->generateAppointmentConfirmation($appointment, $actor);
 
         $this->audit->record($request, 'clinical_document.generated', $document, [
             'document_type' => $document->document_type,
             'encrypted_at_rest' => true,
         ]);
 
-        return $this->createdResponse($document);
+        return $this->documentResponse($document, HttpStatus::HTTP_CREATED);
     }
 
     /**
@@ -63,17 +75,28 @@ final class DocumentController extends Controller
         Gate::authorize('view', $prescription);
         Gate::authorize('create', ClinicalDocument::class);
 
-        $document = $this->pdfGenerator->generatePrescriptionPlan(
-            $prescription,
-            $this->actor($request),
-        );
+        $actor = $this->actor($request);
+
+        if ($this->asyncGeneration()) {
+            $document = $this->pdfGenerator->queuePrescriptionPlan($prescription, $actor);
+            $this->dispatch($document);
+
+            $this->audit->record($request, 'clinical_document.queued', $document, [
+                'document_type' => $document->document_type,
+                'queue' => config('documents.queue'),
+            ]);
+
+            return $this->documentResponse($document, HttpStatus::HTTP_ACCEPTED);
+        }
+
+        $document = $this->pdfGenerator->generatePrescriptionPlan($prescription, $actor);
 
         $this->audit->record($request, 'clinical_document.generated', $document, [
             'document_type' => $document->document_type,
             'encrypted_at_rest' => true,
         ]);
 
-        return $this->createdResponse($document);
+        return $this->documentResponse($document, HttpStatus::HTTP_CREATED);
     }
 
     /**
@@ -84,17 +107,28 @@ final class DocumentController extends Controller
         Gate::authorize('view', $invoice);
         Gate::authorize('create', ClinicalDocument::class);
 
-        $document = $this->pdfGenerator->generateInvoice(
-            $invoice,
-            $this->actor($request),
-        );
+        $actor = $this->actor($request);
+
+        if ($this->asyncGeneration()) {
+            $document = $this->pdfGenerator->queueInvoice($invoice, $actor);
+            $this->dispatch($document);
+
+            $this->audit->record($request, 'clinical_document.queued', $document, [
+                'document_type' => $document->document_type,
+                'queue' => config('documents.queue'),
+            ]);
+
+            return $this->documentResponse($document, HttpStatus::HTTP_ACCEPTED);
+        }
+
+        $document = $this->pdfGenerator->generateInvoice($invoice, $actor);
 
         $this->audit->record($request, 'clinical_document.generated', $document, [
             'document_type' => $document->document_type,
             'encrypted_at_rest' => true,
         ]);
 
-        return $this->createdResponse($document);
+        return $this->documentResponse($document, HttpStatus::HTTP_CREATED);
     }
 
     /**
@@ -147,6 +181,29 @@ final class DocumentController extends Controller
     }
 
     /**
+     * Return a safe status projection used by clients while a PDF is rendering.
+     */
+    public function status(Request $request, ClinicalDocument $document): JsonResponse
+    {
+        Gate::authorize('view', $document);
+
+        return response()->json([
+            'data' => [
+                'id' => $document->getKey(),
+                'documentType' => $document->document_type,
+                'status' => $document->status->value,
+                'revision' => $document->revision,
+                'generatedAt' => $document->generated_at?->toIso8601String(),
+                'downloadPath' => $document->status === ClinicalDocumentStatus::Ready
+                    ? '/api/v1/documents/'.$document->getKey().'/download'
+                    : null,
+            ],
+        ], HttpStatus::HTTP_OK, [
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    /**
      * Return the authenticated local actor or reject anonymous document operations.
      */
     private function actor(Request $request): User
@@ -160,7 +217,7 @@ final class DocumentController extends Controller
     /**
      * Return the minimal creation response for a generated clinical document.
      */
-    private function createdResponse(ClinicalDocument $document): JsonResponse
+    private function documentResponse(ClinicalDocument $document, int $status): JsonResponse
     {
         return response()->json([
             'data' => [
@@ -170,8 +227,28 @@ final class DocumentController extends Controller
                 'revision' => $document->revision,
                 'templateVersion' => $document->template_version,
                 'generatedAt' => $document->generated_at?->toIso8601String(),
-                'downloadPath' => '/api/v1/documents/'.$document->getKey().'/download',
+                'downloadPath' => $document->status === ClinicalDocumentStatus::Ready
+                    ? '/api/v1/documents/'.$document->getKey().'/download'
+                    : null,
+                'statusPath' => '/api/v1/documents/'.$document->getKey(),
+                'pollAfterSeconds' => (int) config('documents.poll_after_seconds', 2),
             ],
-        ], HttpStatus::HTTP_CREATED);
+        ], $status, [
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    private function asyncGeneration(): bool
+    {
+        return (bool) config('documents.async_generation', false);
+    }
+
+    private function dispatch(ClinicalDocument $document): void
+    {
+        GenerateClinicalPdfJob::dispatch(
+            (string) $document->getKey(),
+            (string) $document->tenant_id,
+            (string) $document->clinic_id,
+        )->onQueue((string) config('documents.queue', 'clinical-pdf'));
     }
 }

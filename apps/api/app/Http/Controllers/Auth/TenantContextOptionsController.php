@@ -37,14 +37,24 @@ class TenantContextOptionsController extends Controller
             throw new TenantAccessDeniedException;
         }
 
-        /** @var Collection<int, Clinic> $clinics */
-        $clinics = Clinic::query()
-            ->withoutGlobalScope('tenant')
-            ->whereIn('tenant_id', $memberships->pluck('tenant_id')->all())
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-        $clinicsByTenant = $clinics->groupBy('tenant_id');
+        /** @var array<string, Collection<int, Clinic>> $clinicsByMembership */
+        $clinicsByMembership = [];
+        foreach ($memberships as $membership) {
+            $clinicsByMembership[$membership->getKey()] = Clinic::query()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $membership->tenant_id)
+                ->where('is_active', true)
+                ->whereExists(function ($grantQuery) use ($membership): void {
+                    $grantQuery->selectRaw('1')
+                        ->from('membership_clinic')
+                        ->whereColumn('membership_clinic.clinic_id', 'clinics.id')
+                        ->where('membership_clinic.tenant_id', $membership->tenant_id)
+                        ->where('membership_clinic.membership_id', $membership->getKey())
+                        ->where('membership_clinic.is_active', true);
+                })
+                ->orderBy('name')
+                ->get();
+        }
         $selectedMembershipId = $request->session()->get('auth.context.membership_id');
         $selectedClinicId = $request->session()->get('auth.context.clinic_id');
         $selectedMembership = is_string($selectedMembershipId)
@@ -56,18 +66,20 @@ class TenantContextOptionsController extends Controller
             $selectedClinicId = null;
         } elseif (
             ! is_string($selectedClinicId) ||
-            ! $clinicsByTenant->get($selectedMembership->tenant_id, collect())->contains('id', $selectedClinicId)
+            ! $clinicsByMembership[$selectedMembership->getKey()]->contains('id', $selectedClinicId)
         ) {
             $selectedClinicId = null;
         }
 
         return response()->json([
-            'items' => $memberships->map(function (Membership $membership) use ($clinicsByTenant): array {
+            'items' => $memberships->map(function (Membership $membership) use ($clinicsByMembership): array {
                 $tenant = $membership->tenant;
 
                 if (! $tenant instanceof Tenant) {
                     throw new TenantAccessDeniedException;
                 }
+
+                $clinics = $clinicsByMembership[$membership->getKey()] ?? collect();
 
                 return [
                     'membershipId' => $membership->getKey(),
@@ -75,7 +87,7 @@ class TenantContextOptionsController extends Controller
                         'id' => $tenant->getKey(),
                         'name' => $tenant->name,
                     ],
-                    'clinics' => $clinicsByTenant->get($tenant->getKey(), collect())
+                    'clinics' => $clinics
                         ->map(static fn (Clinic $clinic): array => [
                             'id' => $clinic->getKey(),
                             'name' => $clinic->name,

@@ -8,16 +8,30 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { AuditApiService, AuditedEvent } from '../../data-access/audit-api';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { SecurityBanner } from '../../../../shared/components/security-banner/security-banner';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 
 @Component({
   selector: 'app-audit',
-  imports: [MatButtonModule, MatProgressSpinnerModule, AppIcon, ScrollReveal],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatProgressSpinnerModule,
+    AppIcon,
+    SecurityBanner,
+    StatePanel,
+    StatusChip,
+    ScrollReveal,
+  ],
   templateUrl: './audit.html',
   styleUrl: './audit.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +42,7 @@ export class Audit {
 
   protected readonly loading = signal(true);
   protected readonly refreshing = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
   protected readonly query = signal('');
   protected readonly events = signal<readonly AuditedEvent[]>([]);
   protected readonly total = signal(0);
@@ -114,9 +128,12 @@ export class Audit {
           this.events.set(response.events);
           this.total.set(response.total);
         },
-        error: () =>
+        error: (error: unknown) =>
           this.errorMessage.set(
-            'No se pudo recuperar la auditoría. Revisa la sesión y el permiso de auditoría.',
+            toAppError(
+              error,
+              'No se pudo recuperar la auditoría. Revisa la sesión y el permiso de auditoría.',
+            ),
           ),
       });
   }

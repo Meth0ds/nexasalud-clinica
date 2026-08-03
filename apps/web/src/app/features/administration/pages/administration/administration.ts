@@ -8,10 +8,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin, finalize } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
+import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import {
   AdministrationApiService,
   AdministrationOverview,
@@ -19,6 +22,8 @@ import {
   AdministrationUser,
 } from '../../data-access/administration-api';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 
 type SectionId = 'users' | 'roles' | 'security';
@@ -33,7 +38,16 @@ interface AdminSection {
 
 @Component({
   selector: 'app-administration',
-  imports: [MatButtonModule, MatCheckboxModule, MatProgressSpinnerModule, AppIcon, ScrollReveal],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatProgressSpinnerModule,
+    AppIcon,
+    StatePanel,
+    StatusChip,
+    ScrollReveal,
+  ],
   templateUrl: './administration.html',
   styleUrls: [
     './administration.scss',
@@ -66,6 +80,7 @@ export class Administration {
   ];
 
   private readonly administrationApi = inject(AdministrationApiService);
+  private readonly notifications = inject(ErrorNotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly activeSection = signal<SectionId>('users');
@@ -73,7 +88,8 @@ export class Administration {
   protected readonly loading = signal(true);
   protected readonly refreshing = signal(false);
   protected readonly submitting = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly actionMessage = signal(
     'Datos protegidos: no se muestran secretos ni sesiones activas individuales.',
   );
@@ -143,6 +159,7 @@ export class Administration {
   }
 
   protected selectUser(user: AdministrationUser): void {
+    this.actionError.set(null);
     this.selectedUserId.set(user.userId);
     this.draftRoleIds.set(user.roles.map((role) => role.id));
     this.requestedActiveState.set(null);
@@ -182,6 +199,7 @@ export class Administration {
   }
 
   protected cancelAction(): void {
+    this.actionError.set(null);
     const selected = this.selectedUser();
     this.reason.set('');
     this.requestedActiveState.set(null);
@@ -202,6 +220,7 @@ export class Administration {
 
     this.submitting.set(true);
     this.errorMessage.set(null);
+    this.actionError.set(null);
 
     if (action === 'sessions') {
       this.administrationApi
@@ -221,7 +240,7 @@ export class Administration {
             );
             this.completeAction(`Sesiones de ${selected.displayName} revocadas por el servidor.`);
           },
-          error: () => this.reportActionFailure(),
+          error: (error: unknown) => this.reportActionFailure(error),
         });
       return;
     }
@@ -245,7 +264,7 @@ export class Administration {
           );
           this.completeAction(`Acceso de ${updatedUser.displayName} actualizado y auditado.`);
         },
-        error: () => this.reportActionFailure(),
+        error: (error: unknown) => this.reportActionFailure(error),
       });
   }
 
@@ -331,24 +350,34 @@ export class Administration {
             this.selectedUserId.set(null);
           }
         },
-        error: () => {
+        error: (error: unknown) => {
           this.errorMessage.set(
-            'No se pudo cargar la administración. Comprueba la sesión, el contexto y tus permisos.',
+            toAppError(
+              error,
+              'No se pudo cargar la administración. Comprueba la sesión, el contexto y tus permisos.',
+            ),
           );
         },
       });
   }
 
   private completeAction(message: string): void {
+    this.actionError.set(null);
     this.reason.set('');
     this.requestedActiveState.set(null);
     this.pendingAction.set(null);
     this.actionMessage.set(message);
   }
 
-  private reportActionFailure(): void {
-    this.actionMessage.set(
+  private reportActionFailure(error: unknown): void {
+    const appError = toAppError(
+      error,
       'El servidor no aplicó el cambio. Revisa la MFA reciente, el permiso y el motivo.',
     );
+    this.actionError.set(appError);
+    this.actionMessage.set(
+      'El cambio protegido no se ha aplicado. Revisa la referencia y vuelve a intentarlo cuando proceda.',
+    );
+    this.notifications.notify(appError);
   }
 }

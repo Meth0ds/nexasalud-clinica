@@ -29,20 +29,34 @@
     </div>
   </header>
 
+  @if (actionError(); as error) {
+    <app-state-panel
+      kind="error"
+      title="La operación no se ha completado"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Cerrar aviso"
+      (action)="actionError.set(null)"
+    />
+  }
+
   @if (loading()) {
-    <section class="clinical-loading nexa-card" aria-live="polite">
-      <mat-spinner diameter="34" /><span>Cargando directorio autorizado…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando directorio autorizado"
+      message="Verificando el contexto asistencial antes de mostrar información clínica."
+    />
   } @else if (errorMessage(); as error) {
-    <section class="clinical-error nexa-card" role="alert">
-      <app-icon name="shield" [size]="22" />
-      <div>
-        <strong>Historia clínica no disponible</strong>
-        <p>{{ error }}</p>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Historia clínica no disponible"
+      [message]="error.message"
+      [reference]="error.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="retry()"
+    />
   } @else {
-    <section class="clinical-selector nexa-card" appScrollReveal>
+    <mat-card appearance="outlined" class="clinical-selector nexa-card" appScrollReveal>
       <div>
         <h2>Contexto asistencial</h2>
         <p>Selecciona un paciente del centro activo; el acceso y la consulta quedarán auditados.</p>
@@ -60,10 +74,15 @@
           }
         </mat-select></mat-form-field
       >
-    </section>
+    </mat-card>
 
     @if (selectedPatient(); as patient) {
-      <section class="patient-context nexa-card" appScrollReveal>
+      <mat-card
+        appearance="outlined"
+        class="patient-context nexa-card"
+        role="article"
+        appScrollReveal
+      >
         <div class="patient-context__identity">
           <span class="patient-avatar">{{ patient.initials }}</span>
           <div>
@@ -90,10 +109,15 @@
             <dd>{{ patient.lastVisitLabel }}</dd>
           </div>
         </dl>
-      </section>
+      </mat-card>
 
       <section class="clinical-alerts nexa-grid nexa-grid--3 nexa-section">
-        <article class="clinical-alert clinical-alert--danger" appScrollReveal>
+        <mat-card
+          appearance="outlined"
+          class="clinical-alert clinical-alert--danger"
+          role="article"
+          appScrollReveal
+        >
           <span><app-icon name="shield" /></span>
           <div>
             <small>Alertas disponibles</small><strong>{{ patient.alertLabels.length }}</strong>
@@ -105,25 +129,42 @@
               }}
             </p>
           </div>
-        </article>
-        <article class="clinical-alert clinical-alert--blue" appScrollReveal [revealDelay]="60">
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="clinical-alert clinical-alert--blue"
+          role="article"
+          appScrollReveal
+          [revealDelay]="60"
+        >
           <span><app-icon name="spark" /></span>
           <div>
             <small>Notas firmadas</small><strong>{{ signedNotes() }}</strong>
             <p>Registros clínicos inmutables</p>
           </div>
-        </article>
-        <article class="clinical-alert clinical-alert--green" appScrollReveal [revealDelay]="120">
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="clinical-alert clinical-alert--green"
+          role="article"
+          appScrollReveal
+          [revealDelay]="120"
+        >
           <span><app-icon name="check" /></span>
           <div>
             <small>Borradores</small><strong>{{ draftNotes() }}</strong>
             <p>Requieren firma explícita para quedar definitivos</p>
           </div>
-        </article>
+        </mat-card>
       </section>
 
       <section class="clinical-layout nexa-section">
-        <div class="clinical-main nexa-card" appScrollReveal>
+        <mat-card
+          appearance="outlined"
+          class="clinical-main nexa-card"
+          role="article"
+          appScrollReveal
+        >
           <mat-tab-group animationDuration="250ms" preserveContent>
             <mat-tab label="Evolución">
               <div class="tab-content">
@@ -152,10 +193,10 @@
                         <i></i>
                         <div>
                           <header>
-                            <span class="nexa-chip nexa-chip--{{ statusTone(note.status) }}">{{
-                              statusLabel(note.status)
-                            }}</span
-                            ><small>{{ note.authorDisplayName ?? 'Autor no disponible' }}</small>
+                            <app-status-chip [tone]="statusTone(note.status)">
+                              {{ statusLabel(note.status) }}
+                            </app-status-chip>
+                            <small>{{ note.authorDisplayName ?? 'Autor no disponible' }}</small>
                           </header>
                           <p>{{ privacyVisible() ? note.content : 'Contenido clínico oculto' }}</p>
                           <small>Referencia segura · {{ note.id }}</small>
@@ -233,9 +274,15 @@
               </div></mat-tab
             >
           </mat-tab-group>
-        </div>
+        </mat-card>
         <aside class="clinical-side">
-          <article class="nexa-card next-actions" appScrollReveal [revealDelay]="100">
+          <mat-card
+            appearance="outlined"
+            class="nexa-card next-actions"
+            role="article"
+            appScrollReveal
+            [revealDelay]="100"
+          >
             <div class="nexa-card__header">
               <div>
                 <h2>Estado del registro</h2>
@@ -260,26 +307,24 @@
                 ><small>MFA reciente requerida para notas definitivas.</small></span
               >
             </div>
-          </article>
-          <article class="privacy-access nexa-card">
+          </mat-card>
+          <mat-card appearance="outlined" class="privacy-access nexa-card" role="article">
             <app-icon name="eye" [size]="19" /><span
               ><strong>Acceso asistencial</strong
               ><small>La consulta de esta historia queda registrada por seguridad.</small></span
             >
-          </article>
+          </mat-card>
         </aside>
       </section>
     } @else {
-      <section class="nexa-card clinical-empty" appScrollReveal>
-        <app-icon name="shield" [size]="27" />
-        <div>
-          <h2>Selecciona un contexto asistencial</h2>
-          <p>
-            La historia clínica permanece cerrada hasta que se selecciona un paciente autorizado en
-            el tenant activo.
-          </p>
-        </div>
-      </section>
+      <app-state-panel
+        class="clinical-empty"
+        kind="empty"
+        icon="shield"
+        title="Selecciona un contexto asistencial"
+        message="La historia clínica permanece cerrada hasta que se selecciona un paciente autorizado en el tenant activo."
+        appScrollReveal
+      />
     }
   }
 </div>

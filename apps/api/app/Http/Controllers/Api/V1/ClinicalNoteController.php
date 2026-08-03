@@ -39,6 +39,7 @@ final class ClinicalNoteController extends Controller
         $notes = ClinicalNote::query()
             ->with('author')
             ->where('patient_id', $patient->getKey())
+            ->where('tenant_id', $patient->tenant_id)
             ->latest('created_at')
             ->paginate((int) ($filters['perPage'] ?? 50));
 
@@ -117,12 +118,20 @@ final class ClinicalNoteController extends Controller
     {
         if (isset($data['appointmentId'])) {
             $appointment = Appointment::query()->findOrFail($data['appointmentId']);
-            abort_if($appointment->patient_id !== $patient->getKey(), Response::HTTP_UNPROCESSABLE_ENTITY);
+            abort_if(
+                $appointment->tenant_id !== $patient->tenant_id
+                    || $appointment->patient_id !== $patient->getKey(),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
         }
 
         if (isset($data['supersedesId'])) {
             $superseded = ClinicalNote::query()->findOrFail($data['supersedesId']);
-            abort_if($superseded->patient_id !== $patient->getKey(), Response::HTTP_UNPROCESSABLE_ENTITY);
+            abort_if(
+                $superseded->tenant_id !== $patient->tenant_id
+                    || $superseded->patient_id !== $patient->getKey(),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
         }
     }
 

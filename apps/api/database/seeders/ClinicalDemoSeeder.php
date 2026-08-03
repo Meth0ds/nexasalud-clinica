@@ -6,12 +6,14 @@ use App\Models\AdverseReaction;
 use App\Models\Appointment;
 use App\Models\AppointmentType;
 use App\Models\Clinic;
+use App\Models\ClinicPatient;
 use App\Models\ClinicalDocument;
 use App\Models\ConsentRecord;
 use App\Models\Insurer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Membership;
+use App\Models\MembershipClinic;
 use App\Models\Patient;
 use App\Models\PatientAllergy;
 use App\Models\PatientCoverage;
@@ -56,6 +58,7 @@ class ClinicalDemoSeeder extends Seeder
         try {
             DB::transaction(function () use ($issuer): void {
                 $tenant = $this->upsertTenant();
+                $this->setDatabaseTenantContext($tenant->getKey());
                 app()->instance('currentTenant', $tenant);
 
                 $users = $this->upsertUsers($issuer);
@@ -63,6 +66,7 @@ class ClinicalDemoSeeder extends Seeder
                 $this->upsertMemberships($tenant, $users, $roles);
 
                 [$clinic, $room, $appointmentType] = $this->upsertReferenceData($tenant);
+                $this->syncClinicAccess($tenant, $clinic);
                 $clinician = $users['clinician'];
 
                 UserPreference::query()->updateOrCreate(
@@ -79,6 +83,7 @@ class ClinicalDemoSeeder extends Seeder
 
                 if ($datasetMarker || $existingPatient) {
                     if ($existingPatient) {
+                        $this->syncClinicAccess($tenant, $clinic);
                         $this->upsertPatientUserLink($tenant, $users['patient'], $existingPatient, $clinician);
                     }
 
@@ -98,6 +103,7 @@ class ClinicalDemoSeeder extends Seeder
                 $this->markDatasetSeeded($tenant, $clinician);
             });
         } finally {
+            $this->clearDatabaseTenantContext();
             app()->forgetInstance('currentMembership');
             app()->forgetInstance('currentTenant');
         }
@@ -109,6 +115,8 @@ class ClinicalDemoSeeder extends Seeder
             'users' => ['oidc_issuer', 'oidc_subject'],
             'tenants' => ['slug', 'timezone'],
             'memberships' => ['tenant_id', 'user_id'],
+            'membership_clinic' => ['tenant_id', 'membership_id', 'clinic_id'],
+            'clinic_patient' => ['tenant_id', 'clinic_id', 'patient_id'],
             'consent_records' => ['tenant_id', 'patient_id', 'status'],
             'patient_user_links' => ['tenant_id', 'user_id', 'patient_id', 'relationship'],
         ];
@@ -119,6 +127,27 @@ class ClinicalDemoSeeder extends Seeder
                     "The database schema is not current for {$table}; run all Laravel migrations before the demo seeder.",
                 );
             }
+        }
+    }
+
+    /**
+     * Allow the synthetic dataset to run through the same PostgreSQL tenant policy
+     * as an authenticated request after the target tenant has been discovered.
+     */
+    private function setDatabaseTenantContext(string $tenantId): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.tenant_id', ?, false)", [$tenantId]);
+        }
+    }
+
+    /**
+     * Never leave the demo tenant in a long-lived CLI/worker database connection.
+     */
+    private function clearDatabaseTenantContext(): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT set_config('app.tenant_id', '', false)");
         }
     }
 
@@ -335,6 +364,16 @@ class ClinicalDemoSeeder extends Seeder
         User $patientUser,
     ): void {
         $patients = Patient::factory()->count(6)->create(['tenant_id' => $tenant->getKey()]);
+        foreach ($patients as $patient) {
+            ClinicPatient::query()->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->getKey(),
+                    'clinic_id' => $clinic->getKey(),
+                    'patient_id' => $patient->getKey(),
+                ],
+                ['is_active' => true, 'first_seen_at' => now()],
+            );
+        }
         $scheduleStart = now()->addWeek()->startOfWeek()->addDay()->setTime(9, 0);
 
         foreach ($patients->take(4)->values() as $index => $patient) {
@@ -395,6 +434,7 @@ class ClinicalDemoSeeder extends Seeder
         ]);
         $document = ClinicalDocument::factory()->create([
             'tenant_id' => $tenant->getKey(),
+            'clinic_id' => $clinic->getKey(),
             'patient_id' => $patient->getKey(),
             'prescription_id' => $prescription->getKey(),
             'consent_record_id' => $consent->getKey(),
@@ -422,6 +462,42 @@ class ClinicalDemoSeeder extends Seeder
             'tenant_id' => $tenant->getKey(),
             'invoice_id' => $invoice->getKey(),
         ]);
+    }
+
+    /**
+     * Grant every synthetic demo identity and patient access to the single demo clinic.
+     */
+    private function syncClinicAccess(Tenant $tenant, Clinic $clinic): void
+    {
+        Membership::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('is_active', true)
+            ->get()
+            ->each(function (Membership $membership) use ($tenant, $clinic): void {
+                MembershipClinic::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->getKey(),
+                        'membership_id' => $membership->getKey(),
+                        'clinic_id' => $clinic->getKey(),
+                    ],
+                    ['is_active' => true],
+                );
+            });
+
+        Patient::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('is_active', true)
+            ->get()
+            ->each(function (Patient $patient) use ($tenant, $clinic): void {
+                ClinicPatient::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->getKey(),
+                        'clinic_id' => $clinic->getKey(),
+                        'patient_id' => $patient->getKey(),
+                    ],
+                    ['is_active' => true, 'first_seen_at' => now()],
+                );
+            });
     }
 
     private function upsertPatientUserLink(

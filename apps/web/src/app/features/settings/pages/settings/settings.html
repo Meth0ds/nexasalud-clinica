@@ -17,21 +17,35 @@
       <app-icon name="check" [size]="17" /> {{ saving() ? 'Guardando…' : 'Guardar preferencias' }}
     </button>
   </header>
+  @if (saveError(); as requestError) {
+    <app-state-panel
+      kind="error"
+      title="No se pudieron guardar las preferencias"
+      [message]="requestError.message"
+      [reference]="requestError.correlationId ?? null"
+      actionLabel="Reintentar guardado"
+      [busy]="saving()"
+      (action)="save()"
+    />
+  }
   @if (loading()) {
-    <section class="settings-state" role="status">
-      <mat-spinner diameter="30" /><span>Cargando preferencias autorizadas…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Cargando preferencias"
+      message="Recuperando la configuración de tu espacio de trabajo."
+    />
   } @else if (error(); as message) {
-    <section class="settings-state settings-state--error" role="alert">
-      <div>
-        <h2>Preferencias no disponibles</h2>
-        <p>{{ message }}</p>
-        <button mat-stroked-button type="button" (click)="retry()">Reintentar</button>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Preferencias no disponibles"
+      [message]="message.message"
+      [reference]="message.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="retry()"
+    />
   } @else {
     <section class="settings-grid">
-      <article class="nexa-card" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Apariencia</h2>
@@ -69,8 +83,14 @@
             [checked]="preferences.reduceMotion()"
             (change)="preferences.setReduceMotion($event.checked)"
         /></label>
-      </article>
-      <article class="nexa-card" appScrollReveal [revealDelay]="70">
+      </mat-card>
+      <mat-card
+        appearance="outlined"
+        class="nexa-card"
+        role="article"
+        appScrollReveal
+        [revealDelay]="70"
+      >
         <div class="nexa-card__header">
           <div>
             <h2>Espacio de trabajo</h2>
@@ -103,8 +123,14 @@
             [checked]="desktopNotifications()"
             (change)="desktopNotifications.set($event.checked)"
         /></label>
-      </article>
-      <aside class="settings-note nexa-card" appScrollReveal [revealDelay]="120">
+      </mat-card>
+      <mat-card
+        appearance="outlined"
+        class="settings-note nexa-card"
+        role="article"
+        appScrollReveal
+        [revealDelay]="120"
+      >
         <app-icon name="shield" [size]="22" />
         <div>
           <h2>Configuración protegida</h2>
@@ -113,7 +139,7 @@
             flujos autorizados; no se muestran controles simulados.
           </p>
         </div>
-      </aside>
+      </mat-card>
     </section>
   }
 </div>

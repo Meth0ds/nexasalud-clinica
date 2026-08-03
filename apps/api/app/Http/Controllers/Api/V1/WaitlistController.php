@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\OfferWaitlistRequest;
 use App\Http\Requests\Api\V1\StoreWaitlistRequest;
 use App\Http\Resources\Api\V1\WaitlistEntryResource;
 use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\Tenant;
 use App\Models\WaitlistEntry;
 use App\Support\Auditing\AuditRecorder;
@@ -46,6 +47,7 @@ final class WaitlistController extends Controller
 
         $entries = WaitlistEntry::query()
             ->with(['patient', 'appointmentType', 'preferredClinician', 'clinic'])
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->when(isset($filters['clinicId']), fn ($query) => $query->where('clinic_id', $filters['clinicId']))
             ->when(isset($filters['patientId']), fn ($query) => $query->where('patient_id', $filters['patientId']))
@@ -62,6 +64,11 @@ final class WaitlistController extends Controller
     public function store(StoreWaitlistRequest $request): WaitlistEntryResource
     {
         $data = $request->validated();
+        $this->requireCurrentClinic($data['clinicId']);
+        $this->requirePatientInCurrentClinic(Patient::query()->findOrFail($data['patientId']));
+        if (isset($data['practitionerId'])) {
+            $this->requirePractitionerInCurrentClinic($data['practitionerId']);
+        }
         $entry = WaitlistEntry::create([
             'tenant_id' => $this->tenant()->getKey(),
             'clinic_id' => $data['clinicId'],

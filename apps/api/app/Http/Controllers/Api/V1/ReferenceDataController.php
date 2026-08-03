@@ -32,11 +32,13 @@ final class ReferenceDataController extends Controller
     {
         abort_unless($request->user() && $this->permissions->allows($request->user(), 'appointments.read'), Response::HTTP_FORBIDDEN);
 
+        $clinic = $this->currentClinic();
+
         return response()->json(['data' => [
-            'clinics' => Clinic::query()->where('is_active', true)->orderBy('name')->get()->map(fn (Clinic $clinic): array => [
+            'clinics' => Clinic::query()->whereKey($clinic->getKey())->where('is_active', true)->get()->map(fn (Clinic $clinic): array => [
                 'id' => $clinic->getKey(), 'code' => $clinic->code, 'name' => $clinic->name, 'timezone' => $clinic->timezone,
             ]),
-            'rooms' => Room::query()->where('is_active', true)->orderBy('name')->get()->map(fn (Room $room): array => [
+            'rooms' => Room::query()->where('clinic_id', $clinic->getKey())->where('is_active', true)->orderBy('name')->get()->map(fn (Room $room): array => [
                 'id' => $room->getKey(), 'clinicId' => $room->clinic_id, 'name' => $room->name, 'capacity' => $room->capacity,
             ]),
             'appointmentTypes' => AppointmentType::query()->where('is_active', true)->orderBy('name')->get()->map(fn (AppointmentType $type): array => [
@@ -44,7 +46,16 @@ final class ReferenceDataController extends Controller
                 'bufferBeforeMinutes' => $type->buffer_before_minutes, 'bufferAfterMinutes' => $type->buffer_after_minutes,
                 'color' => $type->color, 'requiresRoom' => $type->requires_room, 'allowsVideo' => $type->allows_video,
             ]),
-            'practitioners' => Membership::query()->with(['user', 'roles'])->where('is_active', true)->get()
+            'practitioners' => Membership::query()->with(['user', 'roles'])->where('is_active', true)
+                ->whereExists(function ($grantQuery) use ($clinic): void {
+                    $grantQuery->selectRaw('1')
+                        ->from('membership_clinic')
+                        ->whereColumn('membership_clinic.membership_id', 'memberships.id')
+                        ->where('membership_clinic.tenant_id', $clinic->tenant_id)
+                        ->where('membership_clinic.clinic_id', $clinic->getKey())
+                        ->where('membership_clinic.is_active', true);
+                })
+                ->get()
                 ->filter(fn (Membership $membership): bool => $membership->roles->contains(
                     fn ($role): bool => collect($role->permissions)->contains(
                         fn ($permission): bool => is_string($permission) && (str_starts_with($permission, 'prescriptions.') || $permission === '*'),

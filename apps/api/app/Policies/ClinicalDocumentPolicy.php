@@ -30,11 +30,11 @@ class ClinicalDocumentPolicy
      */
     public function view(User $user, ClinicalDocument $document): bool
     {
-        if (! $this->permissions->belongsToCurrentTenant($document)) {
+        if (! $this->permissions->belongsToCurrentClinic($document)) {
             return false;
         }
 
-        if ($this->permissions->allows($user, 'documents.read') || $this->permissions->allows($user, 'patients.read')) {
+        if ($this->permissions->allows($user, 'documents.read')) {
             return true;
         }
 

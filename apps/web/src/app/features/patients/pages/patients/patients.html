@@ -21,7 +21,7 @@
     </div>
   </header>
 
-  <section class="patient-toolbar nexa-card nexa-card--flat" appScrollReveal>
+  <mat-card appearance="outlined" class="patient-toolbar nexa-card nexa-card--flat" appScrollReveal>
     <mat-form-field appearance="outline" subscriptSizing="dynamic" class="patient-search"
       ><mat-label>Filtrar directorio cargado</mat-label
       ><app-icon matPrefix name="search" [size]="17" /><input
@@ -49,22 +49,25 @@
         >Pendiente <span>{{ filterCounts().missing }}</span></mat-button-toggle
       >
     </mat-button-toggle-group>
-  </section>
+  </mat-card>
 
   <section class="patients-layout nexa-section" [class.has-detail]="selected()">
-    <div class="patient-list nexa-card" appScrollReveal>
+    <mat-card appearance="outlined" class="patient-list nexa-card" appScrollReveal>
       @if (loading()) {
-        <div class="patient-loading" role="status">
-          <mat-spinner diameter="28" /><span>Cargando directorio autorizado…</span>
-        </div>
+        <app-state-panel
+          kind="loading"
+          title="Cargando directorio autorizado"
+          message="Consultando pacientes del contexto activo."
+        />
       } @else if (loadError(); as message) {
-        <div class="nexa-empty patient-load-error" role="alert">
-          <div>
-            <h2>Directorio no disponible</h2>
-            <p>{{ message }}</p>
-            <button mat-stroked-button type="button" (click)="reload()">Reintentar</button>
-          </div>
-        </div>
+        <app-state-panel
+          kind="error"
+          title="Directorio no disponible"
+          [message]="message.message"
+          [reference]="message.correlationId ?? null"
+          actionLabel="Reintentar"
+          (action)="reload()"
+        />
       } @else {
         <div class="nexa-table-wrap">
           <table class="nexa-table">
@@ -109,13 +112,17 @@
                     <strong class="next-visit">{{ patient.nextVisit }}</strong>
                   </td>
                   <td>
-                    <span
-                      class="nexa-chip"
-                      [class.nexa-chip--success]="patient.consent === 'Al día'"
-                      [class.nexa-chip--warning]="patient.consent === 'Revisar'"
-                      [class.nexa-chip--danger]="patient.consent === 'Pendiente'"
-                      >{{ patient.consent }}</span
+                    <app-status-chip
+                      [tone]="
+                        patient.consent === 'Al día'
+                          ? 'success'
+                          : patient.consent === 'Revisar'
+                            ? 'warning'
+                            : 'danger'
+                      "
                     >
+                      {{ patient.consent }}
+                    </app-status-chip>
                   </td>
                 </tr>
               } @empty {
@@ -140,10 +147,16 @@
           >
         </footer>
       }
-    </div>
+    </mat-card>
 
     @if (selected(); as patient) {
-      <aside class="patient-detail nexa-card" appScrollReveal [revealDelay]="80">
+      <mat-card
+        appearance="outlined"
+        class="patient-detail nexa-card"
+        role="article"
+        appScrollReveal
+        [revealDelay]="80"
+      >
         <header>
           <button mat-icon-button aria-label="Cerrar detalle" (click)="selectedId.set(null)">
             <app-icon name="close" [size]="17" />
@@ -153,7 +166,7 @@
           <span class="patient-detail__avatar">{{ patient.initials }}</span>
           <h2>{{ patient.name }}</h2>
           <p>{{ patient.age }} · NS-{{ patient.id.slice(-4).toUpperCase() }}</p>
-          <span class="nexa-chip nexa-chip--success">Paciente activo</span>
+          <app-status-chip tone="success">Paciente activo</app-status-chip>
         </div>
         @if (patient.alerts.length) {
           <div class="detail-alert">
@@ -203,7 +216,7 @@
         <p class="detail-audit">
           <app-icon name="eye" [size]="13" /> Consulta registrada · alcance asistencial
         </p>
-      </aside>
+      </mat-card>
     }
   </section>
 </div>
@@ -225,6 +238,17 @@
         <app-icon name="close" />
       </button>
     </header>
+    @if (createError(); as error) {
+      <app-state-panel
+        kind="error"
+        title="No se ha podido crear la ficha"
+        [message]="error.message"
+        [reference]="error.correlationId ?? null"
+        actionLabel="Reintentar"
+        [busy]="saving()"
+        (action)="savePatient()"
+      />
+    }
     <p class="create-intro">
       Recoge únicamente los datos necesarios para identificar y atender a la persona.
     </p>

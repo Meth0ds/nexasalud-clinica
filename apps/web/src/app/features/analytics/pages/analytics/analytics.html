@@ -19,50 +19,53 @@
   </header>
 
   @if (loading()) {
-    <section class="analytics-state" role="status">
-      <mat-spinner diameter="30" /><span>Calculando indicadores autorizados…</span>
-    </section>
+    <app-state-panel
+      kind="loading"
+      title="Calculando indicadores"
+      message="Solo se procesan métricas agregadas del centro activo."
+    />
   } @else if (error(); as message) {
-    <section class="analytics-state analytics-state--error" role="alert">
-      <div>
-        <h2>Analítica no disponible</h2>
-        <p>{{ message }}</p>
-        <button mat-stroked-button type="button" (click)="retry()">Reintentar</button>
-      </div>
-    </section>
+    <app-state-panel
+      kind="error"
+      title="Analítica no disponible"
+      [message]="message.message"
+      [reference]="message.correlationId ?? null"
+      actionLabel="Reintentar"
+      (action)="retry()"
+    />
   } @else if (snapshot(); as data) {
     <section class="nexa-grid nexa-grid--4 analytics-metrics" appScrollReveal>
-      <article class="nexa-card">
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <app-icon name="calendar" />
         <div>
           <small>Citas del periodo</small><strong>{{ data.metrics.appointments }}</strong>
           <p>Centro activo</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <app-icon name="check" />
         <div>
           <small>Finalizadas</small><strong>{{ data.metrics.completionRate }}%</strong>
           <p>Sobre citas registradas</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <app-icon name="close" />
         <div>
           <small>Canceladas</small><strong>{{ data.metrics.cancellationRate }}%</strong>
           <p>Sobre citas registradas</p>
         </div>
-      </article>
-      <article class="nexa-card">
+      </mat-card>
+      <mat-card appearance="outlined" class="nexa-card" role="article">
         <app-icon name="clock" />
         <div>
           <small>No presentadas</small><strong>{{ data.metrics.noShowRate }}%</strong>
           <p>Sobre citas registradas</p>
         </div>
-      </article>
+      </mat-card>
     </section>
     <section class="analytics-detail nexa-section">
-      <article class="nexa-card" appScrollReveal>
+      <mat-card appearance="outlined" class="nexa-card" role="article" appScrollReveal>
         <div class="nexa-card__header">
           <div>
             <h2>Estado de las citas</h2>
@@ -84,18 +87,22 @@
             </div>
           }
         </div>
-      </article>
-      <aside class="nexa-card analytics-privacy" appScrollReveal [revealDelay]="80">
-        <app-icon name="shield" [size]="22" />
-        <div>
-          <h2>Privacidad aplicada</h2>
-          <p>
-            Solo se presentan agregados. Los grupos inferiores a
-            {{ data.privacy.minimumGroupSize }} no deben usarse para inferir información individual.
-          </p>
-          <small>Zona horaria: {{ data.range.timezone }}</small>
-        </div>
-      </aside>
+      </mat-card>
+      <app-security-banner
+        class="analytics-privacy"
+        title="Privacidad aplicada"
+        [message]="
+          'Solo se presentan agregados. Los grupos inferiores a ' +
+          data.privacy.minimumGroupSize +
+          ' no deben usarse para inferir información individual. Zona horaria: ' +
+          data.range.timezone
+        "
+        label="Minimizado"
+        icon="shield"
+        tone="info"
+        appScrollReveal
+        [revealDelay]="80"
+      />
     </section>
   }
 </div>

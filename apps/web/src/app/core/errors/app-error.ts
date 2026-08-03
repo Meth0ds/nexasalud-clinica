@@ -52,7 +52,7 @@ export class AppError extends Error {
   }
 }
 
-export function toAppError(error: unknown): AppError {
+export function toAppError(error: unknown, fallbackMessage?: string): AppError {
   if (error instanceof AppError) {
     return error;
   }
@@ -62,7 +62,7 @@ export function toAppError(error: unknown): AppError {
     const traceHeader = error.headers?.get('x-trace-id') ?? undefined;
     const status = Number.isFinite(error.status) ? error.status : 0;
     return new AppError({
-      message: messagesByStatus[status] ?? genericMessage,
+      message: fallbackMessage ?? messagesByStatus[status] ?? genericMessage,
       status,
       code: problem?.code ?? `HTTP_${status || 'NETWORK'}`,
       correlationId: problem?.traceId ?? problem?.correlationId ?? traceHeader,
@@ -73,7 +73,7 @@ export function toAppError(error: unknown): AppError {
     });
   }
 
-  return new AppError({ message: genericMessage });
+  return new AppError({ message: fallbackMessage ?? genericMessage });
 }
 
 function isApiProblem(value: unknown): value is ApiProblem {

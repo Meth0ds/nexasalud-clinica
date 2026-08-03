@@ -52,6 +52,7 @@ final class PatientCommunicationController extends Controller
 
         $communications = PatientCommunication::query()
             ->with(['patient', 'author'])
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->when(isset($filters['patientId']), fn ($query) => $query->where('patient_id', $filters['patientId']))
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->when(
@@ -89,10 +90,13 @@ final class PatientCommunicationController extends Controller
         $contentClass = CommunicationContentClass::from((string) $data['contentClass']);
         $this->assertCanWriteContentClass($actor, $contentClass);
         $patient = Patient::query()->findOrFail($data['patientId']);
+        $this->requirePatientInCurrentClinic($patient);
+        $clinic = $this->currentClinic();
 
-        $communication = DB::transaction(function () use ($actor, $contentClass, $data, $patient): PatientCommunication {
+        $communication = DB::transaction(function () use ($actor, $contentClass, $data, $patient, $clinic): PatientCommunication {
             $communication = PatientCommunication::create([
                 'tenant_id' => $this->tenant()->getKey(),
+                'clinic_id' => $clinic->getKey(),
                 'patient_id' => $patient->getKey(),
                 'author_user_id' => $actor->getKey(),
                 'channel' => $data['channel'],

@@ -1,0 +1,15 @@
+<mat-chip-set class="status-chip-set" role="list">
+  <mat-chip
+    class="nexa-chip"
+    role="listitem"
+    [class.nexa-chip--success]="tone() === 'success'"
+    [class.nexa-chip--warning]="tone() === 'warning'"
+    [class.nexa-chip--danger]="tone() === 'danger'"
+    [class.nexa-chip--info]="tone() === 'info'"
+  >
+    @if (icon(); as iconName) {
+      <app-icon [name]="iconName" [size]="13" />
+    }
+    <ng-content />
+  </mat-chip>
+</mat-chip-set>

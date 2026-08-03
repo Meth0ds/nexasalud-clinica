@@ -2,6 +2,62 @@
 @use '@fontsource-variable/manrope';
 @use '@fontsource-variable/newsreader';
 
+$nexa-material-typography: (
+  plain-family: (
+    'Manrope Variable',
+    'Manrope',
+    system-ui,
+    sans-serif,
+  ),
+  brand-family: (
+    'Newsreader Variable',
+    'Newsreader',
+    Georgia,
+    serif,
+  ),
+  bold-weight: 720,
+  medium-weight: 560,
+  regular-weight: 480,
+);
+
+$nexa-material-light-overrides: (
+  primary: #14756c,
+  on-primary: #ffffff,
+  primary-container: #dceee9,
+  on-primary-container: #0d292a,
+  tertiary: #b5653e,
+  on-tertiary: #ffffff,
+  surface: #ffffff,
+  surface-container: #f5f8f5,
+  surface-container-high: #e9efeb,
+  on-surface: #153b3b,
+  on-surface-variant: #527170,
+  outline: #c4d3cb,
+  outline-variant: #d8e2dc,
+  error: #a33b46,
+  error-container: #fae9eb,
+  on-error-container: #5d101b,
+);
+
+$nexa-material-dark-overrides: (
+  primary: #65c3b8,
+  on-primary: #063b36,
+  primary-container: #19514b,
+  on-primary-container: #b3eee3,
+  tertiary: #f1a07d,
+  on-tertiary: #4b1d0f,
+  surface: #142625,
+  surface-container: #192e2c,
+  surface-container-high: #213936,
+  on-surface: #e4f1ed,
+  on-surface-variant: #9eb8b2,
+  outline: #45615b,
+  outline-variant: #2e4743,
+  error: #ffb4ab,
+  error-container: #49252b,
+  on-error-container: #ffdad6,
+);
+
 html {
   @include mat.theme(
     (
@@ -10,9 +66,12 @@ html {
         tertiary: mat.$orange-palette,
         theme-type: light,
       ),
-      typography: 'Manrope',
-      density: 0,
-    )
+      typography: $nexa-material-typography,
+      density: (
+        scale: 0,
+      ),
+    ),
+    $nexa-material-light-overrides
   );
 
   --nexa-ink: #153b3b;
@@ -49,6 +108,21 @@ html {
 }
 
 html[data-theme='dark'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
+        theme-type: dark,
+      ),
+      typography: $nexa-material-typography,
+      density: (
+        scale: 0,
+      ),
+    ),
+    $nexa-material-dark-overrides
+  );
+
   --nexa-ink: #e4f1ed;
   --nexa-ink-strong: #f5fbf8;
   --nexa-ink-soft: #9eb8b2;
@@ -292,7 +366,7 @@ a {
   font-size: 0.82rem;
 }
 
-.nexa-btn-primary.mat-mdc-unelevated-button {
+.nexa-btn-primary {
   --mdc-filled-button-container-color: var(--nexa-primary);
   --mdc-filled-button-label-text-color: #fff;
   min-height: 43px;
@@ -302,7 +376,7 @@ a {
   letter-spacing: -0.01em;
 }
 
-.nexa-btn-secondary.mat-mdc-outlined-button {
+.nexa-btn-secondary {
   --mdc-outlined-button-label-text-color: var(--nexa-ink);
   --mdc-outlined-button-outline-color: var(--nexa-border-strong);
   min-height: 43px;
@@ -311,7 +385,7 @@ a {
   font-weight: 680;
 }
 
-.nexa-icon-button.mat-mdc-icon-button {
+.nexa-icon-button {
   color: var(--nexa-ink-soft);
   background: var(--nexa-surface);
   border: 1px solid var(--nexa-border);
@@ -500,24 +574,31 @@ a {
   gap: 15px;
 }
 
-.nexa-field-grid .mat-mdc-form-field {
+.nexa-field-grid mat-form-field {
   width: 100%;
 }
 
-.nexa-snackbar .mdc-snackbar__surface {
+.nexa-snackbar {
+  --mdc-snackbar-container-color: var(--nexa-surface);
+  --mdc-snackbar-supporting-text-color: var(--nexa-ink-strong);
+  --mat-snack-bar-button-color: var(--nexa-primary);
   border: 1px solid var(--nexa-border-strong);
-  border-radius: 14px !important;
-  color: var(--nexa-ink-strong) !important;
-  background: var(--nexa-surface) !important;
-  box-shadow: var(--nexa-shadow) !important;
+  border-radius: 14px;
+  color: var(--nexa-ink-strong);
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow);
 }
 
-.nexa-snackbar--error .mdc-snackbar__surface {
+.nexa-snackbar--error {
   border-inline-start: 4px solid var(--nexa-danger);
 }
 
-.nexa-snackbar--success .mdc-snackbar__surface {
+.nexa-snackbar--success {
   border-inline-start: 4px solid var(--nexa-success);
+}
+
+.nexa-snackbar--info {
+  border-inline-start: 4px solid var(--nexa-blue);
 }
 
 [appScrollReveal] {

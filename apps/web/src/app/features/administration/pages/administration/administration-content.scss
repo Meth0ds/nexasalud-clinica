@@ -209,7 +209,7 @@
   .audit-stream article {
     grid-template-columns: 48px 15px 1fr;
   }
-  .audit-stream article > .nexa-chip {
+  .audit-stream article > app-status-chip {
     grid-column: 3;
   }
   .account-table {

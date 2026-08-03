@@ -29,7 +29,7 @@ class InvoicePolicy
      */
     public function view(User $user, Invoice $invoice): bool
     {
-        return $this->permissions->belongsToCurrentTenant($invoice) && $this->viewAny($user);
+        return $this->permissions->belongsToCurrentClinic($invoice) && $this->viewAny($user);
     }
 
     /**
@@ -45,7 +45,7 @@ class InvoicePolicy
      */
     public function update(User $user, Invoice $invoice): bool
     {
-        return $this->permissions->belongsToCurrentTenant($invoice) && $this->permissions->allows($user, 'billing.write');
+        return $this->permissions->belongsToCurrentClinic($invoice) && $this->permissions->allows($user, 'billing.write');
     }
 
     /**

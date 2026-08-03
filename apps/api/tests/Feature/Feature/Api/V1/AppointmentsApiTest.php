@@ -284,6 +284,37 @@ final class AppointmentsApiTest extends TestCase
             ->count());
     }
 
+    public function test_delete_alias_requires_reason_and_expected_version_before_cancelling(): void
+    {
+        $appointment = $this->appointment(now()->addDays(5)->startOfHour());
+        $this->actingAs($this->coordinator);
+
+        $this->withSession($this->sessionContext())
+            ->deleteJson('/api/v1/appointments/'.$appointment->getKey(), ['version' => 1])
+            ->assertUnprocessable()
+            ->assertJsonPath('type', '/problems/validation-failed');
+
+        $cancelled = $this->withSession($this->sessionContext())
+            ->deleteJson('/api/v1/appointments/'.$appointment->getKey(), [
+                'version' => 1,
+                'reason' => 'La persona solicita cancelar la consulta.',
+            ]);
+
+        $cancelled->assertNoContent();
+        $this->assertDatabaseHas('appointments', [
+            'id' => $appointment->getKey(),
+            'status' => AppointmentStatus::Cancelled->value,
+            'lock_version' => 2,
+        ]);
+
+        $this->withSession($this->sessionContext())
+            ->deleteJson('/api/v1/appointments/'.$appointment->getKey(), [
+                'version' => 1,
+                'reason' => 'Intento de repetición con versión antigua.',
+            ])
+            ->assertConflict();
+    }
+
     public function test_transition_to_cancelled_requires_the_dedicated_cancellation_permission(): void
     {
         $writeOnly = User::factory()->create(['is_active' => true]);

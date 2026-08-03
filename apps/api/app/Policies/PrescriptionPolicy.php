@@ -29,7 +29,7 @@ class PrescriptionPolicy
      */
     public function view(User $user, Prescription $prescription): bool
     {
-        return $this->permissions->belongsToCurrentTenant($prescription) && $this->viewAny($user);
+        return $this->permissions->belongsToCurrentClinic($prescription) && $this->viewAny($user);
     }
 
     /**
@@ -45,7 +45,7 @@ class PrescriptionPolicy
      */
     public function update(User $user, Prescription $prescription): bool
     {
-        return $this->permissions->belongsToCurrentTenant($prescription) && $this->permissions->allows($user, 'prescriptions.write');
+        return $this->permissions->belongsToCurrentClinic($prescription) && $this->permissions->allows($user, 'prescriptions.write');
     }
 
     /**
@@ -53,7 +53,7 @@ class PrescriptionPolicy
      */
     public function sign(User $user, Prescription $prescription): bool
     {
-        return $this->permissions->belongsToCurrentTenant($prescription) && $this->permissions->allows($user, 'prescriptions.sign');
+        return $this->permissions->belongsToCurrentClinic($prescription) && $this->permissions->allows($user, 'prescriptions.sign');
     }
 
     /**
@@ -61,7 +61,7 @@ class PrescriptionPolicy
      */
     public function send(User $user, Prescription $prescription): bool
     {
-        return $this->permissions->belongsToCurrentTenant($prescription) && $this->permissions->allows($user, 'prescriptions.send');
+        return $this->permissions->belongsToCurrentClinic($prescription) && $this->permissions->allows($user, 'prescriptions.send');
     }
 
     /**

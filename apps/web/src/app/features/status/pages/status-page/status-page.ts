@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
@@ -11,7 +14,7 @@ type StatusKind = 'not-found' | 'unavailable';
  */
 @Component({
   selector: 'app-status-page',
-  imports: [MatButtonModule, RouterLink, AppIcon],
+  imports: [MatButtonModule, MatCardModule, MatChipsModule, MatDividerModule, RouterLink, AppIcon],
   templateUrl: './status-page.html',
   styleUrl: './status-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

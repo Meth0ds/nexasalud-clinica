@@ -58,6 +58,7 @@ final class AnalyticsController extends Controller
         $noShow = (clone $base)->where('status', AppointmentStatus::NoShow)->count();
         $completed = (clone $base)->where('status', AppointmentStatus::Completed)->count();
         $byStatus = (clone $base)->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status');
+        $reportable = $total >= 5;
 
         $this->audit->record($request, 'analytics.viewed', metadata: [
             'clinic_id' => $clinic->getKey(),
@@ -68,13 +69,17 @@ final class AnalyticsController extends Controller
         return response()->json(['data' => [
             'range' => ['from' => $from->toIso8601String(), 'to' => $to->toIso8601String(), 'timezone' => $clinic->timezone],
             'metrics' => [
-                'appointments' => $total,
-                'completionRate' => $total === 0 ? 0 : round(($completed / $total) * 100, 1),
-                'cancellationRate' => $total === 0 ? 0 : round(($cancelled / $total) * 100, 1),
-                'noShowRate' => $total === 0 ? 0 : round(($noShow / $total) * 100, 1),
+                'appointments' => $reportable ? $total : null,
+                'completionRate' => $reportable && $total > 0 ? round(($completed / $total) * 100, 1) : null,
+                'cancellationRate' => $reportable && $total > 0 ? round(($cancelled / $total) * 100, 1) : null,
+                'noShowRate' => $reportable && $total > 0 ? round(($noShow / $total) * 100, 1) : null,
             ],
-            'byStatus' => $byStatus,
-            'privacy' => ['aggregated' => true, 'minimumGroupSize' => 5],
+            'byStatus' => $reportable ? $byStatus : [],
+            'privacy' => [
+                'aggregated' => true,
+                'minimumGroupSize' => 5,
+                'suppressed' => ! $reportable,
+            ],
         ]]);
     }
 }

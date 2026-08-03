@@ -1,28 +1,17 @@
 .content-switch {
   display: inline-flex;
+  width: fit-content;
   gap: 3px;
   margin-bottom: 18px;
-  padding: 4px;
+  padding: 3px;
   border: 1px solid var(--nexa-border);
   border-radius: 13px;
   background: var(--nexa-surface);
 }
-.content-switch button {
-  min-height: 38px;
-  padding: 7px 14px;
-  border: 0;
-  border-radius: 9px;
-  color: var(--nexa-ink-soft);
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.63rem;
-  font-weight: 690;
+.content-switch mat-button-toggle {
+  min-width: 118px;
 }
-.content-switch button.is-active {
-  color: var(--nexa-primary);
-  background: var(--nexa-primary-soft);
-}
-.content-switch button span {
+.content-switch .toggle-count {
   margin-left: 5px;
   padding: 2px 6px;
   border-radius: 999px;
@@ -97,7 +86,7 @@
   font-style: normal;
   font-weight: 800;
 }
-.appointment-detail > .nexa-chip {
+.appointment-detail > app-status-chip {
   margin-right: 6px;
 }
 .data-demo {

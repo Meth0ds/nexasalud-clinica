@@ -42,8 +42,10 @@ final class PatientController extends Controller
         ]);
 
         $tenant = $this->tenant();
+        $clinic = $this->currentClinic();
         $patients = Patient::query()
             ->with($this->relationships())
+            ->whereHas('clinics', fn ($query) => $query->where('clinics.id', $clinic->getKey()))
             ->when(
                 isset($filters['identifier']),
                 fn ($query) => $query->where(
@@ -72,17 +74,33 @@ final class PatientController extends Controller
     public function store(StorePatientRequest $request): PatientResource
     {
         $data = $request->validated();
-        $patient = DB::transaction(fn (): Patient => Patient::create([
-            'tenant_id' => $this->tenant()->getKey(),
-            'medical_record_number' => $data['medicalRecordNumber'],
-            'first_name' => $data['firstName'],
-            'last_name' => $data['lastName'],
-            'birth_date' => $data['birthDate'],
-            'email' => $data['email'] ?? null,
-            'phone' => $data['phone'] ?? null,
-            'address' => $data['address'] ?? null,
-            'preferred_language' => $data['preferredLanguage'],
-        ]));
+        $tenant = $this->tenant();
+        $clinic = $this->currentClinic();
+        $patient = DB::transaction(function () use ($data, $tenant, $clinic): Patient {
+            $patient = Patient::create([
+                'tenant_id' => $tenant->getKey(),
+                'medical_record_number' => $data['medicalRecordNumber'],
+                'first_name' => $data['firstName'],
+                'last_name' => $data['lastName'],
+                'birth_date' => $data['birthDate'],
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'address' => $data['address'] ?? null,
+                'preferred_language' => $data['preferredLanguage'],
+            ]);
+            DB::table('clinic_patient')->insert([
+                'id' => (string) str()->ulid(),
+                'tenant_id' => $tenant->getKey(),
+                'clinic_id' => $clinic->getKey(),
+                'patient_id' => $patient->getKey(),
+                'is_active' => true,
+                'first_seen_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return $patient;
+        });
 
         $this->audit->record($request, 'patient.created', $patient);
 

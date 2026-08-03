@@ -33,7 +33,7 @@ final class ClinicalPdfGenerator
 
     private const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
-    public function generateAppointmentConfirmation(Appointment $appointment, User $actor): ClinicalDocument
+    public function generateAppointmentConfirmation(Appointment $appointment, User $actor, ?ClinicalDocument $target = null): ClinicalDocument
     {
         if (in_array($appointment->status, [AppointmentStatus::Cancelled, AppointmentStatus::NoShow], true)) {
             throw new DomainException('A confirmation cannot be generated for an unavailable appointment.');
@@ -48,6 +48,7 @@ final class ClinicalPdfGenerator
             documentType: 'appointment_confirmation',
             patient: $patient,
             actor: $actor,
+            clinicId: $appointment->clinic_id,
             associations: ['appointment_id' => $appointment->getKey()],
             payload: [
                 'organization' => $this->organizationData($patient, $appointment->clinic?->name),
@@ -65,10 +66,11 @@ final class ClinicalPdfGenerator
                     'status' => $this->appointmentStatusLabel($appointment->status),
                 ],
             ],
+            target: $target,
         );
     }
 
-    public function generatePrescriptionPlan(Prescription $prescription, User $actor): ClinicalDocument
+    public function generatePrescriptionPlan(Prescription $prescription, User $actor, ?ClinicalDocument $target = null): ClinicalDocument
     {
         if (! in_array($prescription->status, [PrescriptionStatus::Signed, PrescriptionStatus::Sent], true)
             || $prescription->signed_at === null) {
@@ -90,6 +92,7 @@ final class ClinicalPdfGenerator
             documentType: 'prescription_plan',
             patient: $patient,
             actor: $actor,
+            clinicId: $prescription->clinic_id,
             associations: ['prescription_id' => $prescription->getKey()],
             payload: [
                 'organization' => $this->organizationData($patient, $clinic?->name),
@@ -115,10 +118,11 @@ final class ClinicalPdfGenerator
                     ])->all(),
                 ],
             ],
+            target: $target,
         );
     }
 
-    public function generateInvoice(Invoice $invoice, User $actor): ClinicalDocument
+    public function generateInvoice(Invoice $invoice, User $actor, ?ClinicalDocument $target = null): ClinicalDocument
     {
         if (in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Voided], true)
             || $invoice->issued_on === null) {
@@ -137,7 +141,8 @@ final class ClinicalPdfGenerator
             documentType: 'invoice',
             patient: $patient,
             actor: $actor,
-            associations: [],
+            clinicId: $invoice->clinic_id,
+            associations: ['invoice_id' => $invoice->getKey()],
             payload: [
                 'organization' => $this->organizationData($patient, $invoice->clinic?->name),
                 'patient' => $this->patientData($patient, includeAddress: true),
@@ -161,13 +166,14 @@ final class ClinicalPdfGenerator
                     'balance' => $this->money($invoice->balance_minor, $invoice->currency),
                 ],
             ],
+            target: $target,
         );
     }
 
     /**
      * Generate a clearly non-fiscal invoice preview for a demonstration environment.
      */
-    public function generateDemoInvoicePreview(Invoice $invoice, User $actor): ClinicalDocument
+    public function generateDemoInvoicePreview(Invoice $invoice, User $actor, ?ClinicalDocument $target = null): ClinicalDocument
     {
         $invoice->loadMissing(['patient.tenant', 'clinic', 'items']);
         $patient = $this->requirePatient($invoice->patient);
@@ -177,7 +183,8 @@ final class ClinicalPdfGenerator
             documentType: 'demo_invoice_preview',
             patient: $patient,
             actor: $actor,
-            associations: [],
+            clinicId: $invoice->clinic_id,
+            associations: ['invoice_id' => $invoice->getKey()],
             payload: [
                 'organization' => $this->organizationData($patient, $invoice->clinic?->name),
                 'patient' => $this->patientData($patient),
@@ -196,7 +203,145 @@ final class ClinicalPdfGenerator
                     'balance' => $this->money($invoice->balance_minor, $invoice->currency),
                 ],
             ],
+            target: $target,
         );
+    }
+
+    /**
+     * Create an opaque pending document for asynchronous appointment rendering.
+     */
+    public function queueAppointmentConfirmation(Appointment $appointment, User $actor): ClinicalDocument
+    {
+        if (in_array($appointment->status, [AppointmentStatus::Cancelled, AppointmentStatus::NoShow], true)) {
+            throw new DomainException('A confirmation cannot be generated for an unavailable appointment.');
+        }
+
+        $appointment->loadMissing(['patient.tenant', 'clinic']);
+        $patient = $this->requirePatient($appointment->patient);
+
+        return $this->createPendingDocument(
+            patient: $patient,
+            actor: $actor,
+            clinicId: (string) $appointment->clinic_id,
+            documentType: 'appointment_confirmation',
+            associations: ['appointment_id' => $appointment->getKey()],
+            renderSpec: ['type' => 'appointment', 'id' => (string) $appointment->getKey()],
+        );
+    }
+
+    /**
+     * Create an opaque pending document for asynchronous prescription rendering.
+     */
+    public function queuePrescriptionPlan(Prescription $prescription, User $actor): ClinicalDocument
+    {
+        if (! in_array($prescription->status, [PrescriptionStatus::Signed, PrescriptionStatus::Sent], true)
+            || $prescription->signed_at === null) {
+            throw new DomainException('Only a signed prescription can be rendered as a clinical document.');
+        }
+
+        $prescription->loadMissing(['patient.tenant', 'items']);
+        $patient = $this->requirePatient($prescription->patient);
+
+        if ($prescription->items->isEmpty()) {
+            throw new DomainException('A prescription document requires at least one medication.');
+        }
+
+        return $this->createPendingDocument(
+            patient: $patient,
+            actor: $actor,
+            clinicId: (string) $prescription->clinic_id,
+            documentType: 'prescription_plan',
+            associations: ['prescription_id' => $prescription->getKey()],
+            renderSpec: ['type' => 'prescription', 'id' => (string) $prescription->getKey()],
+        );
+    }
+
+    /**
+     * Create an opaque pending document for asynchronous invoice rendering.
+     */
+    public function queueInvoice(Invoice $invoice, User $actor): ClinicalDocument
+    {
+        if (in_array($invoice->status, [InvoiceStatus::Draft, InvoiceStatus::Voided], true)
+            || $invoice->issued_on === null) {
+            throw new DomainException('Only an issued and active invoice can be rendered.');
+        }
+
+        $invoice->loadMissing(['patient.tenant', 'items']);
+        $patient = $this->requirePatient($invoice->patient);
+
+        if ($invoice->items->isEmpty() || $invoice->total_minor <= 0) {
+            throw new DomainException('An invoice document requires at least one billable line.');
+        }
+
+        return $this->createPendingDocument(
+            patient: $patient,
+            actor: $actor,
+            clinicId: (string) $invoice->clinic_id,
+            documentType: 'invoice',
+            associations: ['invoice_id' => $invoice->getKey()],
+            renderSpec: ['type' => 'invoice', 'id' => (string) $invoice->getKey()],
+        );
+    }
+
+    /**
+     * Render a pending document using only IDs persisted in its metadata.
+     * No clinical payload is serialized into the queue message.
+     */
+    public function renderPendingDocument(ClinicalDocument $document): ClinicalDocument
+    {
+        $render = is_array($document->metadata) ? ($document->metadata['render'] ?? null) : null;
+        $type = is_array($render) ? ($render['type'] ?? null) : null;
+        $sourceId = is_array($render) ? ($render['id'] ?? null) : null;
+        $actor = $document->generatedBy()->first();
+
+        if (! is_string($type) || ! is_string($sourceId) || ! $actor instanceof User) {
+            throw new UnexpectedValueException('The clinical document render specification is invalid.');
+        }
+
+        $source = match ($type) {
+            'appointment' => Appointment::query()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $document->tenant_id)
+                ->where('clinic_id', $document->clinic_id)
+                ->whereKey($sourceId)
+                ->firstOrFail(),
+            'prescription' => Prescription::query()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $document->tenant_id)
+                ->where('clinic_id', $document->clinic_id)
+                ->whereKey($sourceId)
+                ->firstOrFail(),
+            'invoice' => Invoice::query()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $document->tenant_id)
+                ->where('clinic_id', $document->clinic_id)
+                ->whereKey($sourceId)
+                ->firstOrFail(),
+            default => throw new UnexpectedValueException('The clinical document source type is unsupported.'),
+        };
+
+        return match ($type) {
+            'appointment' => $this->generateAppointmentConfirmation($source, $actor, $document),
+            'prescription' => $this->generatePrescriptionPlan($source, $actor, $document),
+            'invoice' => $this->generateInvoice($source, $actor, $document),
+            default => throw new UnexpectedValueException('The clinical document source type is unsupported.'),
+        };
+    }
+
+    /**
+     * Mark a pending document as failed without exposing exception details.
+     */
+    public function markPendingDocumentFailed(ClinicalDocument $document): void
+    {
+        if ($document->status === ClinicalDocumentStatus::Ready) {
+            return;
+        }
+
+        $this->markFailed($document, [
+            'content_type' => 'application/pdf',
+            'storage_format' => 'laravel-encrypted-v1',
+            'self_contained' => true,
+        ]);
     }
 
     public function verifiedContents(ClinicalDocument $document): string
@@ -250,6 +395,54 @@ final class ClinicalPdfGenerator
 
     /**
      * @param  array<string, string|null>  $associations
+     * @param  array<string, string>  $renderSpec
+     */
+    private function createPendingDocument(
+        Patient $patient,
+        User $actor,
+        string $clinicId,
+        string $documentType,
+        array $associations,
+        array $renderSpec,
+    ): ClinicalDocument {
+        if ($clinicId === '') {
+            throw new DomainException('A clinical document requires a clinic context.');
+        }
+
+        $pending = ClinicalDocument::query()
+            ->where('tenant_id', $patient->tenant_id)
+            ->where('clinic_id', $clinicId)
+            ->where('generated_by', $actor->getKey())
+            ->where('status', ClinicalDocumentStatus::Generating)
+            ->count();
+
+        if ($pending >= (int) config('documents.max_pending_per_actor', 3)) {
+            throw new DomainException('The clinical document generation quota has been reached.');
+        }
+
+        $metadata = [
+            'content_type' => 'application/pdf',
+            'storage_format' => 'laravel-encrypted-v1',
+            'self_contained' => true,
+            'render' => $renderSpec,
+        ];
+
+        return ClinicalDocument::create([
+            'tenant_id' => $patient->tenant_id,
+            'clinic_id' => $clinicId,
+            'patient_id' => $patient->getKey(),
+            ...$associations,
+            'document_type' => $documentType,
+            'status' => ClinicalDocumentStatus::Generating,
+            'template_version' => self::TEMPLATE_VERSION,
+            'storage_key' => $this->opaqueStorageKey(),
+            'metadata' => $metadata,
+            'generated_by' => $actor->getKey(),
+        ]);
+    }
+
+    /**
+     * @param  array<string, string|null>  $associations
      * @param  array<string, mixed>  $payload
      */
     private function renderAndStore(
@@ -257,8 +450,10 @@ final class ClinicalPdfGenerator
         string $documentType,
         Patient $patient,
         User $actor,
+        string $clinicId,
         array $associations,
         array $payload,
+        ?ClinicalDocument $target = null,
     ): ClinicalDocument {
         $generatedAt = now();
         $storageKey = $this->opaqueStorageKey();
@@ -268,8 +463,9 @@ final class ClinicalPdfGenerator
             'self_contained' => true,
         ];
 
-        $document = ClinicalDocument::create([
+        $document = $target ?? ClinicalDocument::create([
             'tenant_id' => $patient->tenant_id,
+            'clinic_id' => $clinicId,
             'patient_id' => $patient->getKey(),
             ...$associations,
             'document_type' => $documentType,
@@ -279,6 +475,23 @@ final class ClinicalPdfGenerator
             'metadata' => $metadata,
             'generated_by' => $actor->getKey(),
         ]);
+
+        if ($target instanceof ClinicalDocument) {
+            if ($target->tenant_id !== $patient->tenant_id
+                || $target->clinic_id !== $clinicId
+                || $target->patient_id !== $patient->getKey()) {
+                throw new DomainException('The pending clinical document context does not match its source record.');
+            }
+
+            $storageKey = $target->storage_key;
+            $document->fill([
+                'status' => ClinicalDocumentStatus::Generating,
+                'document_type' => $documentType,
+                'template_version' => self::TEMPLATE_VERSION,
+                'generated_by' => $actor->getKey(),
+            ]);
+            $document->save();
+        }
 
         $stored = false;
 

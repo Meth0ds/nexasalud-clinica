@@ -63,9 +63,12 @@ final class PortalController extends Controller
     {
         $link = $this->patientLink($request);
         $patient = $link->patient()->firstOrFail();
+        $clinic = $this->currentClinic();
+        $this->requirePatientInCurrentClinic($patient);
         $appointments = Appointment::query()
             ->with(['appointmentType', 'clinic', 'room', 'clinician'])
             ->where('patient_id', $patient->getKey())
+            ->where('clinic_id', $clinic->getKey())
             ->latest('starts_at')
             ->limit(100)
             ->get();
@@ -94,20 +97,20 @@ final class PortalController extends Controller
                 'canCancel' => in_array($appointment->status, [AppointmentStatus::Scheduled, AppointmentStatus::Confirmed], true)
                     && $appointment->starts_at?->isAfter(now()->addHours(4)),
             ])->values(),
-            'prescriptions' => $patient->prescriptions()->with(['items', 'prescriber'])->latest()->limit(50)->get()->map(fn ($prescription): array => [
+            'prescriptions' => $patient->prescriptions()->with(['items', 'prescriber'])->where('clinic_id', $clinic->getKey())->latest()->limit(50)->get()->map(fn ($prescription): array => [
                 'id' => $prescription->getKey(),
                 'status' => $prescription->status->value,
                 'validUntil' => $prescription->valid_until?->toDateString(),
                 'prescriberName' => $prescription->prescriber?->display_name,
                 'itemCount' => $prescription->items->count(),
             ]),
-            'documents' => $patient->documents()->where('status', 'ready')->latest('generated_at')->limit(50)->get()->map(fn ($document): array => [
+            'documents' => $patient->documents()->where('clinic_id', $clinic->getKey())->where('status', 'ready')->latest('generated_at')->limit(50)->get()->map(fn ($document): array => [
                 'id' => $document->getKey(),
                 'type' => $document->document_type,
                 'generatedAt' => $document->generated_at?->toIso8601String(),
                 'revision' => $document->revision,
             ]),
-            'invoices' => $patient->invoices()->latest()->limit(50)->get()->map(fn ($invoice): array => [
+            'invoices' => $patient->invoices()->where('clinic_id', $clinic->getKey())->latest()->limit(50)->get()->map(fn ($invoice): array => [
                 'id' => $invoice->getKey(),
                 'number' => $invoice->invoice_number,
                 'status' => $invoice->status->value,
@@ -123,6 +126,7 @@ final class PortalController extends Controller
                 ? PortalDemoRequest::query()
                     ->where('tenant_id', $link->tenant_id)
                     ->where('patient_id', $link->patient_id)
+                    ->where('clinic_id', $clinic->getKey())
                     ->where('request_type', 'medication_review')
                     ->pluck('prescription_id')
                     ->values()
@@ -140,6 +144,7 @@ final class PortalController extends Controller
         $messages = PatientCommunication::query()
             ->with('author')
             ->where('patient_id', $link->patient_id)
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->where('channel', CommunicationChannel::Portal)
             ->where('status', CommunicationStatus::Queued)
             ->latest('queued_at')
@@ -167,6 +172,7 @@ final class PortalController extends Controller
                 ->whereKey($prescription->getKey())
                 ->where('tenant_id', $link->tenant_id)
                 ->where('patient_id', $link->patient_id)
+                ->where('clinic_id', $this->currentClinic()->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
             $existing = PortalDemoRequest::query()
@@ -218,6 +224,7 @@ final class PortalController extends Controller
             ->whereKey($invoice->getKey())
             ->where('tenant_id', $link->tenant_id)
             ->where('patient_id', $link->patient_id)
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->firstOrFail();
         $document = $this->pdfGenerator->generateDemoInvoicePreview($ownedInvoice, $this->actor($request));
 
@@ -245,6 +252,7 @@ final class PortalController extends Controller
         $entries = WaitlistEntry::query()
             ->with(['patient', 'appointmentType'])
             ->where('patient_id', $link->patient_id)
+            ->where('clinic_id', $this->currentClinic()->getKey())
             ->latest('created_at')
             ->limit(100)
             ->get();
@@ -273,7 +281,7 @@ final class PortalController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
         $clinic = Clinic::query()->findOrFail($data['clinicId']);
-        $this->requireCurrentClinic($clinic);
+        $this->assertCurrentClinic($clinic);
 
         $entry = WaitlistEntry::create([
             'tenant_id' => $link->tenant_id,
@@ -310,7 +318,7 @@ final class PortalController extends Controller
             'mode' => ['nullable', Rule::in(['in-person', 'video', 'phone'])],
         ]);
         $clinic = Clinic::query()->findOrFail($data['clinicId']);
-        $this->requireCurrentClinic($clinic);
+        $this->assertCurrentClinic($clinic);
         $type = AppointmentType::query()->findOrFail($data['appointmentTypeId']);
         $mode = $data['mode'] ?? 'in-person';
         abort_if($mode === 'video' && ! $type->allows_video, Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -341,8 +349,9 @@ final class PortalController extends Controller
         $data = $request->validated();
         $link = $this->patientLink($request);
         $clinic = Clinic::query()->findOrFail($data['clinicId']);
-        $this->requireCurrentClinic($clinic);
+        $this->assertCurrentClinic($clinic);
         $type = AppointmentType::query()->findOrFail($data['appointmentTypeId']);
+        abort_if($type->duration_minutes < 5 || $type->duration_minutes > 720, Response::HTTP_UNPROCESSABLE_ENTITY);
         $provider = $this->clinicalMemberships($data['practitionerId'])->firstOrFail();
         $room = isset($data['roomId']) ? Room::query()->findOrFail($data['roomId']) : null;
         $startsAt = CarbonImmutable::parse($data['startsAt'])->utc();
@@ -515,13 +524,25 @@ final class PortalController extends Controller
         $actor = $this->actor($request);
         abort_unless($this->permissions->allows($actor, 'portal.self'), Response::HTTP_FORBIDDEN);
 
-        return PatientUserLink::query()
+        $link = PatientUserLink::query()
             ->with('patient')
             ->where('user_id', $actor->getKey())
             ->where('is_active', true)
             ->where(fn ($query) => $query->whereNull('access_expires_at')->orWhere('access_expires_at', '>', now()))
             ->orderByRaw("CASE WHEN relationship = 'self' THEN 0 ELSE 1 END")
             ->firstOrFail();
+
+        abort_unless(
+            DB::table('clinic_patient')
+                ->where('tenant_id', $link->tenant_id)
+                ->where('clinic_id', $this->currentClinic()->getKey())
+                ->where('patient_id', $link->patient_id)
+                ->where('is_active', true)
+                ->exists(),
+            Response::HTTP_NOT_FOUND,
+        );
+
+        return $link;
     }
 
     /**
@@ -534,6 +555,14 @@ final class PortalController extends Controller
         return Membership::query()
             ->with(['user', 'roles'])
             ->where('is_active', true)
+            ->whereExists(function ($grantQuery): void {
+                $grantQuery->selectRaw('1')
+                    ->from('membership_clinic')
+                    ->whereColumn('membership_clinic.membership_id', 'memberships.id')
+                    ->where('membership_clinic.clinic_id', $this->currentClinic()->getKey())
+                    ->where('membership_clinic.tenant_id', $this->currentTenant()->getKey())
+                    ->where('membership_clinic.is_active', true);
+            })
             ->when($userId, fn ($query) => $query->where('user_id', $userId))
             ->get()
             ->filter(fn (Membership $membership): bool => $membership->user?->is_active === true && $membership->roles->contains(
@@ -647,7 +676,12 @@ final class PortalController extends Controller
      */
     private function assertOwnedActiveHold(AppointmentSlotHold $hold, PatientUserLink $link, User $actor): void
     {
-        abort_if($hold->patient_id !== $link->patient_id || $hold->created_by_user_id !== $actor->getKey(), Response::HTTP_NOT_FOUND);
+        abort_if(
+            $hold->patient_id !== $link->patient_id
+                || $hold->created_by_user_id !== $actor->getKey()
+                || $hold->clinic_id !== $this->currentClinic()->getKey(),
+            Response::HTTP_NOT_FOUND,
+        );
         if ($hold->status === 'active' && $hold->expires_at?->isPast()) {
             $hold->status = 'expired';
             $hold->save();
@@ -660,7 +694,11 @@ final class PortalController extends Controller
      */
     private function assertPortalAppointment(Appointment $appointment, PatientUserLink $link, int $version): void
     {
-        abort_if($appointment->patient_id !== $link->patient_id, Response::HTTP_NOT_FOUND);
+        abort_if(
+            $appointment->patient_id !== $link->patient_id
+                || $appointment->clinic_id !== $this->currentClinic()->getKey(),
+            Response::HTTP_NOT_FOUND,
+        );
         abort_if($appointment->lock_version !== $version, Response::HTTP_CONFLICT);
     }
 
@@ -678,7 +716,7 @@ final class PortalController extends Controller
     /**
      * Ensure that the selected clinic matches the request's tenant-scoped clinic context.
      */
-    private function requireCurrentClinic(Clinic $clinic): void
+    private function assertCurrentClinic(Clinic $clinic): void
     {
         $current = app()->bound('currentClinic') ? app('currentClinic') : null;
         abort_unless($current instanceof Clinic && $current->is($clinic), Response::HTTP_FORBIDDEN);

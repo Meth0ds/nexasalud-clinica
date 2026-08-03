@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -98,6 +99,16 @@ class Patient extends Model
     public function userLinks(): HasMany
     {
         return $this->hasMany(PatientUserLink::class);
+    }
+
+    /**
+     * Return clinics where this patient has an active care relationship.
+     */
+    public function clinics(): BelongsToMany
+    {
+        return $this->belongsToMany(Clinic::class, 'clinic_patient')
+            ->withPivot(['tenant_id', 'is_active', 'first_seen_at'])
+            ->wherePivot('is_active', true);
     }
 
     /**

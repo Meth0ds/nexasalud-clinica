@@ -1,0 +1,14 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.status-chip-set {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+mat-chip {
+  max-width: 100%;
+}

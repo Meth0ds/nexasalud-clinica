@@ -10,6 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -17,11 +18,14 @@ import { finalize } from 'rxjs';
 
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { AppointmentsService } from '../../../../core/services/appointments';
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { PatientsService } from '../../../../core/services/patients';
 import { ReferenceDataService } from '../../../../core/services/reference-data';
 import { SessionService } from '../../../../core/services/session';
 import { Appointment, Patient, ReferenceData } from '../../../../core/models/app.models';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   AppointmentDialog,
@@ -68,9 +72,12 @@ interface TransitionAction {
   imports: [
     MatButtonModule,
     MatButtonToggleModule,
+    MatCardModule,
     MatMenuModule,
     MatTooltipModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './agenda.html',
@@ -97,7 +104,7 @@ export class Agenda implements OnInit {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly appointments = signal<readonly AgendaItem[]>([]);
   protected readonly loading = signal(false);
-  protected readonly agendaError = signal<string | null>(null);
+  protected readonly agendaError = signal<AppError | null>(null);
   protected readonly timezone = signal('Europe/Madrid');
   protected readonly pdfId = signal<string | null>(null);
   protected readonly practitioners = signal<
@@ -281,7 +288,11 @@ export class Agenda implements OnInit {
                 : 'No presentación registrada. El cambio ha quedado auditado.',
             );
           },
-          error: () => this.loadAppointments(),
+          error: (error: unknown) =>
+            this.reportMutationError(
+              error,
+              'No se ha podido actualizar el estado de la cita. La agenda se volverá a cargar.',
+            ),
         });
       });
   }
@@ -293,7 +304,11 @@ export class Agenda implements OnInit {
         this.selectedId.set(appointment.id);
         this.notifications.success(`${action.label}. El cambio ha quedado registrado.`);
       },
-      error: () => this.loadAppointments(),
+      error: (error: unknown) =>
+        this.reportMutationError(
+          error,
+          'No se ha podido actualizar la cita. La agenda se volverá a cargar.',
+        ),
     });
   }
 
@@ -354,6 +369,11 @@ export class Agenda implements OnInit {
             'El justificante se ha generado y descargado de forma segura.',
           );
         },
+        error: (error: unknown) =>
+          this.reportMutationError(
+            error,
+            'No se ha podido descargar el justificante. Comprueba tu permiso e inténtalo de nuevo.',
+          ),
       });
   }
 
@@ -447,7 +467,11 @@ export class Agenda implements OnInit {
             : 'Cita guardada correctamente.',
         );
       },
-      error: () => this.loadAppointments(),
+      error: (error: unknown) =>
+        this.reportMutationError(
+          error,
+          'No se ha podido guardar la cita. La agenda se volverá a cargar.',
+        ),
     });
   }
 
@@ -467,8 +491,20 @@ export class Agenda implements OnInit {
         this.appointmentTypes.set(reference.appointmentTypes);
         this.loadAppointments();
       },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        this.agendaError.set(
+          toAppError(error, 'No se han podido cargar los recursos autorizados de la agenda.'),
+        );
+      },
     });
-    this.patientApi.search().subscribe({ next: (response) => this.patients.set(response.items) });
+    this.patientApi.search().subscribe({
+      next: (response) => this.patients.set(response.items),
+      error: (error: unknown) =>
+        this.notifications.notify(
+          toAppError(error, 'No se ha podido cargar el directorio de pacientes para crear citas.'),
+        ),
+    });
   }
 
   private loadAppointments(): void {
@@ -494,9 +530,12 @@ export class Agenda implements OnInit {
           );
           this.selectedId.set(response.items[0]?.id ?? null);
         },
-        error: () =>
+        error: (error: unknown) =>
           this.agendaError.set(
-            'No se pudo actualizar la agenda. Comprueba la conexión e inténtalo de nuevo.',
+            toAppError(
+              error,
+              'No se pudo actualizar la agenda. Comprueba la conexión e inténtalo de nuevo.',
+            ),
           ),
       });
   }
@@ -510,6 +549,12 @@ export class Agenda implements OnInit {
             left.startsAt.localeCompare(right.startsAt),
           ),
     );
+  }
+
+  private reportMutationError(error: unknown, fallbackMessage: string): void {
+    const appError = toAppError(error, fallbackMessage);
+    this.notifications.notify(appError);
+    this.loadAppointments();
   }
 
   private toAgendaItem(appointment: Appointment): AgendaItem {

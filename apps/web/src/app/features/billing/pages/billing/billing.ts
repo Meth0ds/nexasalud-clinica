@@ -10,17 +10,21 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { Patient } from '../../../../core/models/app.models';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { PatientsService } from '../../../../core/services/patients';
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   InvoiceApiService,
@@ -34,11 +38,14 @@ import {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './billing.html',
@@ -63,7 +70,8 @@ export class Billing {
   protected readonly invoices = signal<readonly InvoiceRecord[]>([]);
   protected readonly patients = signal<readonly Patient[]>([]);
   protected readonly query = signal('');
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<AppError | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly filteredInvoices = computed(() => {
     const query = this.query().trim().toLocaleLowerCase('es');
     if (!query) {
@@ -120,6 +128,7 @@ export class Billing {
   }
 
   protected openCreate(): void {
+    this.actionError.set(null);
     this.invoiceForm.reset({
       patientId: '',
       description: '',
@@ -152,6 +161,7 @@ export class Billing {
     const unitPriceMinor = Math.round(Number(value.unitPriceEuro) * 100);
     const taxRateBasisPoints = Math.round(Number(value.taxRatePercent) * 100);
     this.saving.set(true);
+    this.actionError.set(null);
     this.invoiceApi
       .create({
         clinicId,
@@ -178,6 +188,8 @@ export class Billing {
           this.createOpen.set(false);
           this.notifications.success('Borrador de factura creado y auditado.');
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido crear la factura.'),
       });
   }
 
@@ -187,6 +199,7 @@ export class Billing {
     }
 
     this.processingId.set(invoice.id);
+    this.actionError.set(null);
     this.invoiceApi
       .issue(invoice)
       .pipe(
@@ -198,6 +211,8 @@ export class Billing {
           this.upsert(updated);
           this.notifications.success('Factura emitida. Ya puede generarse el documento PDF.');
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido emitir la factura.'),
       });
   }
 
@@ -206,6 +221,7 @@ export class Billing {
       return;
     }
 
+    this.actionError.set(null);
     this.paymentForm.reset({
       amountEuro: (invoice.balanceMinor / 100).toFixed(2),
       methodCode: 'card_provider',
@@ -235,6 +251,7 @@ export class Billing {
     }
 
     this.processingId.set(invoice.id);
+    this.actionError.set(null);
     this.invoiceApi
       .recordPayment(invoice, {
         amountMinor,
@@ -253,6 +270,8 @@ export class Billing {
           this.paymentInvoice.set(null);
           this.notifications.success('Cobro registrado y trazado correctamente.');
         },
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido registrar el cobro.'),
       });
   }
 
@@ -266,6 +285,7 @@ export class Billing {
     }
 
     this.downloadingId.set(invoice.id);
+    this.actionError.set(null);
     this.invoiceApi
       .downloadInvoice(invoice)
       .pipe(
@@ -274,6 +294,8 @@ export class Billing {
       )
       .subscribe({
         next: ({ blob, filename }) => this.downloadBlob(blob, filename),
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido generar el PDF de la factura.'),
       });
   }
 
@@ -312,7 +334,10 @@ export class Billing {
       : new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(parsed);
   }
 
-  private load(): void {
+  protected load(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.actionError.set(null);
     forkJoin({ invoices: this.invoiceApi.list(), patients: this.patientsApi.search() })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -323,9 +348,12 @@ export class Billing {
           this.invoices.set(invoices.invoices);
           this.patients.set(patients.items);
         },
-        error: () =>
+        error: (error: unknown) =>
           this.errorMessage.set(
-            'No se han podido cargar las facturas autorizadas. Comprueba tu sesión, contexto y permisos de facturación.',
+            toAppError(
+              error,
+              'No se han podido cargar las facturas autorizadas. Comprueba tu sesión, contexto y permisos de facturación.',
+            ),
           ),
       });
   }
@@ -350,5 +378,11 @@ export class Billing {
     anchor.click();
     anchor.remove();
     globalThis.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  private reportActionError(error: unknown, fallback: string): void {
+    const appError = toAppError(error, fallback);
+    this.actionError.set(appError);
+    this.notifications.notify(appError);
   }
 }

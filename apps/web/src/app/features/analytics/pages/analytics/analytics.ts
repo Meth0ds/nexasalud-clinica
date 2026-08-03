@@ -8,14 +8,18 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import {
   AnalyticsApiService,
   AnalyticsPeriod,
   AnalyticsSnapshot,
 } from '../../data-access/analytics-api';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { SecurityBanner } from '../../../../shared/components/security-banner/security-banner';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 
 @Component({
@@ -23,8 +27,11 @@ import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
   imports: [
     MatButtonModule,
     MatButtonToggleModule,
+    MatCardModule,
     MatProgressSpinnerModule,
     AppIcon,
+    SecurityBanner,
+    StatePanel,
     ScrollReveal,
   ],
   templateUrl: './analytics.html',
@@ -36,7 +43,7 @@ export class Analytics implements OnInit {
   protected readonly period = signal<AnalyticsPeriod>('30d');
   protected readonly snapshot = signal<AnalyticsSnapshot | null>(null);
   protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly error = signal<AppError | null>(null);
   protected readonly statusRows = computed(() =>
     Object.entries(this.snapshot()?.byStatus ?? {}).map(([status, total]) => ({
       status: this.statusLabel(status),
@@ -64,8 +71,10 @@ export class Analytics implements OnInit {
         this.snapshot.set(snapshot);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('No se ha podido calcular la analítica. Inténtalo de nuevo.');
+      error: (error: unknown) => {
+        this.error.set(
+          toAppError(error, 'No se ha podido calcular la analítica. Inténtalo de nuevo.'),
+        );
         this.loading.set(false);
       },
     });

@@ -11,6 +11,7 @@
       <span class="portal-brand__mark" aria-hidden="true"><i></i><i></i></span>
       <span><strong>NexaSalud</strong><small>Portal del paciente</small></span>
       <button
+        mat-icon-button
         class="portal-close"
         type="button"
         aria-label="Cerrar menú"
@@ -35,6 +36,7 @@
       <p>Tu espacio</p>
       @for (item of navItems; track item.id) {
         <button
+          mat-button
           type="button"
           [class.is-active]="activeSection() === item.id"
           [attr.aria-current]="activeSection() === item.id ? 'page' : null"
@@ -74,6 +76,7 @@
   <div class="portal-workspace">
     <header class="portal-topbar">
       <button
+        mat-icon-button
         class="portal-menu"
         id="portal-menu-toggle"
         type="button"
@@ -90,6 +93,7 @@
       <div class="topbar-actions">
         <span class="portal-security-pill"><i></i> Conexión segura</span>
         <button
+          mat-icon-button
           type="button"
           class="topbar-action"
           aria-label="Abrir mensajes seguros"
@@ -104,34 +108,34 @@
     </header>
 
     <main id="portal-main" class="portal-main" tabindex="-1">
+      @if (actionError(); as error) {
+        <app-state-panel
+          class="portal-state-panel"
+          kind="error"
+          title="La operación no se ha completado"
+          [message]="error.message"
+          [reference]="error.correlationId ?? null"
+          actionLabel="Cerrar aviso"
+          (action)="actionError.set(null)"
+        />
+      }
       @if (overviewLoading()) {
-        <section
-          class="portal-view portal-state"
-          aria-labelledby="portal-loading-title"
-          aria-busy="true"
-        >
-          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          <span><app-icon name="shield" [size]="27" /></span>
-          <h1 id="portal-loading-title">Preparando tu espacio seguro</h1>
-          <p>Estamos recuperando únicamente la información necesaria para esta sesión.</p>
-        </section>
+        <app-state-panel
+          class="portal-state-panel"
+          kind="loading"
+          title="Preparando tu espacio seguro"
+          message="Estamos recuperando únicamente la información necesaria para esta sesión."
+        />
       } @else if (overviewError(); as error) {
-        <section
-          class="portal-view portal-state portal-state--error"
-          aria-labelledby="portal-error-title"
-          role="alert"
-        >
-          <span><app-icon name="shield" [size]="27" /></span>
-          <p class="nexa-eyebrow">No se pudo cargar el portal</p>
-          <h1 id="portal-error-title">Tu información no se ha mostrado</h1>
-          <p>{{ error.message }}</p>
-          @if (error.correlationId) {
-            <small>Referencia: {{ error.correlationId }}</small>
-          }
-          <button mat-flat-button class="nexa-btn-primary" type="button" (click)="loadOverview()">
-            Volver a intentar
-          </button>
-        </section>
+        <app-state-panel
+          class="portal-state-panel"
+          kind="error"
+          title="Tu información no se ha mostrado"
+          [message]="error.message"
+          [reference]="error.correlationId ?? null"
+          actionLabel="Volver a intentar"
+          (action)="loadOverview()"
+        />
       } @else {
         @switch (activeSection()) {
           @case ('inicio') {
@@ -166,9 +170,9 @@
                     ><span>{{ formatMonth(appointment.startsAt) }}</span>
                   </div>
                   <div class="care-journey__main">
-                    <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}"
-                      ><i></i> {{ statusLabel(appointment.status) }}</span
-                    >
+                    <app-status-chip [tone]="statusTone(appointment.status)">
+                      {{ statusLabel(appointment.status) }}
+                    </app-status-chip>
                     <h2>{{ appointment.typeName || 'Consulta programada' }}</h2>
                     <p>
                       <strong>{{ formatTime(appointment.startsAt) }}</strong> ·
@@ -223,20 +227,17 @@
                   </div>
                 </article>
               } @else {
-                <section class="portal-empty" appScrollReveal>
-                  <span><app-icon name="calendar" [size]="28" /></span>
-                  <h2>No tienes citas próximas</h2>
-                  <p>Puedes buscar disponibilidad si necesitas una nueva consulta.</p>
-                  <button
-                    mat-flat-button
-                    class="nexa-btn-primary"
-                    type="button"
-                    [disabled]="catalogLoading() || !!catalogError()"
-                    (click)="activateSection('reservar')"
-                  >
-                    Buscar una cita
-                  </button>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel portal-state-panel--compact"
+                  kind="empty"
+                  icon="calendar"
+                  title="No tienes citas próximas"
+                  message="Puedes buscar disponibilidad si necesitas una nueva consulta."
+                  actionLabel="Buscar una cita"
+                  [busy]="catalogLoading() || !!catalogError()"
+                  (action)="activateSection('reservar')"
+                  appScrollReveal
+                />
               }
 
               <div class="home-layout nexa-section">
@@ -320,6 +321,7 @@
                     </header>
                     <div class="health-summary__rail">
                       <button
+                        mat-button
                         type="button"
                         (click)="healthTab.set('medicacion'); activateSection('salud')"
                       >
@@ -328,6 +330,7 @@
                         ><small>Planes registrados</small></button
                       ><i></i>
                       <button
+                        mat-button
                         type="button"
                         (click)="healthTab.set('documentos'); activateSection('salud')"
                       >
@@ -335,7 +338,7 @@
                         ><strong>{{ documents().length }}</strong
                         ><small>Documentos</small></button
                       ><i></i>
-                      <button type="button" (click)="activateSection('pagos')">
+                      <button mat-button type="button" (click)="activateSection('pagos')">
                         <span><app-icon name="check" [size]="19" /></span
                         ><strong>{{
                           money(outstandingBalance(), invoices()[0]?.currency || 'EUR')
@@ -355,6 +358,7 @@
                         ><small>{{ appointments().length }} citas registradas</small>
                       </div>
                       <button
+                        mat-icon-button
                         type="button"
                         aria-label="Abrir citas"
                         (click)="activateSection('citas')"
@@ -364,6 +368,7 @@
                     </header>
                     @for (appointment of upcomingAppointments().slice(0, 2); track appointment.id) {
                       <button
+                        mat-button
                         class="inbox-preview"
                         type="button"
                         (click)="activateSection('citas')"
@@ -435,28 +440,22 @@
               </header>
 
               @if (catalogLoading()) {
-                <section class="portal-empty" aria-busy="true">
-                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                  <h2>Cargando opciones de reserva</h2>
-                  <p>Estamos consultando centros y tipos de atención disponibles.</p>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="loading"
+                  title="Cargando opciones de reserva"
+                  message="Estamos consultando centros y tipos de atención disponibles."
+                />
               } @else if (catalogError(); as error) {
-                <section class="portal-empty portal-state--error" role="alert">
-                  <span><app-icon name="shield" [size]="28" /></span>
-                  <h2>La reserva no está disponible</h2>
-                  <p>{{ error.message }}</p>
-                  @if (error.correlationId) {
-                    <small>Referencia: {{ error.correlationId }}</small>
-                  }
-                  <button
-                    mat-flat-button
-                    class="nexa-btn-primary"
-                    type="button"
-                    (click)="loadCatalog()"
-                  >
-                    Volver a intentar
-                  </button>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="error"
+                  title="La reserva no está disponible"
+                  [message]="error.message"
+                  [reference]="error.correlationId ?? null"
+                  actionLabel="Volver a intentar"
+                  (action)="loadCatalog()"
+                />
               } @else {
                 <div class="booking-frame" appScrollReveal [revealDelay]="60">
                   <header class="booking-progress">
@@ -523,13 +522,12 @@
                                   type="button"
                                   role="radio"
                                   [attr.aria-checked]="selectedAppointmentTypeId() === care.id"
-                                  [class.is-selected]="selectedAppointmentTypeId() === care.id"
-                                  (click)="
-                                    selectedAppointmentTypeId.set(care.id);
-                                    selectedMode.set(
-                                      care.allowsVideo ? selectedMode() : 'in-person'
-                                    )
+                                  [attr.tabindex]="
+                                    selectedAppointmentTypeId() === care.id || $first ? 0 : -1
                                   "
+                                  [class.is-selected]="selectedAppointmentTypeId() === care.id"
+                                  (click)="selectAppointmentType(care.id)"
+                                  (keydown)="handleCareOptionKeydown($event, $index)"
                                 >
                                   <span><app-icon name="calendar" [size]="20" /></span>
                                   <div>
@@ -547,25 +545,22 @@
                             <div class="booking-preferences">
                               <fieldset>
                                 <legend>Modalidad</legend>
-                                <div class="segmented-choice">
-                                  <button
-                                    type="button"
-                                    [class.is-selected]="selectedMode() === 'in-person'"
-                                    [attr.aria-pressed]="selectedMode() === 'in-person'"
-                                    (click)="selectedMode.set('in-person')"
-                                  >
+                                <mat-button-toggle-group
+                                  class="segmented-choice"
+                                  [value]="selectedMode()"
+                                  aria-label="Modalidad de la cita"
+                                  (change)="selectedMode.set($event.value)"
+                                >
+                                  <mat-button-toggle value="in-person">
                                     <app-icon name="location" [size]="16" /> En el centro
-                                  </button>
-                                  <button
-                                    type="button"
+                                  </mat-button-toggle>
+                                  <mat-button-toggle
+                                    value="video"
                                     [disabled]="!selectedCareType()?.allowsVideo"
-                                    [class.is-selected]="selectedMode() === 'video'"
-                                    [attr.aria-pressed]="selectedMode() === 'video'"
-                                    (click)="selectedMode.set('video')"
                                   >
                                     <app-icon name="video" [size]="16" /> Videoconsulta
-                                  </button>
-                                </div>
+                                  </mat-button-toggle>
+                                </mat-button-toggle-group>
                               </fieldset>
                               <mat-form-field appearance="outline"
                                 ><mat-label>Centro</mat-label
@@ -580,11 +575,13 @@
                               >
                             </div>
                           } @else {
-                            <div class="portal-empty">
-                              <span><app-icon name="calendar" [size]="28" /></span>
-                              <h2>No hay tipos de atención disponibles</h2>
-                              <p>El centro activo no ha publicado opciones reservables.</p>
-                            </div>
+                            <app-state-panel
+                              class="portal-state-panel portal-state-panel--compact"
+                              kind="empty"
+                              icon="calendar"
+                              title="No hay tipos de atención disponibles"
+                              message="El centro activo no ha publicado opciones reservables."
+                            />
                           }
                         </section>
                       }
@@ -596,11 +593,12 @@
                             <p>El hueco se retendrá durante cinco minutos en el siguiente paso.</p>
                           </header>
                           @if (availabilityLoading()) {
-                            <div class="portal-empty" aria-busy="true">
-                              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                              <h2>Consultando horarios</h2>
-                              <p>Comprobamos profesionales, salas y conflictos de agenda.</p>
-                            </div>
+                            <app-state-panel
+                              class="portal-state-panel portal-state-panel--compact"
+                              kind="loading"
+                              title="Consultando horarios"
+                              message="Comprobamos profesionales, salas y conflictos de agenda."
+                            />
                           } @else if (bookingDates().length) {
                             <div
                               class="date-strip"
@@ -612,8 +610,10 @@
                                   type="button"
                                   role="radio"
                                   [attr.aria-checked]="selectedDate() === date.id"
+                                  [attr.tabindex]="selectedDate() === date.id || $first ? 0 : -1"
                                   [class.is-selected]="selectedDate() === date.id"
                                   (click)="chooseDate(date.id)"
+                                  (keydown)="handleDateOptionKeydown($event, $index)"
                                 >
                                   <small>{{ date.day }}</small
                                   ><strong>{{ date.date }}</strong
@@ -639,10 +639,16 @@
                                       [attr.aria-checked]="
                                         selectedSlot()?.startsAt === slot.startsAt
                                       "
+                                      [attr.tabindex]="
+                                        selectedSlot()?.startsAt === slot.startsAt || $first
+                                          ? 0
+                                          : -1
+                                      "
                                       [class.is-selected]="
                                         selectedSlot()?.startsAt === slot.startsAt
                                       "
-                                      (click)="selectedSlot.set(slot); activeHold.set(null)"
+                                      (click)="chooseSlot(slot)"
+                                      (keydown)="handleSlotOptionKeydown($event, $index)"
                                     >
                                       {{ formatTime(slot.startsAt) }}
                                     </button>
@@ -673,22 +679,15 @@
                               </aside>
                             </div>
                           } @else {
-                            <div class="portal-empty">
-                              <span><app-icon name="clock" [size]="28" /></span>
-                              <h2>No hay huecos en este periodo</h2>
-                              <p>
-                                Cambia la modalidad o el tipo de atención para realizar otra
-                                búsqueda.
-                              </p>
-                              <button
-                                mat-stroked-button
-                                class="nexa-btn-secondary"
-                                type="button"
-                                (click)="bookingStep.set(1)"
-                              >
-                                Cambiar búsqueda
-                              </button>
-                            </div>
+                            <app-state-panel
+                              class="portal-state-panel portal-state-panel--compact"
+                              kind="empty"
+                              icon="clock"
+                              title="No hay huecos en este periodo"
+                              message="Cambia la modalidad o el tipo de atención para realizar otra búsqueda."
+                              actionLabel="Cambiar búsqueda"
+                              (action)="bookingStep.set(1)"
+                            />
                           }
                         </section>
                       }
@@ -757,9 +756,13 @@
                                 ><span>{{ availability()?.timezone }}</span>
                               </div>
                               <div class="ticket-details">
-                                <span class="nexa-chip nexa-chip--info">{{
-                                  bookingIntent() === 'reschedule' ? 'Reprogramación' : 'Nueva cita'
-                                }}</span>
+                                <app-status-chip tone="info">
+                                  {{
+                                    bookingIntent() === 'reschedule'
+                                      ? 'Reprogramación'
+                                      : 'Nueva cita'
+                                  }}
+                                </app-status-chip>
                                 <h3>{{ selectedCare() }}</h3>
                                 <p>
                                   <app-icon
@@ -876,23 +879,20 @@
                   <app-icon name="plus" [size]="17" /> Pedir cita
                 </button>
               </header>
-              <nav class="content-switch" aria-label="Filtrar citas" appScrollReveal>
-                <button
-                  type="button"
-                  [class.is-active]="appointmentFilter() === 'proximas'"
-                  [attr.aria-pressed]="appointmentFilter() === 'proximas'"
-                  (click)="appointmentFilter.set('proximas')"
-                >
-                  Próximas <span>{{ upcomingAppointments().length }}</span></button
-                ><button
-                  type="button"
-                  [class.is-active]="appointmentFilter() === 'anteriores'"
-                  [attr.aria-pressed]="appointmentFilter() === 'anteriores'"
-                  (click)="appointmentFilter.set('anteriores')"
-                >
-                  Anteriores <span>{{ pastAppointments().length }}</span>
-                </button>
-              </nav>
+              <mat-button-toggle-group
+                class="content-switch"
+                [value]="appointmentFilter()"
+                aria-label="Filtrar citas"
+                appScrollReveal
+                (change)="appointmentFilter.set($event.value)"
+              >
+                <mat-button-toggle value="proximas">
+                  Próximas <span class="toggle-count">{{ upcomingAppointments().length }}</span>
+                </mat-button-toggle>
+                <mat-button-toggle value="anteriores">
+                  Anteriores <span class="toggle-count">{{ pastAppointments().length }}</span>
+                </mat-button-toggle>
+              </mat-button-toggle-group>
 
               @if (appointmentFilter() === 'proximas') {
                 <div class="appointment-ledger" appScrollReveal [revealDelay]="70">
@@ -905,9 +905,9 @@
                         ><i>{{ formatTime(appointment.startsAt) }}</i>
                       </div>
                       <div class="appointment-detail">
-                        <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}">{{
-                          statusLabel(appointment.status)
-                        }}</span>
+                        <app-status-chip [tone]="statusTone(appointment.status)">
+                          {{ statusLabel(appointment.status) }}
+                        </app-status-chip>
                         <h2>{{ appointment.typeName || 'Consulta programada' }}</h2>
                         <p>{{ appointment.practitionerName || 'Profesional por asignar' }}</p>
                         <div>
@@ -981,20 +981,16 @@
                       }
                     </article>
                   } @empty {
-                    <div class="portal-empty">
-                      <span><app-icon name="calendar" [size]="28" /></span>
-                      <h2>No tienes citas próximas</h2>
-                      <p>Puedes buscar un hueco disponible desde este portal.</p>
-                      <button
-                        mat-flat-button
-                        class="nexa-btn-primary"
-                        type="button"
-                        [disabled]="catalogLoading() || !!catalogError()"
-                        (click)="activateSection('reservar')"
-                      >
-                        Buscar cita
-                      </button>
-                    </div>
+                    <app-state-panel
+                      class="portal-state-panel portal-state-panel--compact"
+                      kind="empty"
+                      icon="calendar"
+                      title="No tienes citas próximas"
+                      message="Puedes buscar un hueco disponible desde este portal."
+                      actionLabel="Buscar cita"
+                      [busy]="catalogLoading() || !!catalogError()"
+                      (action)="activateSection('reservar')"
+                    />
                   }
                 </div>
               } @else {
@@ -1013,16 +1009,18 @@
                         ><strong>{{ appointment.typeName || 'Consulta' }}</strong>
                         <p>{{ appointment.practitionerName || statusLabel(appointment.status) }}</p>
                       </div>
-                      <span class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}">{{
-                        statusLabel(appointment.status)
-                      }}</span>
+                      <app-status-chip [tone]="statusTone(appointment.status)">
+                        {{ statusLabel(appointment.status) }}
+                      </app-status-chip>
                     </article>
                   } @empty {
-                    <div class="portal-empty">
-                      <span><app-icon name="calendar" [size]="28" /></span>
-                      <h2>No hay citas anteriores</h2>
-                      <p>El historial aparecerá aquí cuando exista actividad.</p>
-                    </div>
+                    <app-state-panel
+                      class="portal-state-panel portal-state-panel--compact"
+                      kind="empty"
+                      icon="calendar"
+                      title="No hay citas anteriores"
+                      message="El historial aparecerá aquí cuando exista actividad."
+                    />
                   }
                 </section>
               }
@@ -1050,23 +1048,20 @@
                   </p>
                 </div>
               </header>
-              <nav class="content-switch" aria-label="Contenido de salud" appScrollReveal>
-                <button
-                  type="button"
-                  [class.is-active]="healthTab() === 'medicacion'"
-                  [attr.aria-pressed]="healthTab() === 'medicacion'"
-                  (click)="healthTab.set('medicacion')"
-                >
-                  Medicación <span>{{ prescriptions().length }}</span></button
-                ><button
-                  type="button"
-                  [class.is-active]="healthTab() === 'documentos'"
-                  [attr.aria-pressed]="healthTab() === 'documentos'"
-                  (click)="healthTab.set('documentos')"
-                >
-                  Documentos <span>{{ documents().length }}</span>
-                </button>
-              </nav>
+              <mat-button-toggle-group
+                class="content-switch"
+                [value]="healthTab()"
+                aria-label="Contenido de salud"
+                appScrollReveal
+                (change)="healthTab.set($event.value)"
+              >
+                <mat-button-toggle value="medicacion">
+                  Medicación <span class="toggle-count">{{ prescriptions().length }}</span>
+                </mat-button-toggle>
+                <mat-button-toggle value="documentos">
+                  Documentos <span class="toggle-count">{{ documents().length }}</span>
+                </mat-button-toggle>
+              </mat-button-toggle-group>
               @if (healthTab() === 'medicacion') {
                 <div class="medication-layout">
                   <section
@@ -1085,10 +1080,9 @@
                           <span>{{ index + 1 }}</span>
                         </div>
                         <div class="medication-copy">
-                          <span
-                            class="nexa-chip nexa-chip--{{ statusTone(prescription.status) }}"
-                            >{{ statusLabel(prescription.status) }}</span
-                          >
+                          <app-status-chip [tone]="statusTone(prescription.status)">
+                            {{ statusLabel(prescription.status) }}
+                          </app-status-chip>
                           <h2>Plan de medicación</h2>
                           <strong>{{ prescriptionSummary(prescription) }}</strong>
                           <p>{{ prescription.prescriberName || 'Profesional no especificado' }}</p>
@@ -1119,11 +1113,13 @@
                         </aside>
                       </article>
                     } @empty {
-                      <div class="portal-empty">
-                        <span><app-icon name="shield" [size]="28" /></span>
-                        <h2>No hay planes de medicación</h2>
-                        <p>No consta medicación visible para esta cuenta.</p>
-                      </div>
+                      <app-state-panel
+                        class="portal-state-panel portal-state-panel--compact"
+                        kind="empty"
+                        icon="shield"
+                        title="No hay planes de medicación"
+                        message="No consta medicación visible para esta cuenta."
+                      />
                     }
                   </section>
                   <aside class="medication-safety" appScrollReveal [revealDelay]="110">
@@ -1165,9 +1161,8 @@
                             {{ document.revision }}</small
                           >
                         </div>
-                        <span class="nexa-chip nexa-chip--success"
-                          ><app-icon name="check" [size]="12" /> Disponible</span
-                        ><button
+                        <app-status-chip tone="success" icon="check">Disponible</app-status-chip>
+                        <button
                           mat-button
                           type="button"
                           [disabled]="!!downloadingDocumentId()"
@@ -1182,11 +1177,13 @@
                         </button>
                       </article>
                     } @empty {
-                      <div class="portal-empty">
-                        <span><app-icon name="download" [size]="28" /></span>
-                        <h2>No hay documentos disponibles</h2>
-                        <p>Los documentos firmados aparecerán aquí cuando estén preparados.</p>
-                      </div>
+                      <app-state-panel
+                        class="portal-state-panel portal-state-panel--compact"
+                        kind="empty"
+                        icon="download"
+                        title="No hay documentos disponibles"
+                        message="Los documentos firmados aparecerán aquí cuando estén preparados."
+                      />
                     }
                   </div>
                 </section>
@@ -1258,10 +1255,10 @@
                       <strong>{{ invoiceConcept(invoice) }}</strong
                       ><small>Identificador {{ invoice.id }}</small>
                     </div>
-                    <span class="nexa-chip nexa-chip--{{ statusTone(invoice.status) }}">{{
-                      statusLabel(invoice.status)
-                    }}</span
-                    ><strong>{{ money(invoice.totalMinor, invoice.currency) }}</strong>
+                    <app-status-chip [tone]="statusTone(invoice.status)">
+                      {{ statusLabel(invoice.status) }}
+                    </app-status-chip>
+                    <strong>{{ money(invoice.totalMinor, invoice.currency) }}</strong>
                     @if (demoCapabilities().invoicePreview) {
                       <button
                         mat-button
@@ -1279,11 +1276,13 @@
                     }
                   </article>
                 } @empty {
-                  <div class="portal-empty">
-                    <span><app-icon name="download" [size]="28" /></span>
-                    <h2>No hay facturas</h2>
-                    <p>No consta actividad económica visible para esta cuenta.</p>
-                  </div>
+                  <app-state-panel
+                    class="portal-state-panel portal-state-panel--compact"
+                    kind="empty"
+                    icon="download"
+                    title="No hay facturas"
+                    message="No consta actividad económica visible para esta cuenta."
+                  />
                 }
               </section>
             </section>
@@ -1394,26 +1393,22 @@
               </section>
 
               @if (waitlistLoading()) {
-                <section class="portal-state" aria-live="polite" aria-busy="true">
-                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                  <p>Cargando tus solicitudes…</p>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="loading"
+                  title="Cargando tus solicitudes"
+                  message="Estamos recuperando las solicitudes de tu cuenta autorizada."
+                />
               } @else if (waitlistError(); as error) {
-                <section class="portal-state portal-state--error" role="alert">
-                  <app-icon name="shield" [size]="22" />
-                  <div>
-                    <strong>No se ha podido cargar la lista de espera</strong>
-                    <p>{{ error.message }}</p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    class="nexa-btn-secondary"
-                    type="button"
-                    (click)="loadWaitlist()"
-                  >
-                    Reintentar
-                  </button>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="error"
+                  title="No se ha podido cargar la lista de espera"
+                  [message]="error.message"
+                  [reference]="error.correlationId ?? null"
+                  actionLabel="Reintentar"
+                  (action)="loadWaitlist()"
+                />
               } @else if (waitlistEntries(); as entries) {
                 <section class="waitlist-requests" aria-label="Tus solicitudes de lista de espera">
                   <h2>Tus solicitudes</h2>
@@ -1427,16 +1422,18 @@
                           {{ formatDate(entry.preferredWindow[1]) }}</small
                         >
                       </div>
-                      <span class="nexa-chip nexa-chip--{{ statusTone(entry.status) }}">{{
-                        statusLabel(entry.status)
-                      }}</span>
+                      <app-status-chip [tone]="statusTone(entry.status)">
+                        {{ statusLabel(entry.status) }}
+                      </app-status-chip>
                     </article>
                   } @empty {
-                    <div class="portal-empty">
-                      <span><app-icon name="waitlist" [size]="28" /></span>
-                      <h2>No tienes solicitudes activas</h2>
-                      <p>Usa el formulario para solicitar una plaza si aparece disponibilidad.</p>
-                    </div>
+                    <app-state-panel
+                      class="portal-state-panel portal-state-panel--compact"
+                      kind="empty"
+                      icon="waitlist"
+                      title="No tienes solicitudes activas"
+                      message="Usa el formulario para solicitar una plaza si aparece disponibilidad."
+                    />
                   }
                 </section>
               }
@@ -1471,26 +1468,22 @@
               </div>
 
               @if (messagesLoading()) {
-                <section class="portal-state" aria-live="polite" aria-busy="true">
-                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                  <p>Cargando tus mensajes seguros…</p>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="loading"
+                  title="Cargando tus mensajes seguros"
+                  message="Estamos recuperando únicamente las comunicaciones autorizadas."
+                />
               } @else if (messagesError(); as error) {
-                <section class="portal-state portal-state--error" role="alert">
-                  <app-icon name="shield" [size]="22" />
-                  <div>
-                    <strong>Los mensajes no están disponibles</strong>
-                    <p>{{ error.message }}</p>
-                  </div>
-                  <button
-                    mat-stroked-button
-                    class="nexa-btn-secondary"
-                    type="button"
-                    (click)="loadMessages()"
-                  >
-                    Reintentar
-                  </button>
-                </section>
+                <app-state-panel
+                  class="portal-state-panel"
+                  kind="error"
+                  title="Los mensajes no están disponibles"
+                  [message]="error.message"
+                  [reference]="error.correlationId ?? null"
+                  actionLabel="Reintentar"
+                  (action)="loadMessages()"
+                />
               } @else if (messages(); as records) {
                 @if (records.length) {
                   <div class="message-workspace">
@@ -1500,6 +1493,7 @@
                       </header>
                       @for (message of records; track message.id) {
                         <button
+                          mat-button
                           type="button"
                           [class.is-active]="selectedMessage()?.id === message.id"
                           (click)="selectMessage(message.id)"
@@ -1530,7 +1524,7 @@
                               ><small>{{ formatMessageDate(message.publishedAt) }}</small></span
                             >
                           </div>
-                          <span class="nexa-chip nexa-chip--success">Portal seguro</span>
+                          <app-status-chip tone="success">Portal seguro</app-status-chip>
                         </header>
                         <div>
                           <p class="nexa-eyebrow">Comunicación del centro</p>
@@ -1546,14 +1540,13 @@
                     }
                   </div>
                 } @else {
-                  <section class="portal-empty" aria-live="polite">
-                    <span><app-icon name="bell" [size]="28" /></span>
-                    <h2>No tienes mensajes disponibles</h2>
-                    <p>
-                      Las comunicaciones seguras del centro aparecerán aquí cuando estén publicadas
-                      para tu portal.
-                    </p>
-                  </section>
+                  <app-state-panel
+                    class="portal-state-panel portal-state-panel--compact"
+                    kind="empty"
+                    icon="bell"
+                    title="No tienes mensajes disponibles"
+                    message="Las comunicaciones seguras del centro aparecerán aquí cuando estén publicadas para tu portal."
+                  />
                 }
               }
             </section>
@@ -1568,6 +1561,7 @@
     <nav class="portal-mobile-nav" aria-label="Navegación rápida">
       @for (item of navItems.slice(0, 4); track item.id) {
         <button
+          mat-button
           type="button"
           [class.is-active]="activeSection() === item.id"
           [attr.aria-current]="activeSection() === item.id ? 'page' : null"
@@ -1576,7 +1570,12 @@
           <app-icon [name]="item.icon" [size]="19" /><span>{{ item.shortLabel }}</span>
         </button>
       }
-      <button type="button" [class.is-active]="mobileNavOpen()" (click)="mobileNavOpen.set(true)">
+      <button
+        mat-icon-button
+        type="button"
+        [class.is-active]="mobileNavOpen()"
+        (click)="mobileNavOpen.set(true)"
+      >
         <app-icon name="menu" [size]="19" /><span>Más</span>
       </button>
     </nav>

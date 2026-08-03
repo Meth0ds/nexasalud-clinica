@@ -23,30 +23,31 @@
   </header>
 
   <section class="team-metrics nexa-section" aria-label="Resumen del directorio" appScrollReveal>
-    <article class="nexa-card team-metric">
+    <mat-card appearance="outlined" class="nexa-card team-metric" role="article">
       <small>Miembros autorizados</small>
       <strong>{{ members().length }}</strong>
       <p>En el contexto seleccionado</p>
-    </article>
-    <article class="nexa-card team-metric">
+    </mat-card>
+    <mat-card appearance="outlined" class="nexa-card team-metric" role="article">
       <small>Cuentas activas</small>
       <strong>{{ activeMembers() }}</strong>
       <p>Disponibles para operar</p>
-    </article>
-    <article class="nexa-card team-metric">
+    </mat-card>
+    <mat-card appearance="outlined" class="nexa-card team-metric" role="article">
       <small>Cuentas suspendidas</small>
       <strong>{{ inactiveMembers() }}</strong>
       <p>No pueden acceder al sistema</p>
-    </article>
-    <article class="nexa-card team-metric">
+    </mat-card>
+    <mat-card appearance="outlined" class="nexa-card team-metric" role="article">
       <small>Con acceso registrado</small>
       <strong>{{ recentAccessCount() }}</strong>
       <p>Sin exponer sesiones ni credenciales</p>
-    </article>
+    </mat-card>
   </section>
 
-  <section
+  <mat-card
     class="nexa-card team-directory nexa-section"
+    appearance="outlined"
     appScrollReveal
     aria-labelledby="team-directory-title"
   >
@@ -68,38 +69,27 @@
     </header>
 
     @if (loading()) {
-      <div class="team-state" aria-busy="true" role="status">
-        <mat-progress-spinner diameter="32" mode="indeterminate" />
-        <div>
-          <strong>Actualizando el directorio</strong>
-          <p>Comprobamos el contexto y los permisos actuales.</p>
-        </div>
-      </div>
+      <app-state-panel
+        kind="loading"
+        title="Actualizando el directorio"
+        message="Comprobamos el contexto y los permisos actuales."
+      />
     } @else if (error(); as requestError) {
-      <div class="team-state team-state--error" role="alert">
-        <app-icon name="shield" [size]="25" />
-        <div>
-          <strong>No se ha podido cargar el equipo</strong>
-          <p>{{ requestError.message }}</p>
-          @if (requestError.correlationId) {
-            <small>Referencia: {{ requestError.correlationId }}</small>
-          }
-        </div>
-        <button mat-stroked-button class="nexa-btn-secondary" type="button" (click)="refresh()">
-          Reintentar
-        </button>
-      </div>
+      <app-state-panel
+        kind="error"
+        title="No se ha podido cargar el equipo"
+        [message]="requestError.message"
+        [reference]="requestError.correlationId ?? null"
+        actionLabel="Reintentar"
+        (action)="refresh()"
+      />
     } @else if (filteredMembers().length === 0) {
-      <div class="team-state" role="status">
-        <app-icon name="team" [size]="25" />
-        <div>
-          <strong>No hay coincidencias</strong>
-          <p>
-            Prueba con otro nombre o función; no se muestran resultados fuera del contexto
-            autorizado.
-          </p>
-        </div>
-      </div>
+      <app-state-panel
+        kind="empty"
+        icon="team"
+        title="No hay coincidencias"
+        message="Prueba con otro nombre o función; no se muestran resultados fuera del contexto autorizado."
+      />
     } @else {
       <div class="nexa-table-wrap">
         <table class="nexa-table team-table">
@@ -130,14 +120,12 @@
                   <span class="team-role">{{ roleSummary(member) }}</span>
                 </td>
                 <td>
-                  <span
-                    class="nexa-chip"
-                    [class.nexa-chip--success]="member.active"
-                    [class.nexa-chip--warning]="!member.active"
-                    ><app-icon [name]="member.active ? 'shield' : 'lock'" [size]="13" />{{
-                      member.active ? 'Activa' : 'Suspendida'
-                    }}</span
+                  <app-status-chip
+                    [tone]="member.active ? 'success' : 'warning'"
+                    [icon]="member.active ? 'shield' : 'lock'"
                   >
+                    {{ member.active ? 'Activa' : 'Suspendida' }}
+                  </app-status-chip>
                 </td>
                 <td>{{ formatTimestamp(member.lastLoginAt) }}</td>
               </tr>
@@ -146,7 +134,7 @@
         </table>
       </div>
     }
-  </section>
+  </mat-card>
 
   <aside class="team-boundary" appScrollReveal>
     <app-icon name="shield" [size]="19" />

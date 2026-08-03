@@ -1,71 +1,11 @@
-.portal-empty {
-  display: grid;
-  min-height: 280px;
-  place-items: center;
-  padding: 38px;
-  border: 1px dashed var(--nexa-border-strong);
-  border-radius: 18px;
-  background: var(--nexa-surface);
-  text-align: center;
-}
-.portal-empty > span {
-  display: grid;
-  width: 57px;
-  height: 57px;
-  place-items: center;
-  border-radius: 18px;
-  color: var(--nexa-primary);
-  background: var(--nexa-primary-soft);
-}
-.portal-empty h2 {
-  margin-top: 10px;
-}
-.portal-empty p {
-  max-width: 430px;
-  margin: 5px 0 13px;
-  color: var(--nexa-ink-soft);
-  font-size: 0.62rem;
-}
-.portal-state {
+.portal-state-panel {
   display: grid;
   min-height: calc(100dvh - 130px);
-  align-content: center;
-  justify-items: center;
-  text-align: center;
+  align-items: center;
 }
-.portal-state mat-progress-bar,
-.portal-empty mat-progress-bar {
-  width: min(380px, 100%);
-  margin-bottom: 25px;
-}
-.portal-state > span {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  place-items: center;
-  border-radius: 18px;
-  color: var(--nexa-primary);
-  background: var(--nexa-primary-soft);
-}
-.portal-state h1 {
-  max-width: 640px;
-  margin-top: 15px;
-}
-.portal-state > p:not(.nexa-eyebrow) {
-  max-width: 560px;
-  color: var(--nexa-ink-soft);
-  line-height: 1.6;
-}
-.portal-state > small,
-.portal-empty > small {
-  margin-bottom: 13px;
-  color: var(--nexa-ink-soft);
-  font-size: 0.58rem;
-}
-.portal-state--error > span,
-.portal-empty.portal-state--error > span {
-  color: var(--nexa-danger);
-  background: var(--nexa-danger-soft);
+.portal-state-panel--compact {
+  display: block;
+  min-height: 0;
 }
 .inline-problem {
   display: flex;

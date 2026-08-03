@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Models\Patient;
 use App\Models\PatientCommunication;
+use App\Models\Clinic;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,10 @@ final class PatientCommunicationFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'tenant_id' => fn (array $attributes): string => Patient::withoutGlobalScope('tenant')->findOrFail($attributes['patient_id'])->tenant_id,
+            'clinic_id' => fn (array $attributes): ?string => Clinic::withoutGlobalScope('tenant')
+                ->where('tenant_id', $attributes['tenant_id'])
+                ->orderBy('id')
+                ->value('id'),
             'author_user_id' => User::factory(),
             'channel' => 'portal',
             'content_class' => 'administrative',

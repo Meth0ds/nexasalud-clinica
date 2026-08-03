@@ -1,0 +1,91 @@
+:host {
+  display: block;
+}
+
+.state-panel {
+  --mdc-outlined-card-container-color: var(--nexa-surface);
+  --mdc-outlined-card-outline-color: var(--nexa-border);
+  border-radius: var(--nexa-radius);
+  box-shadow: var(--nexa-shadow-soft);
+}
+
+.state-panel mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 106px;
+  padding: 20px 22px;
+}
+
+.state-panel__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--nexa-primary);
+  background: var(--nexa-primary-soft);
+}
+
+.state-panel__icon mat-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+}
+
+.state-panel__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.state-panel h2 {
+  margin: 0;
+  color: var(--nexa-ink-strong);
+  font-size: 0.9rem;
+  font-weight: 760;
+}
+
+.state-panel p {
+  margin: 4px 0 0;
+  color: var(--nexa-ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.state-panel__reference {
+  display: block;
+  margin-top: 5px;
+  color: var(--nexa-ink-soft);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+}
+
+.state-panel--error {
+  --mdc-outlined-card-outline-color: color-mix(in srgb, var(--nexa-danger) 32%, var(--nexa-border));
+}
+
+.state-panel--error .state-panel__icon {
+  color: var(--nexa-danger);
+  background: var(--nexa-danger-soft);
+}
+
+.state-panel--success .state-panel__icon {
+  color: var(--nexa-success);
+  background: var(--nexa-success-soft);
+}
+
+.state-panel--empty .state-panel__icon {
+  color: var(--nexa-blue);
+  background: var(--nexa-blue-soft);
+}
+
+@media (max-width: 560px) {
+  .state-panel mat-card-content {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 18px;
+  }
+
+  .state-panel mat-card-content > button {
+    margin-left: 60px;
+  }
+}

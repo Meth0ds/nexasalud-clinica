@@ -88,6 +88,27 @@ class SecureKeycloakProviderTest extends TestCase
         $this->assertArrayNotHasKey('client_secret', $query);
     }
 
+    public function test_parallel_redirects_keep_independent_transactions(): void
+    {
+        $session = $this->newSessionStore();
+        $firstProvider = $this->provider($this->request('/auth/login', $session));
+        $firstProvider->redirectFor('/agenda');
+        $first = $session->get(SecureKeycloakProvider::TRANSACTION_SESSION_KEY);
+
+        $secondProvider = $this->provider($this->request('/auth/login', $session));
+        $secondProvider->redirectFor('/portal');
+        $second = $session->get(SecureKeycloakProvider::TRANSACTION_SESSION_KEY);
+        $pending = $session->get(SecureKeycloakProvider::TRANSACTIONS_SESSION_KEY);
+
+        $this->assertIsArray($first);
+        $this->assertIsArray($second);
+        $this->assertIsArray($pending);
+        $this->assertCount(2, $pending);
+        $this->assertArrayHasKey($first['state'], $pending);
+        $this->assertArrayHasKey($second['state'], $pending);
+        $this->assertNotSame($first['state'], $second['state']);
+    }
+
     public function test_callback_validates_id_token_and_consumes_transaction_exactly_once(): void
     {
         $session = $this->newSessionStore();

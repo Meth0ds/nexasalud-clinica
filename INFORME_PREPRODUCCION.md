@@ -6,6 +6,24 @@
 
 > Este informe es una revisión de ingeniería y producto. No sustituye una auditoría de seguridad independiente, una certificación de cumplimiento legal, una DPIA, una validación clínica ni una prueba de carga de producción.
 
+## Actualización de interfaz Material y resiliencia — 2 de agosto de 2026
+
+Se consolidó el lenguaje visual del frontend alrededor del tema Material 3 (`mat.theme`) y de componentes Angular Material/CDK: tarjetas, botones, chips, formularios, toggles, menús, diálogos, estados y feedback. Los estados de carga, vacío, error y éxito reutilizan `StatePanel`; los estados de dominio se renderizan mediante `StatusChip`, que encapsula `mat-chip` y evita badges HTML divergentes. Los vacíos genéricos del portal también quedaron unificados en `StatePanel` y se retiró su CSS duplicado. El login OIDC/MFA mantiene la composición responsive validada en escritorio y móvil.
+
+Se completó también la pasada de errores y eventos del frontend: los fallos de agenda, alta de paciente, administración y descargas generan `AppError` contextual, referencia de correlación, notificación deduplicada y recuperación segura; los eventos HTTP, autenticación, contexto, errores y avisos no transportan cuerpos, tokens, PHI ni identificadores de recursos. La redacción de rutas de telemetría oculta consultas e identificadores. Las notificaciones se anuncian también mediante CDK `LiveAnnouncer` con una politeness coherente, además del snackbar visual.
+
+El presupuesto de bundle inicial de producción queda fijado explícitamente en **512 kB** para absorber el coste pequeño de la accesibilidad CDK sin warnings; el build actual mide **500,46 kB** iniciales y **126,98 kB** estimados transferidos.
+
+Verificación local actual: `pnpm format:check`, `pnpm typecheck`, `pnpm --filter @nexasalud/web test:ci` (**30 archivos / 66 pruebas**) y `pnpm --filter @nexasalud/web build` pasan. La evidencia visual queda en `output/playwright/login-material-current.png` y `output/playwright/login-material-current-mobile.png`. Esta actualización mejora la preparación del frontend, pero no cambia el veredicto global de no aptitud para producción hasta completar la validación E2E, WCAG, infraestructura, pentest, cumplimiento sanitario y operación gestionada.
+
+En la misma pasada se añadió estado de error local y recuperación a las mutaciones de comunicaciones, facturación, prescripciones, historia clínica, lista de espera y portal del paciente; el flujo de PDF de prescripción encadena generación y descarga con `switchMap` y finalización segura. Los selectores de modalidad, filtro de citas y contenido de salud del portal usan `mat-button-toggle-group`, con semántica radiogroup y teclado Material. La verificación repetida del 2 de agosto mantiene **30 archivos / 66 pruebas**, typecheck, formato, build de producción (**500,46 kB iniciales; 126,98 kB estimados transferidos**) y `pnpm audit --prod` sin vulnerabilidades conocidas. El interceptor también redacciona identificadores de comunicaciones y lista de espera en rutas de telemetría. La API se validó ahora con Docker Desktop operativo: `php vendor/bin/phpunit` pasa con **103 pruebas / 531 aserciones**, Pint queda limpio y `composer audit --locked --no-dev` no encuentra avisos. PHPUnit también confirma que las pruebas usan SQLite en memoria y cola `sync`, sin contaminar Redis/PostgreSQL local.
+
+La pasada adicional de Material sustituyó los botones interactivos HTML planos de comunicaciones, agenda, shell, lista de espera y portal por directivas Angular Material (`mat-button`/`mat-icon-button`), manteniendo como excepciones explícitas el backdrop del menú y los selectores de reserva con tarjetas de radio personalizadas. Estos selectores conservan ahora navegación roving con flechas, Home/End y foco visible; una regresión cubre la selección por teclado. El contrato de eventos de sesión registra fallos de carga de sesión, opciones de contexto y logout únicamente con estado HTTP, código y correlación; dos regresiones nuevas cubren estos caminos sin transportar datos sensibles. La suite queda en **30 archivos / 66 pruebas**.
+
+La ejecución operativa también validó `infra/scripts/verify.sh`: API, gateway, PostgreSQL, Redis, Keycloak, Mailpit y worker aparecen saludables; `/ready` devuelve `{"status":"ready"}` y `/auth/login` genera una redirección OIDC local 302 con PKCE S256, `state`, `nonce` y ACR. La configuración de producción fue comprobada con Docker Compose usando imágenes por digest; se corrigió el conflicto de Compose 5 entre `pids_limit` y `deploy.resources.limits` trasladando los límites de procesos al esquema moderno. Esto prueba el entorno local y la sintaxis del artefacto, pero no sustituye imágenes firmadas, secretos/KMS, WAF/TLS, servicios gestionados, restore, pentest ni aprobación legal sanitaria.
+
+Se corrigieron los dos `compose.yaml` para que el servicio `api` declare el healthcheck FPM que ya exige el gateway mediante `condition: service_healthy`; ambos artefactos se validaron con Prettier. Esta corrección evita un despliegue bloqueado por una dependencia de salud no declarada, aunque la validación efectiva de imágenes, redes, secretos y servicios gestionados sigue requiriendo Docker y un entorno de staging.
+
 ## Actualización de implementación — 26 de julio de 2026
 
 Las conclusiones históricas de bloqueo B-01, B-02 y B-05 que aparecen más abajo ya han sido corregidas y se conservan para trazabilidad. La aplicación **sigue sin estar lista para producción**: continúan bloqueadores de producto, cumplimiento, entrega y operación descritos en este informe.
@@ -70,7 +88,19 @@ El portal activa la lectura de mensajes seguros ya publicados. `GET /api/v1/port
 
 La validación posterior queda en **25 archivos / 45 pruebas Angular**, build de producción limpio en **482,54 kB** iniciales (122,74 kB estimados transferidos), Pint limpio en **258 archivos** y Laravel en **84 pruebas / 413 aserciones**. El acceso público fue revisado visualmente en navegador sin errores ni avisos de consola; no fue posible validar visualmente el área autenticada sin utilizar credenciales, que no se han expuesto ni transmitido. El producto continúa **no apto para producción** hasta cerrar las capacidades, integraciones y controles de salida restantes.
 
+### Evidencia de navegador actual — 2 de agosto de 2026
+
+El informe de Codex Security quedó revisado: no identificó hallazgos reportables; señaló cinco superficies para seguimiento. Se reforzaron autorización y aislamiento de notas clínicas, visibilidad de motivos de cita por tenant/permisos y cancelación de citas con motivo obligatorio, versión optimista, política y auditoría. La suite API cubre esas regresiones y las auditorías de dependencias no encuentran avisos conocidos. Esta evidencia de código no sustituye un pentest independiente ni la aprobación de seguridad de producción.
+
+La verificación se repitió con Chrome real en escritorio y en viewport móvil de 390 px: el título, `h1`, CTA OIDC, portal del paciente y foco por teclado son accesibles; el documento no produce overflow horizontal y no se observan excepciones JavaScript ni warnings. La única respuesta de error registrada es el `401` esperado de `GET /api/session` al entrar sin cookie: el guard lo transforma en estado anónimo y mantiene el launcher operativo. Las capturas actuales son `output/playwright/login-final.png` y `output/playwright/login-final-mobile.png`.
+
+### Evidencia operativa actual — worker y cola
+
+El worker de comunicaciones se reconstruyó con throttle por comunicación, backoff efectivo y exclusión de solapamientos. Se diagnosticaron y retiraron únicamente trabajos locales huérfanos que apuntaban a tenants eliminados; después se procesó un evento con entidades vigentes y la auditoría idempotente quedó registrada. La verificación final devuelve **0 trabajos pendientes, 0 delayed, 0 reservados y 0 `failed_jobs`** en las colas `default` y `communications`. Este smoke test es local y no sustituye un proveedor de mensajería ni un dead-letter queue gestionado en producción.
+
 ## 1. Resumen ejecutivo
+
+> Nota de lectura: las subsecciones históricas que siguen conservan el diagnóstico original y su trazabilidad. Para el estado vigente, prevalece la actualización del 2 de agosto: el inicio local OIDC devuelve 302 y la API, frontend e infraestructura tienen las evidencias de validación indicadas arriba; los bloqueadores externos de producción siguen abiertos.
 
 La interfaz no es un simple mockup en su totalidad: buena parte de los módulos Angular está conectada a endpoints reales y el backend posee modelo de datos, autorización, auditoría, cifrado y reglas de negocio. Sin embargo, la experiencia que se ve al abrir `http://localhost:4200/login` es una **pantalla de lanzamiento OIDC**, no un formulario de credenciales; esto es correcto para un BFF con proveedor de identidad externo.
 

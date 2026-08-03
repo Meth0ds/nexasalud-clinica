@@ -9,6 +9,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,7 +17,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
+import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import { Patient } from '../../../../core/models/app.models';
 import { PatientsService } from '../../../../core/services/patients';
@@ -44,6 +48,7 @@ type PatientFilter = 'all' | 'current' | 'review' | 'missing';
     ReactiveFormsModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatCardModule,
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
@@ -51,6 +56,8 @@ type PatientFilter = 'all' | 'current' | 'review' | 'missing';
     MatSelectModule,
     RouterLink,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './patients.html',
@@ -67,7 +74,8 @@ export class Patients implements OnInit {
   protected readonly createOpen = signal(false);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
-  protected readonly loadError = signal<string | null>(null);
+  protected readonly loadError = signal<AppError | null>(null);
+  protected readonly createError = signal<AppError | null>(null);
   protected readonly patients = signal<readonly PatientRow[]>([]);
   protected readonly total = signal(0);
   protected readonly filterCounts = computed(() => {
@@ -122,6 +130,7 @@ export class Patients implements OnInit {
     const firstName = parts.shift() ?? '';
     const lastName = parts.join(' ') || 'Sin apellidos indicados';
     this.saving.set(true);
+    this.createError.set(null);
     this.patientApi
       .create({
         medicalRecordNumber: value.identifier,
@@ -139,6 +148,7 @@ export class Patients implements OnInit {
           this.total.update((total) => total + 1);
           this.selectedId.set(row.id);
           this.createOpen.set(false);
+          this.createError.set(null);
           this.createForm.reset({
             name: '',
             birthDate: '',
@@ -149,7 +159,15 @@ export class Patients implements OnInit {
           });
           this.notifications.success('Ficha de paciente creada y acceso registrado.');
         },
-        error: () => this.saving.set(false),
+        error: (error: unknown) => {
+          this.saving.set(false);
+          const appError = toAppError(
+            error,
+            'No se ha podido crear la ficha. Revisa los datos e inténtalo de nuevo.',
+          );
+          this.createError.set(appError);
+          this.notifications.notify(appError);
+        },
         complete: () => this.saving.set(false),
       });
   }
@@ -163,9 +181,12 @@ export class Patients implements OnInit {
         this.loadError.set(null);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.loadError.set(
-          'No se ha podido cargar el directorio. Comprueba la conexión e inténtalo de nuevo.',
+          toAppError(
+            error,
+            'No se ha podido cargar el directorio. Comprueba la conexión e inténtalo de nuevo.',
+          ),
         );
         this.loading.set(false);
       },

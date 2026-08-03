@@ -60,6 +60,7 @@
 }
 .compose-panel fieldset {
   display: flex;
+  flex-direction: column;
   gap: 6px;
   padding: 0;
   border: 0;
@@ -70,19 +71,12 @@
   font-weight: 720;
   text-transform: uppercase;
 }
-.compose-panel fieldset button {
-  padding: 7px 12px;
-  border: 1px solid var(--nexa-border);
-  border-radius: 9px;
-  color: var(--nexa-ink-soft);
-  background: var(--nexa-surface);
-  cursor: pointer;
-  font-size: 0.58rem;
+.channel-toggle {
+  display: flex;
+  width: 100%;
 }
-.compose-panel fieldset button.is-selected {
-  border-color: var(--nexa-primary);
-  color: var(--nexa-primary);
-  background: var(--nexa-primary-soft);
+.channel-toggle mat-button-toggle {
+  flex: 1;
 }
 .channel-warning {
   display: flex;

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -39,6 +40,26 @@ class Clinic extends Model
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
+    }
+
+    /**
+     * Return memberships with access to this clinic.
+     */
+    public function memberships(): BelongsToMany
+    {
+        return $this->belongsToMany(Membership::class, 'membership_clinic')
+            ->withPivot(['tenant_id', 'is_active'])
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Return patients explicitly linked to this clinic.
+     */
+    public function patients(): BelongsToMany
+    {
+        return $this->belongsToMany(Patient::class, 'clinic_patient')
+            ->withPivot(['tenant_id', 'is_active', 'first_seen_at'])
+            ->wherePivot('is_active', true);
     }
 
     /**

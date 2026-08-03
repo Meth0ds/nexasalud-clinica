@@ -10,6 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,6 +23,8 @@ import { AppError, toAppError } from '../../../../core/errors/app-error';
 import { ErrorNotificationService } from '../../../../core/services/error-notification';
 import { SessionService } from '../../../../core/services/session';
 import { AppIcon, AppIconName } from '../../../../shared/components/app-icon/app-icon';
+import { StatePanel } from '../../../../shared/components/state-panel/state-panel';
+import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   PortalApiService,
@@ -62,6 +65,7 @@ interface BookingDateOption {
   imports: [
     FormsModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
@@ -69,6 +73,8 @@ interface BookingDateOption {
     MatSelectModule,
     MatSlideToggleModule,
     AppIcon,
+    StatePanel,
+    StatusChip,
     ScrollReveal,
   ],
   templateUrl: './patient-portal.html',
@@ -166,6 +172,7 @@ export class PatientPortal {
   protected readonly availabilityLoading = signal(false);
   protected readonly availabilityError = signal<AppError | null>(null);
   protected readonly actionBusy = signal<string | null>(null);
+  protected readonly actionError = signal<AppError | null>(null);
   protected readonly downloadingDocumentId = signal<string | null>(null);
 
   protected readonly patientName = computed(
@@ -322,6 +329,7 @@ export class PatientPortal {
   protected loadOverview(): void {
     this.overviewLoading.set(true);
     this.overviewError.set(null);
+    this.actionError.set(null);
     this.api
       .getOverview()
       .pipe(
@@ -408,6 +416,7 @@ export class PatientPortal {
       return;
     }
 
+    this.actionError.set(null);
     this.actionBusy.set('waitlist');
     this.api
       .createWaitlistEntry({
@@ -465,6 +474,45 @@ export class PatientPortal {
     this.bookingStep.update((step) => Math.max(1, step - 1));
   }
 
+  protected selectAppointmentType(appointmentTypeId: string): void {
+    const appointmentType = this.careOptions().find((item) => item.id === appointmentTypeId);
+    if (!appointmentType) return;
+
+    this.selectedAppointmentTypeId.set(appointmentType.id);
+    if (!appointmentType.allowsVideo) {
+      this.selectedMode.set('in-person');
+    }
+  }
+
+  protected handleCareOptionKeydown(event: KeyboardEvent, index: number): void {
+    const options = this.careOptions();
+    this.moveRadioSelection(event, index, options.length, (nextIndex) => {
+      const option = options[nextIndex];
+      if (option) this.selectAppointmentType(option.id);
+    });
+  }
+
+  protected handleDateOptionKeydown(event: KeyboardEvent, index: number): void {
+    const dates = this.bookingDates();
+    this.moveRadioSelection(event, index, dates.length, (nextIndex) => {
+      const date = dates[nextIndex];
+      if (date) this.chooseDate(date.id);
+    });
+  }
+
+  protected chooseSlot(slot: PortalAvailabilitySlot): void {
+    this.selectedSlot.set(slot);
+    this.activeHold.set(null);
+  }
+
+  protected handleSlotOptionKeydown(event: KeyboardEvent, index: number): void {
+    const slots = this.availableSlots();
+    this.moveRadioSelection(event, index, slots.length, (nextIndex) => {
+      const slot = slots[nextIndex];
+      if (slot) this.chooseSlot(slot);
+    });
+  }
+
   protected chooseDate(date: string): void {
     this.selectedDate.set(date);
     this.selectedSlot.set(null);
@@ -485,6 +533,7 @@ export class PatientPortal {
     }
 
     const original = this.bookingAppointment();
+    this.actionError.set(null);
     this.actionBusy.set('booking');
     const request =
       this.bookingIntent() === 'reschedule' && original
@@ -539,6 +588,7 @@ export class PatientPortal {
   }
 
   protected confirmCancellation(appointment: PortalAppointment): void {
+    this.actionError.set(null);
     this.actionBusy.set(`cancel:${appointment.id}`);
     this.api
       .cancelAppointment(
@@ -573,6 +623,7 @@ export class PatientPortal {
       return;
     }
 
+    this.actionError.set(null);
     this.actionBusy.set(`demo-review:${prescription.id}`);
     this.api
       .submitDemoMedicationReview(prescription.id)
@@ -593,6 +644,7 @@ export class PatientPortal {
   protected generateDemoInvoicePreview(invoice: PortalInvoice): void {
     if (!this.demoCapabilities().invoicePreview) return;
 
+    this.actionError.set(null);
     this.actionBusy.set(`demo-invoice:${invoice.id}`);
     this.api
       .generateDemoInvoicePreview(invoice.id)
@@ -613,6 +665,7 @@ export class PatientPortal {
   }
 
   private downloadDocumentById(documentId: string, successMessage: string): void {
+    this.actionError.set(null);
     this.downloadingDocumentId.set(documentId);
     this.api
       .downloadDocument(documentId)
@@ -777,6 +830,7 @@ export class PatientPortal {
       this.bookingStep.set(2);
       return;
     }
+    this.actionError.set(null);
     this.actionBusy.set('hold');
     this.api
       .createSlotHold(slot)
@@ -796,11 +850,49 @@ export class PatientPortal {
 
   private handleMutationError(error: unknown, refreshAvailability = false): void {
     const appError = this.notifications.notify(error);
+    this.actionError.set(appError);
     this.announce(appError.message);
     if (refreshAvailability && appError.status === 409) {
       this.activeHold.set(null);
       this.bookingStep.set(1);
     }
+  }
+
+  private moveRadioSelection(
+    event: KeyboardEvent,
+    index: number,
+    optionCount: number,
+    select: (index: number) => void,
+  ): void {
+    if (optionCount === 0) return;
+
+    let nextIndex = index;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (index + 1) % optionCount;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (index - 1 + optionCount) % optionCount;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = optionCount - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    select(nextIndex);
+
+    const current = event.currentTarget;
+    if (!(current instanceof HTMLElement)) return;
+    const target = current.parentElement?.children.item(nextIndex);
+    if (target instanceof HTMLElement) target.focus();
   }
 
   private resetBooking(): void {

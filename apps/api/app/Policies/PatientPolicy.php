@@ -29,7 +29,7 @@ class PatientPolicy
      */
     public function view(User $user, Patient $patient): bool
     {
-        return $this->permissions->belongsToCurrentTenant($patient) && $this->viewAny($user);
+        return $this->permissions->belongsToCurrentClinic($patient) && $this->viewAny($user);
     }
 
     /**
@@ -45,7 +45,7 @@ class PatientPolicy
      */
     public function update(User $user, Patient $patient): bool
     {
-        return $this->permissions->belongsToCurrentTenant($patient) && $this->permissions->allows($user, 'patients.write');
+        return $this->permissions->belongsToCurrentClinic($patient) && $this->permissions->allows($user, 'patients.write');
     }
 
     /**

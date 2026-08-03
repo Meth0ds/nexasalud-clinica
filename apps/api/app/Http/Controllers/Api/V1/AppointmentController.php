@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\AppointmentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\CancelAppointmentRequest;
 use App\Http\Requests\Api\V1\RescheduleAppointmentRequest;
 use App\Http\Requests\Api\V1\StoreAppointmentRequest;
 use App\Http\Requests\Api\V1\TransitionAppointmentRequest;
@@ -56,9 +57,14 @@ final class AppointmentController extends Controller
         $from = CarbonImmutable::parse($filters['from'] ?? now()->startOfDay());
         $to = CarbonImmutable::parse($filters['to'] ?? $from->addDays(14));
         abort_if($from->diffInDays($to) > 93, Response::HTTP_UNPROCESSABLE_ENTITY);
+        $clinic = $this->currentClinic();
+        if (isset($filters['clinicId'])) {
+            $this->requireCurrentClinic((string) $filters['clinicId']);
+        }
 
         $appointments = Appointment::query()
             ->with(['appointmentType', 'clinic', 'room', 'patient', 'clinician'])
+            ->where('clinic_id', $clinic->getKey())
             ->where('starts_at', '<', $to)
             ->where('ends_at', '>', $from)
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
@@ -79,6 +85,10 @@ final class AppointmentController extends Controller
         $data = $request->validated();
         $tenant = $this->tenant();
         $actor = $this->actor($request);
+        $this->requireCurrentClinic($data['clinicId']);
+        $patient = \App\Models\Patient::query()->findOrFail($data['patientId']);
+        $this->requirePatientInCurrentClinic($patient);
+        $this->requirePractitionerInCurrentClinic($data['practitionerId']);
         $type = AppointmentType::query()->findOrFail($data['appointmentTypeId']);
         $room = isset($data['roomId']) ? Room::query()->findOrFail($data['roomId']) : null;
 
@@ -162,6 +172,12 @@ final class AppointmentController extends Controller
 
         $room = isset($data['roomId']) ? Room::query()->findOrFail($data['roomId']) : null;
         $clinician = isset($data['practitionerId']) ? User::query()->findOrFail($data['practitionerId']) : null;
+        $clinic = $this->currentClinic();
+        abort_if($appointment->clinic_id !== $clinic->getKey(), Response::HTTP_FORBIDDEN);
+        abort_if($room && $room->clinic_id !== $clinic->getKey(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        if ($clinician instanceof User) {
+            $this->requirePractitionerInCurrentClinic($clinician->getKey());
+        }
         $actor = $this->actor($request);
         $rescheduled = $appointment->reschedule(
             CarbonImmutable::parse($data['startsAt'], $data['timezone'])->utc(),
@@ -204,41 +220,21 @@ final class AppointmentController extends Controller
     /**
      * Cancel an active appointment with a validated reason and expected version.
      */
-    public function cancel(Request $request, Appointment $appointment): AppointmentResource
+    public function cancel(CancelAppointmentRequest $request, Appointment $appointment): AppointmentResource
     {
-        Gate::authorize('delete', $appointment);
-        $data = $request->validate([
-            'version' => ['required', 'integer', 'min:1'],
-            'reason' => ['required', 'string', 'min:3', 'max:500'],
-        ]);
-        $this->requireVersion($appointment, (int) $data['version']);
-        abort_if($appointment->status === AppointmentStatus::Cancelled, Response::HTTP_CONFLICT);
-
-        $cancelled = $appointment->transitionTo(
-            AppointmentStatus::Cancelled,
-            $this->actor($request),
-            $data['reason'],
-            (int) $data['version'],
-        );
-        $this->audit->record($request, 'appointment.cancelled', $cancelled, ['version' => $cancelled->lock_version]);
+        $data = $request->validated();
+        $cancelled = $this->cancelAppointment($request, $appointment, (int) $data['version'], $data['reason']);
 
         return new AppointmentResource($this->load($cancelled));
     }
 
     /**
-     * Preserve auditability by translating deletion into a controlled cancellation.
+     * Preserve auditability by translating deletion into a versioned, reasoned cancellation.
      */
-    public function destroy(Request $request, Appointment $appointment): Response
+    public function destroy(CancelAppointmentRequest $request, Appointment $appointment): Response
     {
-        Gate::authorize('delete', $appointment);
-        abort_if($appointment->status === AppointmentStatus::Cancelled, Response::HTTP_CONFLICT);
-
-        $cancelled = $appointment->transitionTo(
-            AppointmentStatus::Cancelled,
-            $this->actor($request),
-            'Cancelación solicitada desde la agenda.',
-        );
-        $this->audit->record($request, 'appointment.cancelled', $cancelled);
+        $data = $request->validated();
+        $this->cancelAppointment($request, $appointment, (int) $data['version'], $data['reason']);
 
         return response()->noContent();
     }
@@ -269,6 +265,25 @@ final class AppointmentController extends Controller
     private function requireVersion(Appointment $appointment, int $version): void
     {
         abort_if($appointment->lock_version !== $version, Response::HTTP_CONFLICT);
+    }
+
+    /**
+     * Cancel an appointment through the single locked transition path used by both endpoints.
+     */
+    private function cancelAppointment(Request $request, Appointment $appointment, int $version, string $reason): Appointment
+    {
+        $this->requireVersion($appointment, $version);
+        abort_if($appointment->status === AppointmentStatus::Cancelled, Response::HTTP_CONFLICT);
+
+        $cancelled = $appointment->transitionTo(
+            AppointmentStatus::Cancelled,
+            $this->actor($request),
+            $reason,
+            $version,
+        );
+        $this->audit->record($request, 'appointment.cancelled', $cancelled, ['version' => $cancelled->lock_version]);
+
+        return $cancelled;
     }
 
     /**

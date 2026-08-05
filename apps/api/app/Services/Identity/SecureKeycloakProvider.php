@@ -254,11 +254,13 @@ final class SecureKeycloakProvider extends Provider
     protected function getUserByToken($token): array
     {
         try {
-            $response = $this->getHttpClient()->get($this->discovery->metadata()->userInfoEndpoint, [
+            $userInfoEndpoint = $this->discovery->metadata()->userInfoEndpoint;
+            $response = $this->getHttpClient()->get($userInfoEndpoint, [
                 RequestOptions::HEADERS => [
                     'Accept' => 'application/json',
                     'Authorization' => 'Bearer '.$token,
                 ],
+                ...LocalhostCurlResolver::optionsFor($userInfoEndpoint),
             ]);
 
             $body = (string) $response->getBody();
@@ -291,9 +293,11 @@ final class SecureKeycloakProvider extends Provider
     public function getAccessTokenResponse($code): array
     {
         try {
-            $response = $this->getHttpClient()->post($this->getTokenUrl(), [
+            $tokenUrl = $this->getTokenUrl();
+            $response = $this->getHttpClient()->post($tokenUrl, [
                 RequestOptions::HEADERS => ['Accept' => 'application/json'],
                 RequestOptions::FORM_PARAMS => $this->getTokenFields($code),
+                ...LocalhostCurlResolver::optionsFor($tokenUrl),
             ]);
 
             $body = (string) $response->getBody();

@@ -27,6 +27,7 @@ import { StatusChip } from '../../../../shared/components/status-chip/status-chi
 import { ScrollReveal } from '../../../../shared/directives/scroll-reveal';
 import {
   CreateWaitlistEntryInput,
+  OfferSlotInput,
   WaitlistApiService,
   WaitlistEntryRecord,
   WaitlistStatus,
@@ -66,6 +67,10 @@ export class Waitlist {
   protected readonly actionError = signal<AppError | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly selectedId = signal<string | null>(null);
+  protected readonly offerStartsAt = signal('');
+  protected readonly offerMode = signal<'in-person' | 'video' | 'phone'>('in-person');
+  protected readonly offerRoomId = signal('');
+  protected readonly offerPractitionerId = signal('');
   protected readonly entries = signal<readonly WaitlistEntryRecord[]>([]);
   protected readonly patients = signal<readonly Patient[]>([]);
   protected readonly referenceData = signal<ReferenceData | null>(null);
@@ -113,6 +118,33 @@ export class Waitlist {
 
   protected select(entry: WaitlistEntryRecord): void {
     this.selectedId.set(entry.id);
+    if (entry.status === 'waiting') {
+      this.openOffer(entry);
+    }
+  }
+
+  protected openOffer(entry: WaitlistEntryRecord): void {
+    const referenceData = this.referenceData();
+    if (!referenceData) {
+      return;
+    }
+    const type = referenceData.appointmentTypes.find((item) => item.id === entry.appointmentTypeId);
+    const clinicId = entry.clinicId || referenceData.clinics[0]?.id || '';
+    const rooms = referenceData.rooms.filter((room) => room.clinicId === clinicId);
+    this.offerStartsAt.set(nextBusinessHour());
+    this.offerMode.set(type?.allowsVideo ? 'in-person' : 'in-person');
+    this.offerRoomId.set(rooms[0]?.id ?? '');
+    this.offerPractitionerId.set('');
+  }
+
+  protected offerRooms(entry: WaitlistEntryRecord): readonly {
+    readonly id: string;
+    readonly clinicId: string;
+    readonly name: string;
+    readonly capacity: number;
+  }[] {
+    const clinicId = entry.clinicId || this.referenceData()?.clinics[0]?.id || '';
+    return (this.referenceData()?.rooms ?? []).filter((room) => room.clinicId === clinicId);
   }
 
   protected setSearch(value: string): void {
@@ -200,27 +232,125 @@ export class Waitlist {
       return;
     }
 
+    const startsAt = this.offerStartsAt();
+    if (!startsAt) {
+      this.notifications.error('Indica la fecha y hora del hueco a ofrecer.');
+      return;
+    }
+    const referenceData = this.referenceData();
+    const type = referenceData?.appointmentTypes.find(
+      (item) => item.id === entry.appointmentTypeId,
+    );
+    const duration = type?.durationMinutes ?? 30;
+    const endsAt = new Date(new Date(startsAt).getTime() + duration * 60_000);
+    if (type?.requiresRoom && !this.offerRoomId()) {
+      this.notifications.error('Este tipo de atención requiere una sala; selecciónala.');
+      return;
+    }
+    if (this.offerMode() === 'video' && type && !type.allowsVideo) {
+      this.notifications.error('Este tipo de atención no admite videoconsulta.');
+      return;
+    }
+
+    const slot: OfferSlotInput = {
+      startsAt: new Date(startsAt).toISOString(),
+      endsAt: endsAt.toISOString(),
+      mode: this.offerMode(),
+      ...(this.offerRoomId() ? { roomId: this.offerRoomId() } : {}),
+      ...(this.offerPractitionerId() ? { practitionerId: this.offerPractitionerId() } : {}),
+    };
+
     this.actionError.set(null);
     this.saving.set(true);
     this.waitlistApi
-      .offer(entry)
+      .offer(entry, slot)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),
       )
       .subscribe({
-        next: (updated) => {
-          this.entries.update((entries) =>
-            entries.map((item) => (item.id === updated.id ? updated : item)),
-          );
-          this.selectedId.set(updated.id);
-          this.notifications.success(
+        next: (updated) =>
+          this.replaceEntry(
+            updated,
             'Oferta temporal registrada durante 20 minutos. Confirma el canal autorizado antes de comunicarla al paciente.',
-          );
-        },
+          ),
         error: (error: unknown) =>
           this.reportActionError(error, 'No se ha podido registrar la oferta temporal.'),
       });
+  }
+
+  protected accept(entry: WaitlistEntryRecord): void {
+    if (entry.status !== 'offered' || this.saving()) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.saving.set(true);
+    this.waitlistApi
+      .acceptOffer(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (updated) =>
+          this.replaceEntry(updated, 'Oferta aceptada: la cita queda confirmada y auditada.'),
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido aceptar la oferta.'),
+      });
+  }
+
+  protected reject(entry: WaitlistEntryRecord): void {
+    if (entry.status !== 'offered' || this.saving()) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.saving.set(true);
+    this.waitlistApi
+      .rejectOffer(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (updated) =>
+          this.replaceEntry(
+            updated,
+            'Oferta rechazada: la solicitud vuelve a la espera y el hueco reservado queda liberado.',
+          ),
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido rechazar la oferta.'),
+      });
+  }
+
+  protected expire(entry: WaitlistEntryRecord): void {
+    if (entry.status !== 'offered' || this.saving()) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.saving.set(true);
+    this.waitlistApi
+      .expire(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (updated) =>
+          this.replaceEntry(updated, 'Oferta caducada: el hueco reservado queda liberado.'),
+        error: (error: unknown) =>
+          this.reportActionError(error, 'No se ha podido caducar la oferta.'),
+      });
+  }
+
+  private replaceEntry(updated: WaitlistEntryRecord, message: string): void {
+    this.entries.update((entries) =>
+      entries.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    this.selectedId.set(updated.id);
+    this.notifications.success(message);
   }
 
   private reportActionError(error: unknown, fallback: string): void {
@@ -270,6 +400,27 @@ export class Waitlist {
     return `${formatter.format(new Date(from))} — ${formatter.format(new Date(to))}`;
   }
 
+  protected slotLabel(entry: WaitlistEntryRecord): string {
+    const slot = entry.offeredSlot;
+    if (!slot) {
+      return 'Sin hueco asociado';
+    }
+    const formatter = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+    const detail = [slot.practitionerName, slot.roomName].filter(Boolean).join(' · ');
+    return `${formatter.format(new Date(slot.startsAt))} — ${formatter.format(new Date(slot.endsAt))}${detail ? ` · ${detail}` : ''}`;
+  }
+
+  protected offerExpiryLabel(entry: WaitlistEntryRecord): string {
+    if (!entry.offerExpiresAt) {
+      return '';
+    }
+    const remaining = Math.max(
+      0,
+      Math.ceil((new Date(entry.offerExpiresAt).getTime() - Date.now()) / 60_000),
+    );
+    return remaining <= 0 ? 'La oferta vence' : `Vence en ${remaining} min`;
+  }
+
   protected waitingLabel(value: string | null): string {
     const days = daysSince(value);
     return days === 0 ? 'Hoy' : `${days} ${days === 1 ? 'día' : 'días'}`;
@@ -314,6 +465,31 @@ function compareEntries(left: WaitlistEntryRecord, right: WaitlistEntryRecord): 
 function asIso(value: string): string | null {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function nextBusinessHour(): string {
+  const date = new Date();
+  date.setMinutes(0, 0, 0);
+  date.setHours(date.getHours() + 1);
+  if (date.getHours() < 8) {
+    date.setHours(8, 0, 0, 0);
+  }
+  if (date.getHours() > 17) {
+    date.setDate(date.getDate() + 1);
+    date.setHours(9, 0, 0, 0);
+  }
+  if (date.getDay() === 6) {
+    date.setDate(date.getDate() + 2);
+  }
+  if (date.getDay() === 0) {
+    date.setDate(date.getDate() + 1);
+  }
+  return toLocalInput(date);
+}
+
+function toLocalInput(date: Date): string {
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function daysSince(value: string | null): number {

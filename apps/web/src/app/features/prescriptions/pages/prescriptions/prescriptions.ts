@@ -306,7 +306,12 @@ export class Prescriptions {
     this.prescriptionApi
       .generateMedicationPlan(prescription.id)
       .pipe(
-        switchMap((document) => this.prescriptionApi.downloadDocument(document.downloadPath)),
+        switchMap((document) => {
+          if (!document.downloadPath) {
+            throw new Error('La ruta de descarga del documento no está disponible.');
+          }
+          return this.prescriptionApi.downloadDocument(document.downloadPath);
+        }),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.pdfId.set(null)),
       )

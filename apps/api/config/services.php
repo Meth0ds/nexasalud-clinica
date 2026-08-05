@@ -66,6 +66,10 @@ return [
         'timeout_seconds' => (int) env('OIDC_TIMEOUT_SECONDS', 5),
         'clock_skew_seconds' => (int) env('OIDC_CLOCK_SKEW_SECONDS', 60),
         'allow_insecure_http' => filter_var(env('OIDC_ALLOW_INSECURE_HTTP', false), FILTER_VALIDATE_BOOL),
+        'admin_base_url' => env('KEYCLOAK_BASE_URL'),
+        'realm' => env('KEYCLOAK_REALM', 'nexasalud-dev'),
+        'admin_username' => env('KEYCLOAK_ADMIN_USERNAME'),
+        'admin_password' => env('KEYCLOAK_ADMIN_PASSWORD'),
     ],
 
 ];

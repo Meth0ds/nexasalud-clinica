@@ -165,6 +165,7 @@ export class PatientPortal {
   protected readonly waitlistEntries = signal<readonly PortalWaitlistEntry[] | null>(null);
   protected readonly waitlistLoading = signal(false);
   protected readonly waitlistError = signal<AppError | null>(null);
+  protected readonly waitlistActionId = signal<string | null>(null);
   protected readonly catalog = signal<PortalBookingCatalog | null>(null);
   protected readonly catalogLoading = signal(true);
   protected readonly catalogError = signal<AppError | null>(null);
@@ -404,6 +405,64 @@ export class PatientPortal {
         next: (entries) => this.waitlistEntries.set(entries),
         error: (error: unknown) => this.waitlistError.set(toAppError(error)),
       });
+  }
+
+  protected acceptWaitlistOffer(entry: PortalWaitlistEntry): void {
+    if (entry.status !== 'offered' || this.waitlistActionId()) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.waitlistActionId.set(entry.id);
+    this.api
+      .acceptWaitlistOffer(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.waitlistActionId.set(null)),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.replaceWaitlistEntry(updated);
+          const message = 'Oferta aceptada: tu cita queda confirmada en el centro.';
+          this.notifications.success(message);
+          this.announce(message);
+          this.loadOverview();
+        },
+        error: (error: unknown) => this.handleMutationError(error),
+      });
+  }
+
+  protected rejectWaitlistOffer(entry: PortalWaitlistEntry): void {
+    if (entry.status !== 'offered' || this.waitlistActionId()) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.waitlistActionId.set(entry.id);
+    this.api
+      .rejectWaitlistOffer(entry)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.waitlistActionId.set(null)),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.replaceWaitlistEntry(updated);
+          const message = 'Oferta rechazada: seguimos manteniéndote en la lista de espera.';
+          this.notifications.success(message);
+          this.announce(message);
+        },
+        error: (error: unknown) => this.handleMutationError(error),
+      });
+  }
+
+  protected offeredSlotLabel(entry: PortalWaitlistEntry): string {
+    const slot = entry.offeredSlot;
+    if (!slot) {
+      return 'Hueco sin confirmar';
+    }
+    const detail = [slot.practitionerName, slot.roomName].filter(Boolean).join(' · ');
+    return `${this.formatDate(slot.startsAt)} · ${this.formatTime(slot.startsAt)}–${this.formatTime(slot.endsAt)}${detail ? ` · ${detail}` : ''}`;
   }
 
   protected submitWaitlist(): void {
@@ -717,9 +776,14 @@ export class PatientPortal {
   }
 
   protected formatTime(value: string): string {
-    return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(
-      new Date(value),
-    );
+    if (!value) {
+      return '—';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '—';
+    }
+    return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(date);
   }
 
   protected formatMessageDate(value: string | null): string {
@@ -756,14 +820,18 @@ export class PatientPortal {
       paid: 'Pagada',
       partially_paid: 'Pago parcial',
       void: 'Anulada',
+      waiting: 'En espera',
+      offered: 'Oferta disponible',
+      booked: 'Cita asignada',
+      expired: 'Caducada',
     };
     return labels[status] ?? humanize(status);
   }
 
   protected statusTone(status: string): 'success' | 'warning' | 'danger' | 'info' {
-    if (['confirmed', 'completed', 'paid', 'signed'].includes(status)) return 'success';
-    if (['cancelled', 'no_show', 'void'].includes(status)) return 'danger';
-    if (['scheduled', 'draft', 'partially_paid'].includes(status)) return 'warning';
+    if (['confirmed', 'completed', 'paid', 'signed', 'booked'].includes(status)) return 'success';
+    if (['cancelled', 'no_show', 'void', 'expired'].includes(status)) return 'danger';
+    if (['scheduled', 'draft', 'partially_paid', 'offered'].includes(status)) return 'warning';
     return 'info';
   }
 
@@ -788,6 +856,12 @@ export class PatientPortal {
 
   protected invoiceConcept(invoice: PortalInvoice): string {
     return invoice.number ? `Factura ${invoice.number}` : 'Documento de facturación';
+  }
+
+  private replaceWaitlistEntry(updated: PortalWaitlistEntry): void {
+    this.waitlistEntries.update((entries) =>
+      (entries ?? []).map((entry) => (entry.id === updated.id ? updated : entry)),
+    );
   }
 
   private loadAvailability(): void {

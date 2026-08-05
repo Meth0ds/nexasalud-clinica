@@ -79,6 +79,7 @@ describe('PatientPortal', () => {
                 waitingSince: null,
                 offeredAt: null,
                 offerExpiresAt: null,
+                offeredSlot: null,
               }),
           },
         },

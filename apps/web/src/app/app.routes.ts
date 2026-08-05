@@ -133,6 +133,13 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'sin-acceso',
+    loadComponent: () =>
+      import('./features/status/pages/status-page/status-page').then((module) => module.StatusPage),
+    data: { kind: 'forbidden' },
+    title: 'Sin acceso · NexaSalud',
+  },
+  {
     path: 'indisponible',
     loadComponent: () =>
       import('./features/status/pages/status-page/status-page').then((module) => module.StatusPage),

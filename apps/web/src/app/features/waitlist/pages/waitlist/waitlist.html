@@ -168,25 +168,130 @@
             ><span><app-icon name="check" [size]="14" /> Control optimista de versión</span
             ><span><app-icon name="check" [size]="14" /> Operación idempotente</span>
           </div>
-          <button
-            mat-flat-button
-            class="nexa-btn-primary"
-            type="button"
-            [disabled]="entry.status !== 'waiting' || saving()"
-            (click)="offer(entry)"
-          >
-            {{
-              saving()
-                ? 'Registrando…'
-                : entry.status === 'waiting'
-                  ? 'Registrar oferta temporal'
-                  : 'Oferta ya registrada'
-            }}
-          </button>
-          <p class="hold-note">
-            <app-icon name="clock" [size]="14" /> La oferta vence en 20 minutos. Comunícala solo por
-            el canal autorizado del paciente.
-          </p>
+          @switch (entry.status) {
+            @case ('waiting') {
+              <div class="offer-form" role="group" aria-label="Configurar el hueco a ofrecer">
+                <div class="offer-form__row">
+                  <label class="offer-form__datetime"
+                    ><span>Hueco a ofrecer</span
+                    ><input
+                      type="datetime-local"
+                      [value]="offerStartsAt()"
+                      (input)="offerStartsAt.set($any($event.target).value)"
+                  /></label>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Modalidad</mat-label>
+                    <mat-select
+                      [value]="offerMode()"
+                      (selectionChange)="offerMode.set($event.value)"
+                    >
+                      <mat-option value="in-person">En el centro</mat-option>
+                      <mat-option value="video">Videoconsulta</mat-option>
+                      <mat-option value="phone">Telefónica</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="offer-form__row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Sala</mat-label>
+                    <mat-select
+                      [value]="offerRoomId()"
+                      (selectionChange)="offerRoomId.set($event.value)"
+                    >
+                      @for (room of offerRooms(entry); track room.id) {
+                        <mat-option [value]="room.id">{{ room.name }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Profesional</mat-label>
+                    <mat-select
+                      [value]="offerPractitionerId()"
+                      (selectionChange)="offerPractitionerId.set($event.value)"
+                    >
+                      <mat-option value="">Preferido de la solicitud</mat-option>
+                      @for (
+                        practitioner of referenceData()?.practitioners ?? [];
+                        track practitioner.id
+                      ) {
+                        <mat-option [value]="practitioner.id">{{
+                          practitioner.displayName
+                        }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <button
+                  mat-flat-button
+                  class="nexa-btn-primary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="offer(entry)"
+                >
+                  {{ saving() ? 'Registrando…' : 'Registrar oferta temporal' }}
+                </button>
+                <p class="hold-note">
+                  <app-icon name="clock" [size]="14" /> La oferta vence en 20 minutos, reserva el
+                  hueco de forma atómica y queda auditada. Comunícala solo por el canal autorizado
+                  del paciente.
+                </p>
+              </div>
+            }
+            @case ('offered') {
+              <div class="offered-slot" role="group" aria-label="Hueco ofrecido">
+                <span class="offered-slot__label"
+                  ><app-icon name="calendar" [size]="14" /> Hueco ofrecido</span
+                ><strong>{{ slotLabel(entry) }}</strong>
+                <small
+                  ><app-icon name="clock" [size]="13" /> {{ offerExpiryLabel(entry) }}. La
+                  aceptación es atómica y queda auditada.</small
+                >
+              </div>
+              <div class="offer-actions">
+                <button
+                  mat-flat-button
+                  class="nexa-btn-primary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="accept(entry)"
+                >
+                  {{ saving() ? 'Procesando…' : 'Aceptar oferta' }}
+                </button>
+                <button
+                  mat-stroked-button
+                  class="nexa-btn-secondary"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="reject(entry)"
+                >
+                  Rechazar y volver a espera
+                </button>
+                <button
+                  mat-button
+                  class="nexa-btn-quiet"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="expire(entry)"
+                >
+                  Caducar oferta
+                </button>
+              </div>
+            }
+            @case ('booked') {
+              <div class="offered-slot" role="status">
+                <span class="offered-slot__label"
+                  ><app-icon name="check" [size]="14" /> Oferta aceptada</span
+                ><strong>{{ slotLabel(entry) }}</strong>
+                <small>La cita queda confirmada y registrada en auditoría.</small>
+              </div>
+            }
+            @default {
+              <div class="offered-slot" role="status">
+                <span class="offered-slot__label">{{ statusLabel(entry.status) }}</span>
+                <small>Esta solicitud ya no admite ofertas.</small>
+              </div>
+            }
+          }
         </mat-card>
       }
     </section>

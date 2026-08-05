@@ -139,7 +139,18 @@ class AuthSessionController extends Controller
             }
 
             foreach ($role->permissions as $permission) {
-                if (is_string($permission) && preg_match('/^[a-z][a-z0-9._:-]{1,99}$/', $permission) === 1) {
+                if (! is_string($permission)) {
+                    continue;
+                }
+
+                $permission = trim($permission);
+
+                // Allow bare and namespace wildcards exactly like PermissionService::allows()
+                // and the frontend SessionService.hasPermission() expect them.
+                $isValid = $permission === '*'
+                    || preg_match('/^[a-z][a-z0-9._:-]{1,99}(\.\*)?$/', $permission) === 1;
+
+                if ($isValid) {
                     $permissions[] = $permission;
                 }
             }

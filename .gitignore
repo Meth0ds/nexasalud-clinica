@@ -24,6 +24,14 @@ data/
 backups/
 *.log
 *.pid
+.freebuff/
+output/
+
+# Agent-specific skill copies and local skill registries
+.claude/
+agent/
+.agents/
+skills-lock.json
 
 # Editors and operating systems
 .DS_Store

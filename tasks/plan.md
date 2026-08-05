@@ -78,9 +78,9 @@ flowchart TD
 
 **Acceptance criteria:**
 
-- [ ] Every browser-consumed endpoint has documented request, response and error schemas.
-- [ ] Tenant, authorization and pagination semantics are explicit.
-- [ ] Generated TypeScript types or contract tests detect backend/frontend drift.
+- [x] Every browser-consumed endpoint has documented request, response and error schemas.
+- [x] Tenant, authorization and pagination semantics are explicit.
+- [x] Generated TypeScript types or contract tests detect backend/frontend drift (`OpenApiContractCoverageTest` verifica que el documento cubre todas las operaciones `api/v1`; validado 4 de agosto de 2026).
 
 **Verification:** Schema validation and a CI contract check for representative API responses.
 
@@ -92,9 +92,9 @@ flowchart TD
 
 **Acceptance criteria:**
 
-- [ ] Invalid state transitions are rejected server-side with stable problem responses.
-- [ ] Every valid transition enforces role, clinic scope, concurrency/version checks and audit events.
-- [ ] Agenda UI offers only permitted transitions and renders conflict recovery.
+- [x] Invalid state transitions are rejected server-side with stable problem responses (`canTransitionTo` + `transitionTo` con DomainException → 409/422 y RFC 9457).
+- [x] Every valid transition enforces role, clinic scope, concurrency/version checks and audit events.
+- [x] Agenda UI offers only permitted transitions and renders conflict recovery.
 
 **Verification:** Laravel feature tests for all transitions and Angular interaction tests for permitted and denied actions.
 
@@ -106,9 +106,9 @@ flowchart TD
 
 **Acceptance criteria:**
 
-- [ ] Double booking of practitioner, room or constrained resource is prevented by database-backed logic.
-- [ ] Cancellation and rescheduling enforce the configured policy and retain an auditable reason.
-- [ ] UI exposes an accessible error path and refreshes stale availability after a conflict.
+- [x] Double booking of practitioner, room or constrained resource is prevented by database-backed logic (constraint de solapamiento en `Appointment` + slot holds atómicos).
+- [x] Cancellation and rescheduling enforce the configured policy and retain an auditable reason.
+- [x] UI exposes an accessible error path and refreshes stale availability after a conflict.
 
 **Verification:** Concurrent Laravel tests, API idempotency tests, and browser E2E coverage of booking/rescheduling.
 
@@ -142,9 +142,9 @@ flowchart TD
 
 **Acceptance criteria:**
 
-- [ ] Matching respects clinic, type, window, allowed preferences and configured priority policy.
-- [ ] Offer expiry and conversion are atomic and cannot create duplicate bookings.
-- [ ] Staff and patient views only reveal the minimum necessary data and all decisions are audited.
+- [x] Matching respects clinic, type, window, allowed preferences and configured priority policy (el staff ofrece el hueco manualmente; además el motor automático `waitlist:match-slots` coincide entradas `waiting` con huecos libres respetando ventana, días preferidos, profesional preferido, lead mínimo y presupuesto por ejecución; 4 de agosto de 2026).
+- [x] Offer expiry and conversion are atomic and cannot create duplicate bookings (aceptar/rechazar/caducar atómicos con lock de fila, verificación de disponibilidad y prevención de doble asignación).
+- [x] Staff and patient views only reveal the minimum necessary data and all decisions are audited (`offeredSlot` mínimo; eventos `waitlist.offer_*` y `portal.waitlist_offer_*`).
 
 **Verification:** Clock-controlled Laravel tests, queue/worker tests, and UI tests for each offer status.
 

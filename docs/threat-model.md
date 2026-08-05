@@ -1,8 +1,9 @@
 # Modelo de amenazas de NexaSalud
 
-**Estado:** modelo inicial basado en el repositorio  
+**Estado:** modelo inicial basado en el repositorio; revalidado contra la arquitectura actual  
 **Fecha de corte:** 19 de julio de 2026  
-**Versión:** 0.1  
+**Actualización:** 4 de agosto de 2026 — el backend fue rebaselineado de NestJS/Fastify a **Laravel 13 (BFF/API)**, por lo que las referencias a componentes, evidencia y rutas de este documento se han ajustado al stack real (`apps/api/app`). Los controles descritos siguen siendo en gran parte diseño o implementación parcial; el riesgo residual para datos sanitarios reales continúa siendo **inaceptable** hasta cerrar identidad, autorización, RLS, cifrado, auditoría, restauración y pruebas negativas verificadas.  
+**Versión:** 0.2  
 **Propietario pendiente:** responsable de seguridad/producto
 
 > Este documento no certifica la seguridad, el cumplimiento normativo ni la aptitud para tratar datos reales. Distingue controles implementados de requisitos de diseño. Debe actualizarse cuando cambien los flujos, integraciones, exposición o modelo de despliegue.
@@ -63,10 +64,10 @@ Mientras no se respondan, se adopta el escenario conservador de aplicación sani
 | Componente                      | Función prevista                                                                            | Estado y evidencia                                                                                                                                |
 | ------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Navegador + Angular             | UI, rutas, formularios y estado visual; nunca autoridad de seguridad                        | **E:** Angular/Material y proxy local en `apps/web/package.json` y `apps/web/proxy.conf.json`. **P:** flujos de negocio y seguridad verificables. |
-| BFF/API NestJS + Fastify        | Terminación de sesión, autorización, validación, negocio, auditoría y acceso a dependencias | **E:** dependencias declaradas en `apps/api/package.json`. **P:** eficacia de guards, rutas y controles.                                          |
+| BFF/API Laravel 13               | Terminación de sesión, autorización, validación, negocio, auditoría y acceso a dependencias | **E:** dependencias en `apps/api/composer.json`; arranque y middleware en `apps/api/bootstrap/app.php`; controladores, policies, Form Requests y recursos bajo `apps/api/app`. **P:** eficacia operativa de rutas, middleware y controles en despliegues reales. |
 | Proveedor OIDC / Keycloak local | Autenticación, passkeys/MFA, recuperación y step-up                                         | **D:** flujo en `PROMPT_INTERNO_IMPLEMENTACION.md`, sección “Arquitectura de identidad”. **P:** realm y proveedor productivo.                     |
-| Redis                           | Sesiones, transacciones OIDC, rate limits y locks breves                                    | **D:** arquitectura en `PLAN_MAESTRO.md` §4.3. **E:** cliente declarado en `apps/api/package.json`. **P:** despliegue/configuración.              |
-| PostgreSQL                      | Fuente de verdad, integridad, tenant y RLS                                                  | **D:** `PLAN_MAESTRO.md` §4.4. **E:** cliente declarado en `apps/api/package.json`. **P:** esquema, migraciones y políticas verificadas.          |
+| Redis                           | Sesiones, transacciones OIDC, rate limits y locks breves                                    | **D:** arquitectura en `PLAN_MAESTRO.md` §4.3. **E:** drivers de sesión/cola/caché declarados en `apps/api/config/*` y `.env.example`. **P:** despliegue/configuración productiva. |
+| PostgreSQL                      | Fuente de verdad, integridad, tenant y RLS                                                  | **D:** `PLAN_MAESTRO.md` §4.4. **E:** migraciones en `apps/api/database/migrations` y políticas RLS habilitadas en `..._enable_tenant_rls_for_clinical_data`. **P:** esquema y políticas verificadas en despliegue productivo. |
 | KMS/gestor de secretos          | Protección y rotación de claves/secretos                                                    | **D:** `PLAN_MAESTRO.md` §4.4 y §5.5. **P:** proveedor, políticas y operación.                                                                    |
 | Correo/cola                     | Recordatorios y avisos sin contenido sanitario innecesario                                  | **D:** Mailpit local y adaptador productivo en `PLAN_MAESTRO.md`. **P:** implementación y proveedor.                                              |
 | Logs, auditoría y SIEM          | Detección, investigación y trazabilidad sin PHI                                             | **D:** `PLAN_MAESTRO.md` §5.5 y prompt, “Logs/auditoría”. **P:** sink separado, alertas e integridad.                                             |
@@ -246,13 +247,13 @@ Referencia estable: [OWASP ASVS 5.0.0](https://github.com/OWASP/ASVS/tree/v5.0.0
 
 | Ruta                         | Motivo                                                     | Amenazas                       |
 | ---------------------------- | ---------------------------------------------------------- | ------------------------------ |
-| `apps/api/src/auth/`         | Callback OIDC, sesión, CSRF y logout cuando exista         | TM-001, TM-002, TM-005, TM-013 |
-| `apps/api/src/common/`       | Guards, contexto, validación, errores y logs transversales | TM-003, TM-004, TM-007, TM-014 |
-| `apps/api/src/database/`     | Conexión, transacciones, tenant y migraciones              | TM-003, TM-007, TM-009         |
-| `apps/api/src/appointments/` | Autorización de recursos, concurrencia e idempotencia      | TM-003, TM-009                 |
-| `apps/api/src/patients/`     | Minimización y separación básica/sensible                  | TM-003, TM-006, TM-012         |
-| `apps/api/src/exports/`      | Step-up, volumen, archivos y auditoría                     | TM-008, TM-012, TM-015         |
-| `apps/api/src/audit/`        | Redacción, integridad y fallos                             | TM-008, TM-012, TM-014         |
+| `apps/api/app/Http/Controllers/Auth/` | Callback OIDC, sesión, CSRF y logout cuando exista              | TM-001, TM-002, TM-005, TM-013 |
+| `apps/api/app/Http/Middleware/`      | Trazabilidad, tenant, no-cache, idempotencia y errores          | TM-003, TM-004, TM-007, TM-014 |
+| `apps/api/app/Models/` y `database/migrations/` | Conexión, transacciones, tenant y migraciones       | TM-003, TM-007, TM-009         |
+| `apps/api/app/Http/Controllers/Api/V1/AppointmentController.php` | Autorización de recursos, concurrencia e idempotencia | TM-003, TM-009                 |
+| `apps/api/app/Http/Controllers/Api/V1/PatientController.php` y `ConsentController.php` | Minimización y separación básica/sensible | TM-003, TM-006, TM-012         |
+| `apps/api/app/Services/Documents/`  | Generación de PDF con datos mínimos y auditoría                   | TM-008, TM-012, TM-015         |
+| `apps/api/app/Support/Auditing/` y `AuditEvent.php` | Redacción, integridad y fallos               | TM-008, TM-012, TM-014         |
 | `apps/web/src/app/`          | Sinks DOM, almacenamiento, guards y caché                  | TM-002, TM-005, TM-006         |
 | `infra/`                     | Red, credenciales, IdP, RLS, backups y health              | TM-001, TM-003, TM-014, TM-015 |
 | Lockfiles y CI               | Dependencias, scripts, secrets y provenance                | TM-010                         |
@@ -268,7 +269,7 @@ Las rutas inexistentes son **focos de implementación/revisión**, no evidencia 
 - [x] Las decisiones documentadas están marcadas como diseño, no como control existente.
 - [x] Se registraron supuestos y preguntas que alteran el riesgo.
 - [x] No se incluyeron secretos ni datos de pacientes reales.
-- [ ] Revalidar contra rutas y migraciones definitivas.
+- [x] Revalidar contra rutas y migraciones definitivas (4 de agosto de 2026: rutas en `apps/api/routes/api.php`, `auth.php` y `console.php`; migraciones en `apps/api/database/migrations`; controladores bajo `apps/api/app/Http/Controllers/Api/V1`).
 - [ ] Asignar owner, fecha y evidencia ejecutable a cada amenaza.
 - [ ] Validar el contexto con producto, operaciones, privacidad y asesoría jurídica.
 - [ ] Actualizar tras pruebas de penetración y antes de cada cambio material.

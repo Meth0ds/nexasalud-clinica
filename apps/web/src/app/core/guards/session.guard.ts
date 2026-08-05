@@ -81,7 +81,7 @@ export const staffWorkspaceGuard: CanActivateFn = () => {
       }
       return session.hasPermission('portal.self')
         ? router.createUrlTree(['/portal'])
-        : router.createUrlTree(['/login'], { queryParams: { reason: 'forbidden' } });
+        : router.createUrlTree(['/sin-acceso']);
     }),
   );
 };

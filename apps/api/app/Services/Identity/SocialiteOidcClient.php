@@ -159,7 +159,10 @@ final class SocialiteOidcClient implements OidcClient
      */
     private function authenticatedAt(array $claims): int
     {
-        $authenticatedAt = $claims['auth_time'] ?? null;
+        // Keycloak only emits auth_time when the client is assigned the auth_time
+        // scope, so fall back to the issuance time (the closest verifiable anchor)
+        // when the optional claim is absent.
+        $authenticatedAt = $claims['auth_time'] ?? $claims['iat'] ?? null;
 
         if (! is_int($authenticatedAt) || $authenticatedAt < 1 || $authenticatedAt > time() + 300) {
             throw new IdentityProtocolException;

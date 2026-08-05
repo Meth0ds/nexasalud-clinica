@@ -1425,6 +1425,39 @@
                       <app-status-chip [tone]="statusTone(entry.status)">
                         {{ statusLabel(entry.status) }}
                       </app-status-chip>
+                      @if (entry.status === 'offered') {
+                        <div
+                          class="portal-offer"
+                          role="group"
+                          aria-label="Oferta de cita disponible"
+                        >
+                          <strong>{{ offeredSlotLabel(entry) }}</strong>
+                          <small
+                            >Disponible hasta {{ formatDate(entry.offerExpiresAt) }} ·
+                            {{ formatTime(entry.offerExpiresAt ?? '') }}</small
+                          >
+                          <div class="portal-offer__actions">
+                            <button
+                              mat-flat-button
+                              class="nexa-btn-primary"
+                              type="button"
+                              [disabled]="waitlistActionId() === entry.id"
+                              (click)="acceptWaitlistOffer(entry)"
+                            >
+                              {{ waitlistActionId() === entry.id ? 'Procesando…' : 'Aceptar cita' }}
+                            </button>
+                            <button
+                              mat-stroked-button
+                              class="nexa-btn-secondary"
+                              type="button"
+                              [disabled]="waitlistActionId() === entry.id"
+                              (click)="rejectWaitlistOffer(entry)"
+                            >
+                              Rechazar y seguir en espera
+                            </button>
+                          </div>
+                        </div>
+                      }
                     </article>
                   } @empty {
                     <app-state-panel

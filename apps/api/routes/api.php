@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuditController;
 use App\Http\Controllers\Api\V1\ClinicalNoteController;
+use App\Http\Controllers\Api\V1\ConsentController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\InvoiceController;
@@ -76,6 +77,15 @@ Route::prefix('v1')
             ->middleware(['throttle:clinical-mutation', 'idempotent'])
             ->name('patients.clinical-notes.sign');
 
+        Route::get('/patients/{patient}/consents', [ConsentController::class, 'index'])
+            ->name('patients.consents.index');
+        Route::post('/patients/{patient}/consents', [ConsentController::class, 'store'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('patients.consents.store');
+        Route::post('/patients/{patient}/consents/{consentRecord}/withdraw', [ConsentController::class, 'withdraw'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('patients.consents.withdraw');
+
         Route::apiResource('waitlist-entries', WaitlistController::class)
             ->parameters(['waitlist-entries' => 'waitlistEntry'])
             ->except('update')
@@ -87,6 +97,15 @@ Route::prefix('v1')
         Route::post('/waitlist-entries/{waitlistEntry}/offer', [WaitlistController::class, 'offer'])
             ->middleware(['throttle:clinical-mutation', 'idempotent'])
             ->name('waitlist-entries.offer');
+        Route::post('/waitlist-entries/{waitlistEntry}/accept', [WaitlistController::class, 'accept'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('waitlist-entries.accept');
+        Route::post('/waitlist-entries/{waitlistEntry}/reject', [WaitlistController::class, 'reject'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('waitlist-entries.reject');
+        Route::post('/waitlist-entries/{waitlistEntry}/expire', [WaitlistController::class, 'expire'])
+            ->middleware(['throttle:clinical-mutation', 'idempotent'])
+            ->name('waitlist-entries.expire');
 
         Route::get('/communications', [PatientCommunicationController::class, 'index'])
             ->name('communications.index');
@@ -168,6 +187,12 @@ Route::prefix('v1')
             Route::post('/waitlist-entries', [PortalController::class, 'createWaitlist'])
                 ->middleware(['throttle:clinical-mutation', 'idempotent'])
                 ->name('waitlist-entries.store');
+            Route::post('/waitlist-entries/{waitlistEntry}/accept', [PortalController::class, 'acceptOffer'])
+                ->middleware(['throttle:clinical-mutation', 'idempotent'])
+                ->name('waitlist-entries.accept');
+            Route::post('/waitlist-entries/{waitlistEntry}/reject', [PortalController::class, 'rejectOffer'])
+                ->middleware(['throttle:clinical-mutation', 'idempotent'])
+                ->name('waitlist-entries.reject');
             Route::get('/availability', [PortalController::class, 'availability'])->name('availability');
             Route::post('/slot-holds', [PortalController::class, 'hold'])
                 ->middleware(['throttle:clinical-mutation', 'idempotent'])

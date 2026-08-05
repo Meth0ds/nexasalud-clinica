@@ -136,3 +136,28 @@
   display: flex;
   gap: 4px;
 }
+.portal-offer {
+  display: grid;
+  gap: 5px;
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--nexa-primary-soft);
+  border-radius: 12px;
+  background: var(--nexa-surface-2);
+  strong {
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+  small {
+    color: var(--nexa-ink-soft);
+    font-size: 0.56rem;
+    line-height: 1.4;
+  }
+}
+.portal-offer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}

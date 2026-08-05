@@ -6,8 +6,8 @@ use App\Models\AdverseReaction;
 use App\Models\Appointment;
 use App\Models\AppointmentType;
 use App\Models\Clinic;
-use App\Models\ClinicPatient;
 use App\Models\ClinicalDocument;
+use App\Models\ClinicPatient;
 use App\Models\ConsentRecord;
 use App\Models\Insurer;
 use App\Models\Invoice;
@@ -27,10 +27,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\WaitlistEntry;
+use App\Services\Identity\LocalhostCurlResolver;
+use GuzzleHttp\Client;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use LogicException;
+use Throwable;
 
 class ClinicalDemoSeeder extends Seeder
 {
@@ -180,32 +183,41 @@ class ClinicalDemoSeeder extends Seeder
     {
         $identities = [
             'clinician' => [
+                'username' => '00000000T-DEMO',
                 'subject' => '30000000-0000-7000-8000-000000000001',
                 'display_name' => 'Alicia Vega (Demo)',
                 'email' => 'alicia.vega@nexasalud.example.test',
             ],
             'receptionist' => [
+                'username' => '11111111H-DEMO',
                 'subject' => '30000000-0000-7000-8000-000000000002',
                 'display_name' => 'Noa Soler (Demo)',
                 'email' => 'recepcion@nexasalud.example.test',
             ],
             'auditor' => [
+                'username' => '22222222J-DEMO',
                 'subject' => '30000000-0000-7000-8000-000000000003',
                 'display_name' => 'Izan Lago (Demo)',
                 'email' => 'auditoria@nexasalud.example.test',
             ],
             'patient' => [
+                'username' => '33333333P-DEMO',
                 'subject' => '30000000-0000-7000-8000-000000000004',
                 'display_name' => 'Paciente Portal (Demo)',
                 'email' => 'paciente@nexasalud.example.test',
             ],
         ];
 
+        // Keycloak 25+ ignores the ids pinned by the realm template on import and
+        // generates fresh UUIDs, so align local subjects with the running realm.
+        // Canonical subjects remain the fallback (e.g. in testing without Keycloak).
+        $subjects = $this->resolveKeycloakSubjects();
+
         $users = [];
 
         foreach ($identities as $key => $identity) {
             $users[$key] = User::query()->updateOrCreate(
-                ['oidc_issuer' => $issuer, 'oidc_subject' => $identity['subject']],
+                ['oidc_issuer' => $issuer, 'oidc_subject' => $subjects[$identity['username']] ?? $identity['subject']],
                 [
                     'display_name' => $identity['display_name'],
                     'email' => $identity['email'],
@@ -215,6 +227,84 @@ class ClinicalDemoSeeder extends Seeder
         }
 
         return $users;
+    }
+
+    /**
+     * Resolve the real Keycloak subjects for the demo identities from the admin
+     * API of the running realm. Returns an empty map when the environment or
+     * configuration does not allow the lookup, so callers keep the canonical
+     * subjects as fallback.
+     *
+     * @return array<string, string> demo username => Keycloak subject
+     */
+    private function resolveKeycloakSubjects(): array
+    {
+        if (! app()->environment('local')) {
+            return [];
+        }
+
+        $baseUrl = rtrim((string) config('services.keycloak.admin_base_url'), '/');
+        $realm = (string) config('services.keycloak.realm');
+        $adminUsername = (string) config('services.keycloak.admin_username');
+        $adminPassword = (string) config('services.keycloak.admin_password');
+
+        if ($baseUrl === '' || $realm === '' || $adminUsername === '' || $adminPassword === '') {
+            return [];
+        }
+
+        try {
+            $http = new Client([
+                'base_uri' => $baseUrl.'/',
+                'timeout' => (float) config('services.keycloak.timeout_seconds', 5),
+                'connect_timeout' => (float) config('services.keycloak.connect_timeout_seconds', 2),
+                ...LocalhostCurlResolver::optionsFor($baseUrl),
+            ]);
+
+            $token = $http->post('/realms/master/protocol/openid-connect/token', [
+                'form_params' => [
+                    'grant_type' => 'password',
+                    'client_id' => 'admin-cli',
+                    'username' => $adminUsername,
+                    'password' => $adminPassword,
+                ],
+            ]);
+            $accessToken = data_get(json_decode((string) $token->getBody(), true), 'access_token');
+
+            if (! is_string($accessToken) || $accessToken === '') {
+                return [];
+            }
+
+            $subjects = [];
+
+            foreach ($this->demoIdentityUsernames() as $username) {
+                $response = $http->get('/admin/realms/'.$realm.'/users', [
+                    'headers' => ['Authorization' => 'Bearer '.$accessToken],
+                    'query' => ['username' => $username, 'exact' => 'true'],
+                ]);
+                $users = json_decode((string) $response->getBody(), true);
+
+                if (is_array($users) && isset($users[0]['id']) && is_string($users[0]['id'])) {
+                    $subjects[$username] = $users[0]['id'];
+                }
+            }
+
+            return $subjects;
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function demoIdentityUsernames(): array
+    {
+        return [
+            '00000000T-DEMO',
+            '11111111H-DEMO',
+            '22222222J-DEMO',
+            '33333333P-DEMO',
+        ];
     }
 
     /**
@@ -374,6 +464,24 @@ class ClinicalDemoSeeder extends Seeder
                 ['is_active' => true, 'first_seen_at' => now()],
             );
         }
+        // A few appointments today (local clinic time) so the operational dashboard is not empty.
+        foreach ($patients->skip(2)->take(3)->values() as $index => $patient) {
+            $startsAt = now($clinic->timezone)->setTime(9, 0)->addMinutes($index * 45);
+
+            Appointment::factory()->create([
+                'tenant_id' => $tenant->getKey(),
+                'clinic_id' => $clinic->getKey(),
+                'room_id' => $room->getKey(),
+                'appointment_type_id' => $appointmentType->getKey(),
+                'patient_id' => $patient->getKey(),
+                'clinician_user_id' => $clinician->getKey(),
+                'created_by' => $clinician->getKey(),
+                'updated_by' => $clinician->getKey(),
+                'starts_at' => $startsAt,
+                'ends_at' => $startsAt->clone()->addMinutes(30),
+            ]);
+        }
+
         $scheduleStart = now()->addWeek()->startOfWeek()->addDay()->setTime(9, 0);
 
         foreach ($patients->take(4)->values() as $index => $patient) {

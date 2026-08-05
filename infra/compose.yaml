@@ -49,6 +49,8 @@ x-api-environment: &api-environment
   KEYCLOAK_REALM: nexasalud-dev
   KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-nexasalud-bff}
   KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?Run infra/scripts/init.sh first}
+  KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME:?Run infra/scripts/init.sh first}
+  KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:?Run infra/scripts/init.sh first}
   KEYCLOAK_REDIRECT_URI: http://localhost:${API_HTTP_PORT:-8000}/auth/callback
   OIDC_ISSUER: http://keycloak.localhost:${KEYCLOAK_HTTP_PORT:-8080}/realms/nexasalud-dev
   OIDC_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-nexasalud-bff}

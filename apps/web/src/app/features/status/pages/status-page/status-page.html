@@ -11,15 +11,26 @@
       <p class="status-page__description">{{ description() }}</p>
       <mat-divider />
       <div class="status-page__actions">
-        <button
-          mat-flat-button
-          type="button"
-          class="status-page__primary"
-          (click)="returnToWorkspace()"
-        >
-          Volver al espacio de trabajo
-        </button>
-        <a mat-stroked-button routerLink="/login">Ir al acceso seguro</a>
+        @if (kind() === 'forbidden') {
+          <button
+            mat-flat-button
+            type="button"
+            class="status-page__primary"
+            (click)="signOut()"
+          >
+            Cerrar sesión
+          </button>
+        } @else {
+          <button
+            mat-flat-button
+            type="button"
+            class="status-page__primary"
+            (click)="returnToWorkspace()"
+          >
+            Volver al espacio de trabajo
+          </button>
+          <a mat-stroked-button routerLink="/login">Ir al acceso seguro</a>
+        }
       </div>
       <p class="status-page__support">
         Si el problema continúa, contacta con soporte autorizado e indica la hora aproximada del

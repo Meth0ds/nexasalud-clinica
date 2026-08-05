@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\AppointmentStatus;
 use App\Enums\CommunicationChannel;
 use App\Enums\CommunicationStatus;
+use App\Enums\WaitlistStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CreatePortalBookingRequest;
 use App\Http\Requests\Api\V1\CreateSlotHoldRequest;
@@ -244,15 +245,22 @@ final class PortalController extends Controller
     }
 
     /**
-     * List only waitlist entries owned by the verified patient and audit the sensitive read.
+     * List only waitlist entries owned by the verified patient, mark active offers as seen and audit the read.
      */
     public function waitlist(Request $request): AnonymousResourceCollection
     {
         $link = $this->patientLink($request);
-        $entries = WaitlistEntry::query()
-            ->with(['patient', 'appointmentType'])
+        $clinicId = $this->currentClinic()->getKey();
+        WaitlistEntry::query()
             ->where('patient_id', $link->patient_id)
-            ->where('clinic_id', $this->currentClinic()->getKey())
+            ->where('clinic_id', $clinicId)
+            ->where('status', WaitlistStatus::Offered)
+            ->whereNull('offer_seen_at')
+            ->update(['offer_seen_at' => now()]);
+        $entries = WaitlistEntry::query()
+            ->with(['patient', 'appointmentType', 'fulfilledAppointment.appointmentType', 'fulfilledAppointment.clinic', 'fulfilledAppointment.room', 'fulfilledAppointment.clinician'])
+            ->where('patient_id', $link->patient_id)
+            ->where('clinic_id', $clinicId)
             ->latest('created_at')
             ->limit(100)
             ->get();
@@ -262,6 +270,86 @@ final class PortalController extends Controller
         ]);
 
         return WaitlistEntryResource::collection($entries);
+    }
+
+    /**
+     * Accept an active offer owned by the linked patient and confirm the reserved appointment.
+     */
+    public function acceptOffer(Request $request, WaitlistEntry $waitlistEntry): WaitlistEntryResource
+    {
+        $link = $this->patientLink($request);
+        $data = $request->validate([
+            'version' => ['required', 'integer', 'min:1'],
+        ]);
+        $entry = DB::transaction(function () use ($data, $link, $waitlistEntry): WaitlistEntry {
+            $entry = WaitlistEntry::query()->lockForUpdate()->findOrFail($waitlistEntry->getKey());
+            abort_if(
+                $entry->patient_id !== $link->patient_id
+                    || $entry->clinic_id !== $this->currentClinic()->getKey(),
+                Response::HTTP_NOT_FOUND,
+            );
+            abort_if($entry->lock_version !== (int) $data['version'], Response::HTTP_CONFLICT);
+            abort_if(
+                $entry->status === WaitlistStatus::Offered
+                    && $entry->offer_expires_at?->isPast(),
+                Response::HTTP_CONFLICT,
+                'La oferta ha caducado.',
+            );
+            abort_unless($entry->status === WaitlistStatus::Offered, Response::HTTP_CONFLICT);
+
+            $appointmentId = $entry->fulfilled_appointment_id;
+            abort_if(! is_string($appointmentId) || $appointmentId === '', Response::HTTP_UNPROCESSABLE_ENTITY, 'La oferta no tiene una cita asociada.');
+            $appointment = Appointment::query()->findOrFail($appointmentId);
+            abort_unless($appointment->status->blocksAvailability(), Response::HTTP_CONFLICT);
+
+            $entry->status = WaitlistStatus::Booked;
+            $entry->lock_version++;
+            $entry->save();
+
+            return $entry;
+        });
+
+        $this->audit->record($request, 'portal.waitlist_offer_accepted', $entry);
+
+        return new WaitlistEntryResource($this->waitlistEntry($entry));
+    }
+
+    /**
+     * Reject an active offer owned by the linked patient and return the entry to waiting.
+     */
+    public function rejectOffer(Request $request, WaitlistEntry $waitlistEntry): WaitlistEntryResource
+    {
+        $link = $this->patientLink($request);
+        $data = $request->validate([
+            'version' => ['required', 'integer', 'min:1'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+        $entry = DB::transaction(function () use ($data, $link, $waitlistEntry): WaitlistEntry {
+            $entry = WaitlistEntry::query()->lockForUpdate()->findOrFail($waitlistEntry->getKey());
+            abort_if(
+                $entry->patient_id !== $link->patient_id
+                    || $entry->clinic_id !== $this->currentClinic()->getKey(),
+                Response::HTTP_NOT_FOUND,
+            );
+            abort_if($entry->lock_version !== (int) $data['version'], Response::HTTP_CONFLICT);
+            abort_unless($entry->status === WaitlistStatus::Offered, Response::HTTP_CONFLICT);
+
+            $entry->releaseOwnedReservation($data['reason'] ?? 'Oferta rechazada desde el portal del paciente');
+            $entry->status = WaitlistStatus::Waiting;
+            $entry->offered_at = null;
+            $entry->offer_expires_at = null;
+            $entry->offer_seen_at = null;
+            $entry->fulfilled_appointment_id = null;
+            $entry->offer_created_appointment = false;
+            $entry->lock_version++;
+            $entry->save();
+
+            return $entry;
+        });
+
+        $this->audit->record($request, 'portal.waitlist_offer_rejected', $entry);
+
+        return new WaitlistEntryResource($this->waitlistEntry($entry));
     }
 
     /**
@@ -514,6 +602,21 @@ final class PortalController extends Controller
         $this->audit->record($request, 'portal.appointment_rescheduled', $rescheduled, ['source' => 'patient_portal']);
 
         return new AppointmentResource($rescheduled->load(['appointmentType', 'clinic', 'room', 'patient', 'clinician']));
+    }
+
+    /**
+     * Load only the relations required by an authorized waitlist response.
+     */
+    private function waitlistEntry(WaitlistEntry $entry): WaitlistEntry
+    {
+        return $entry->load([
+            'patient',
+            'appointmentType',
+            'fulfilledAppointment.appointmentType',
+            'fulfilledAppointment.clinic',
+            'fulfilledAppointment.room',
+            'fulfilledAppointment.clinician',
+        ]);
     }
 
     /**

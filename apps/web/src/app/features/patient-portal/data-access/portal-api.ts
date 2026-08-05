@@ -151,6 +151,15 @@ export interface PortalSlotHold {
   readonly version: number;
 }
 
+export interface PortalWaitlistOfferedSlot {
+  readonly id: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly practitionerName: string | null;
+  readonly roomName: string | null;
+  readonly clinicName: string | null;
+}
+
 export interface PortalWaitlistEntry {
   readonly id: string;
   readonly version: number;
@@ -163,6 +172,7 @@ export interface PortalWaitlistEntry {
   readonly waitingSince: string | null;
   readonly offeredAt: string | null;
   readonly offerExpiresAt: string | null;
+  readonly offeredSlot: PortalWaitlistOfferedSlot | null;
 }
 
 export interface CreatePortalWaitlistEntryInput {
@@ -226,6 +236,26 @@ export class PortalApiService {
       .post<ApiData<PortalWaitlistEntry>, CreatePortalWaitlistEntryInput>(
         '/api/v1/portal/waitlist-entries',
         input,
+        { silent: true, idempotencyKey: createIdempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  acceptWaitlistOffer(entry: PortalWaitlistEntry): Observable<PortalWaitlistEntry> {
+    return this.api
+      .post<ApiData<PortalWaitlistEntry>, { readonly version: number }>(
+        `/api/v1/portal/waitlist-entries/${encodeURIComponent(entry.id)}/accept`,
+        { version: entry.version },
+        { silent: true, idempotencyKey: createIdempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  rejectWaitlistOffer(entry: PortalWaitlistEntry): Observable<PortalWaitlistEntry> {
+    return this.api
+      .post<ApiData<PortalWaitlistEntry>, { readonly version: number }>(
+        `/api/v1/portal/waitlist-entries/${encodeURIComponent(entry.id)}/reject`,
+        { version: entry.version },
         { silent: true, idempotencyKey: createIdempotencyKey() },
       )
       .pipe(map((response) => response.data));

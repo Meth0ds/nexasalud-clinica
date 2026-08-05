@@ -8,6 +8,7 @@ use App\Http\Middleware\EnforceIdempotency;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\PreventSensitiveResponseCaching;
 use App\Http\Middleware\ResolveTenantContext;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -66,6 +67,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(
             fn (Request $request): ?string => $request->is('api/*') || $request->is('auth/*') ? null : '/',
         );
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('waitlist:expire-offers')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('waitlist:match-slots')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->onOneServer()
+            ->environments(['local', 'staging', 'production']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReportDuplicates();

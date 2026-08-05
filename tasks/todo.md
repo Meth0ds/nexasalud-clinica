@@ -11,16 +11,17 @@ This checklist is the execution view of `tasks/plan.md`. Work proceeds in depend
 
 ## Phase 1 — Contracts and appointments
 
-- [ ] Define and validate OpenAPI/API contract coverage.
-- [ ] Implement and test complete appointment lifecycle transition policy.
-- [ ] Make booking, cancellation and reschedule conflict-safe end to end.
-- [ ] Run the Phase 1 clinical workflow checkpoint.
+- [x] Define and validate OpenAPI/API contract coverage (Scramble 3.1 + OpenApiContractCoverageTest en verde; validado en CI).
+- [x] Implement and test complete appointment lifecycle transition policy (transitions + optimistic locking; cubierto por AppointmentStatusTest y AppointmentDomainTest).
+- [x] Make booking, cancellation and reschedule conflict-safe end to end (slot holds, idempotency, versioned mutations; PortalBookingFlowTest en verde).
+- [ ] Run the Phase 1 clinical workflow checkpoint (requiere validación del product owner clínico).
 
 ## Phase 2 — Product slices
 
 - [ ] Complete all enabled patient portal actions or explicitly hide/defer them.
-- [ ] Implement waitlist matching, offers, expiry and conversion.
-- [ ] Complete patient, consent and clinical-context boundaries.
+- [x] Implement waitlist offers, expiry and atomic conversion (offer/accept/reject/expire + scheduler `waitlist:expire-offers` + portal accept/reject; 4 de agosto de 2026).
+- [x] Implement the automated freed-slot matching engine for waitlist (Task 2.2; motor `waitlist:match-slots` + `WaitlistMatchEngine` con ventana/días/profesional, lead mínimo y presupuesto por ejecución; scheduler cada 5 min; 4 de agosto de 2026).
+- [ ] Complete patient, consent and clinical-context boundaries (consentimiento listado/registro/retirada implementado; alta y gobierno de paciente pendientes).
 - [ ] Complete consent-aware communications and reminder delivery.
 - [ ] Decide and implement or formally defer payment/invoice scope.
 - [ ] Run the Phase 2 no-placeholder capability checkpoint.

@@ -6,6 +6,7 @@ use App\Exceptions\IdentityMfaEnrollmentCompletedException;
 use App\Exceptions\IdentityProtocolException;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Log;
 use JsonException;
 use Throwable;
 
@@ -41,10 +42,44 @@ final class IdTokenValidator
 
             return $claims;
         } catch (IdentityProtocolException $exception) {
+            Log::warning('ID token validation failed', [
+                'claims' => $this->redactClaims($claims ?? []),
+                'expected_nonce' => $expectedNonce,
+                'issuer' => $this->discovery->issuer(),
+                'client_id' => config('services.keycloak.client_id'),
+            ]);
+
             throw $exception;
         } catch (Throwable $exception) {
+            Log::warning('ID token verification threw', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
             throw new IdentityProtocolException($exception);
         }
+    }
+
+    /**
+     * Extract the validation-relevant claims for a local diagnostic log without
+     * persisting signature material or bearer tokens.
+     *
+     * @param  array<string, mixed>  $claims
+     * @return array<string, mixed>
+     */
+    private function redactClaims(array $claims): array
+    {
+        $selected = [];
+
+        foreach (['iss', 'sub', 'aud', 'azp', 'nonce', 'acr', 'amr', 'exp', 'iat', 'auth_time', 'nbf'] as $claim) {
+            if (array_key_exists($claim, $claims)) {
+                $selected[$claim] = $claims[$claim];
+            }
+        }
+
+        $selected['has_at_hash'] = array_key_exists('at_hash', $claims);
+
+        return $selected;
     }
 
     /**
@@ -155,7 +190,14 @@ final class IdTokenValidator
         $nonce = $this->requiredString($claims, 'nonce');
         $expiresAt = $this->requiredNumeric($claims, 'exp');
         $issuedAt = $this->requiredNumeric($claims, 'iat');
-        $authenticatedAt = $this->requiredNumeric($claims, 'auth_time');
+
+        // auth_time is OPTIONAL in OpenID Connect Core and is only emitted by
+        // Keycloak when the client is assigned the auth_time scope. When present
+        // it must describe the authentication moment; otherwise the issuance
+        // time is the closest verifiable anchor.
+        $authenticatedAt = array_key_exists('auth_time', $claims)
+            ? $this->requiredNumeric($claims, 'auth_time')
+            : $issuedAt;
 
         if (array_key_exists('nbf', $claims)) {
             $this->requiredNumeric($claims, 'nbf');

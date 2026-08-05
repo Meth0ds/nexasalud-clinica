@@ -23,6 +23,8 @@ class WaitlistEntryResource extends JsonResource
         return [
             'id' => $this->getKey(),
             'version' => $this->lock_version,
+            'clinicId' => $this->clinic_id,
+            'appointmentTypeId' => $this->appointment_type_id,
             'patientId' => $this->patient_id,
             'patientDisplayName' => $patient,
             'patientInitials' => Str::of($patient)->explode(' ')->filter()->take(2)->map(fn (string $part): string => Str::upper(Str::substr($part, 0, 1)))->join(''),
@@ -34,6 +36,14 @@ class WaitlistEntryResource extends JsonResource
             'waitingSince' => $this->created_at?->toIso8601String(),
             'offeredAt' => $this->offered_at?->toIso8601String(),
             'offerExpiresAt' => $this->offer_expires_at?->toIso8601String(),
+            'offeredSlot' => $this->fulfilledAppointment ? [
+                'id' => $this->fulfilledAppointment->getKey(),
+                'startsAt' => $this->fulfilledAppointment->starts_at?->toIso8601String(),
+                'endsAt' => $this->fulfilledAppointment->ends_at?->toIso8601String(),
+                'practitionerName' => $this->fulfilledAppointment->clinician?->display_name,
+                'roomName' => $this->fulfilledAppointment->room?->name,
+                'clinicName' => $this->fulfilledAppointment->clinic?->name,
+            ] : null,
         ];
     }
 }

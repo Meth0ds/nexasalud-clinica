@@ -5,9 +5,20 @@ import { ApiClientService } from '../../../core/services/api-client';
 
 export type WaitlistStatus = 'waiting' | 'offered' | 'booked' | 'expired' | 'cancelled';
 
+export interface WaitlistOfferedSlot {
+  readonly id: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly practitionerName: string | null;
+  readonly roomName: string | null;
+  readonly clinicName: string | null;
+}
+
 export interface WaitlistEntryRecord {
   readonly id: string;
   readonly version: number;
+  readonly clinicId: string;
+  readonly appointmentTypeId: string | null;
   readonly patientId: string;
   readonly patientDisplayName: string;
   readonly patientInitials: string;
@@ -19,6 +30,15 @@ export interface WaitlistEntryRecord {
   readonly waitingSince: string | null;
   readonly offeredAt: string | null;
   readonly offerExpiresAt: string | null;
+  readonly offeredSlot: WaitlistOfferedSlot | null;
+}
+
+export interface OfferSlotInput {
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly mode?: 'in-person' | 'video' | 'phone';
+  readonly roomId?: string;
+  readonly practitionerId?: string;
 }
 
 export interface CreateWaitlistEntryInput {
@@ -62,14 +82,48 @@ export class WaitlistApiService {
       .pipe(map((response) => response.data));
   }
 
-  offer(entry: WaitlistEntryRecord, expiresInMinutes = 20): Observable<WaitlistEntryRecord> {
+  offer(
+    entry: WaitlistEntryRecord,
+    slot: OfferSlotInput,
+    expiresInMinutes = 20,
+  ): Observable<WaitlistEntryRecord> {
     return this.api
       .post<
         ApiData<WaitlistEntryRecord>,
-        { readonly version: number; readonly expiresInMinutes: number }
+        { readonly version: number; readonly expiresInMinutes: number } & OfferSlotInput
       >(
         `/api/v1/waitlist-entries/${encodeURIComponent(entry.id)}/offer`,
-        { version: entry.version, expiresInMinutes },
+        { version: entry.version, expiresInMinutes, ...slot },
+        { idempotencyKey: idempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  acceptOffer(entry: WaitlistEntryRecord): Observable<WaitlistEntryRecord> {
+    return this.api
+      .post<ApiData<WaitlistEntryRecord>, { readonly version: number }>(
+        `/api/v1/waitlist-entries/${encodeURIComponent(entry.id)}/accept`,
+        { version: entry.version },
+        { idempotencyKey: idempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  rejectOffer(entry: WaitlistEntryRecord, reason?: string): Observable<WaitlistEntryRecord> {
+    return this.api
+      .post<ApiData<WaitlistEntryRecord>, { readonly version: number; readonly reason?: string }>(
+        `/api/v1/waitlist-entries/${encodeURIComponent(entry.id)}/reject`,
+        { version: entry.version, ...(reason?.trim() ? { reason: reason.trim() } : {}) },
+        { idempotencyKey: idempotencyKey() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  expire(entry: WaitlistEntryRecord): Observable<WaitlistEntryRecord> {
+    return this.api
+      .post<ApiData<WaitlistEntryRecord>, { readonly version: number }>(
+        `/api/v1/waitlist-entries/${encodeURIComponent(entry.id)}/expire`,
+        { version: entry.version },
         { idempotencyKey: idempotencyKey() },
       )
       .pipe(map((response) => response.data));

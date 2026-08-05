@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\OidcCallbackRequest;
 use App\Services\Identity\OidcAuthenticationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Completes the browser-facing OpenID Connect callback and maps failures to safe frontend errors.
@@ -34,10 +35,23 @@ class OidcCallbackController extends Controller
         } catch (IdentityAccessDeniedException) {
             return $this->errorRedirect('access_denied');
         } catch (IdentityUnavailableException $exception) {
+            Log::warning('OIDC callback failed: identity unavailable', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
             report($exception);
 
             return $this->errorRedirect('identity_unavailable');
-        } catch (IdentityProtocolException|InvalidOidcTransactionException) {
+        } catch (IdentityProtocolException|InvalidOidcTransactionException $exception) {
+            Log::warning('OIDC callback failed: identity invalid', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+                'previous' => $exception->getPrevious() !== null
+                    ? $exception->getPrevious()::class.': '.$exception->getPrevious()->getMessage()
+                    : null,
+            ]);
+            report($exception);
+
             return $this->errorRedirect('identity_invalid');
         }
     }

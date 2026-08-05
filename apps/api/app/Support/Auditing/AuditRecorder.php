@@ -37,18 +37,60 @@ final class AuditRecorder
         $ip = $request->ip();
         $userAgent = $request->userAgent();
 
-        return AuditEvent::create([
-            'tenant_id' => $tenant->getKey(),
+        return $this->persist($tenant, $eventType, $resource, $metadata, [
             'actor_user_id' => $actor->getKey(),
             'actor_subject' => $actor->oidc_subject,
-            'event_type' => $eventType,
-            'auditable_type' => $resource ? $resource::class : null,
-            'auditable_id' => $resource?->getKey(),
             'request_id' => is_string($requestId) ? $requestId : null,
             'ip_hash' => is_string($ip) && $ip !== '' ? $this->fingerprint($tenant, $ip) : null,
             'user_agent_hash' => is_string($userAgent) && $userAgent !== '' ? $this->fingerprint($tenant, $userAgent) : null,
+        ]);
+    }
+
+    /**
+     * Records a system-initiated action that has no HTTP request or human actor.
+     *
+     * The active tenant context must already be bound (for example by a console
+     * command). The actor columns stay null so the event can never be attributed
+     * to a real identity.
+     *
+     * @param  array<string, bool|int|string|null>  $metadata
+     */
+    public function recordSystem(
+        string $eventType,
+        ?Model $resource = null,
+        array $metadata = [],
+    ): ?AuditEvent {
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
+
+        if (! $tenant instanceof Tenant) {
+            return null;
+        }
+
+        return $this->persist($tenant, $eventType, $resource, $metadata, [
+            'actor_user_id' => null,
+            'actor_subject' => null,
+            'request_id' => null,
+            'ip_hash' => null,
+            'user_agent_hash' => null,
+        ]);
+    }
+
+    /**
+     * Persist one audit event using the caller-provided operational context.
+     *
+     * @param  array<string, bool|int|string|null>  $metadata
+     * @param  array<string, bool|int|string|null>  $context
+     */
+    private function persist(Tenant $tenant, string $eventType, ?Model $resource, array $metadata, array $context): AuditEvent
+    {
+        return AuditEvent::create([
+            'tenant_id' => $tenant->getKey(),
+            'event_type' => $eventType,
+            'auditable_type' => $resource ? $resource::class : null,
+            'auditable_id' => $resource?->getKey(),
             'metadata' => $metadata === [] ? null : $metadata,
             'occurred_at' => now(),
+            ...$context,
         ]);
     }
 

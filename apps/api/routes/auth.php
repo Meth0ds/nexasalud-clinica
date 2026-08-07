@@ -19,8 +19,11 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         ->middleware('throttle:oidc-callback')
         ->block(60, 5)
         ->name('callback');
+    // Logout intentionally does NOT require an authenticated local session: after
+    // the session was terminated (disabled or revoked account) the browser must
+    // still be able to end the IdP SSO session. CSRF and throttling still apply.
     Route::post('/logout', LogoutController::class)
-        ->middleware(['auth:web', 'throttle:logout'])
+        ->middleware('throttle:logout')
         ->block(10, 5)
         ->name('logout');
 });

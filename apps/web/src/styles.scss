@@ -1,60 +1,62 @@
 @use '@angular/material' as mat;
-@use '@fontsource-variable/manrope';
-@use '@fontsource-variable/newsreader';
+@use '@fontsource-variable/instrument-sans';
+@use '@fontsource/ibm-plex-mono';
+@use '@fontsource/ibm-plex-mono/500.css' as *;
+@use '@fontsource/ibm-plex-mono/600.css' as *;
 
 $nexa-material-typography: (
   plain-family: (
-    'Manrope Variable',
-    'Manrope',
+    'Instrument Sans Variable',
+    'Instrument Sans',
     system-ui,
     sans-serif,
   ),
   brand-family: (
-    'Newsreader Variable',
-    'Newsreader',
-    Georgia,
-    serif,
+    'Instrument Sans Variable',
+    'Instrument Sans',
+    system-ui,
+    sans-serif,
   ),
-  bold-weight: 720,
+  bold-weight: 640,
   medium-weight: 560,
-  regular-weight: 480,
+  regular-weight: 460,
 );
 
 $nexa-material-light-overrides: (
-  primary: #14756c,
+  primary: #0b6b5f,
   on-primary: #ffffff,
-  primary-container: #dceee9,
-  on-primary-container: #0d292a,
-  tertiary: #b5653e,
+  primary-container: #d3eae3,
+  on-primary-container: #0a241f,
+  tertiary: #c25e3c,
   on-tertiary: #ffffff,
   surface: #ffffff,
-  surface-container: #f5f8f5,
-  surface-container-high: #e9efeb,
-  on-surface: #153b3b,
-  on-surface-variant: #527170,
-  outline: #c4d3cb,
-  outline-variant: #d8e2dc,
-  error: #a33b46,
-  error-container: #fae9eb,
-  on-error-container: #5d101b,
+  surface-container: #f4f8f6,
+  surface-container-high: #e8efec,
+  on-surface: #162b27,
+  on-surface-variant: #4d655f,
+  outline: #c2d0cb,
+  outline-variant: #d9e4df,
+  error: #b03e4b,
+  error-container: #f9e9eb,
+  on-error-container: #551019,
 );
 
 $nexa-material-dark-overrides: (
-  primary: #65c3b8,
-  on-primary: #063b36,
-  primary-container: #19514b,
-  on-primary-container: #b3eee3,
-  tertiary: #f1a07d,
-  on-tertiary: #4b1d0f,
-  surface: #142625,
-  surface-container: #192e2c,
-  surface-container-high: #213936,
-  on-surface: #e4f1ed,
-  on-surface-variant: #9eb8b2,
-  outline: #45615b,
-  outline-variant: #2e4743,
-  error: #ffb4ab,
-  error-container: #49252b,
+  primary: #54c8b8,
+  on-primary: #05332c,
+  primary-container: #14534a,
+  on-primary-container: #b5eee2,
+  tertiary: #f29d77,
+  on-tertiary: #46210f,
+  surface: #0f1d1b,
+  surface-container: #162723,
+  surface-container-high: #1e332e,
+  on-surface: #dcebe6,
+  on-surface-variant: #93aca5,
+  outline: #415c55,
+  outline-variant: #243a35,
+  error: #ffb1b8,
+  error-container: #452327,
   on-error-container: #ffdad6,
 );
 
@@ -74,36 +76,39 @@ html {
     $nexa-material-light-overrides
   );
 
-  --nexa-ink: #153b3b;
-  --nexa-ink-strong: #0d292a;
-  --nexa-ink-soft: #527170;
-  --nexa-primary: #14756c;
-  --nexa-primary-strong: #0b5c55;
-  --nexa-primary-soft: #dceee9;
-  --nexa-primary-pale: #eef7f4;
-  --nexa-accent: #f1a07d;
-  --nexa-accent-soft: #fff0e9;
-  --nexa-blue: #4385a1;
-  --nexa-blue-soft: #e6f2f7;
-  --nexa-warn: #b5653e;
-  --nexa-danger: #a33b46;
-  --nexa-danger-soft: #fae9eb;
-  --nexa-success: #3e7757;
-  --nexa-success-soft: #e5f1e9;
+  --nexa-ink: #16302b;
+  --nexa-ink-strong: #0c211d;
+  --nexa-ink-soft: #4f6861;
+  --nexa-primary: #0b6b5f;
+  --nexa-primary-strong: #07524a;
+  --nexa-primary-soft: #d7ece5;
+  --nexa-primary-pale: #e9f5f1;
+  --nexa-accent: #b0502c;
+  --nexa-accent-soft: #fbece6;
+  --nexa-blue: #2c6e94;
+  --nexa-blue-soft: #e1eff6;
+  --nexa-warn: #86590d;
+  --nexa-danger: #b03e4b;
+  --nexa-danger-soft: #f9e9eb;
+  --nexa-success: #2b704c;
+  --nexa-success-soft: #e2f1e8;
+  --nexa-on-primary: #ffffff;
+  --nexa-on-danger: #ffffff;
   --nexa-surface: #ffffff;
-  --nexa-surface-muted: #f5f8f5;
-  --nexa-surface-strong: #e9efeb;
-  --nexa-canvas: #f1f5f1;
-  --nexa-border: #d8e2dc;
-  --nexa-border-strong: #c4d3cb;
-  --nexa-shadow: 0 18px 50px rgba(27, 63, 58, 0.08);
-  --nexa-shadow-soft: 0 8px 26px rgba(27, 63, 58, 0.06);
-  --nexa-radius-sm: 10px;
-  --nexa-radius: 18px;
-  --nexa-radius-lg: 26px;
-  --nexa-focus: 0 0 0 3px rgba(20, 117, 108, 0.22);
+  --nexa-surface-muted: #f4f8f6;
+  --nexa-surface-strong: #e8efec;
+  --nexa-canvas: #eef3f1;
+  --nexa-border: #d9e4df;
+  --nexa-border-strong: #bfcfc9;
+  --nexa-shadow: 0 16px 44px rgba(13, 43, 37, 0.08);
+  --nexa-shadow-soft: 0 6px 22px rgba(13, 43, 37, 0.05);
+  --nexa-radius-sm: 9px;
+  --nexa-radius: 16px;
+  --nexa-radius-lg: 22px;
+  --nexa-focus: 0 0 0 3px rgba(11, 107, 95, 0.22);
+  --nexa-page-gutter: clamp(24px, 2.6vw, 36px);
   color-scheme: light;
-  font-family: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   background: var(--nexa-canvas);
 }
 
@@ -123,24 +128,31 @@ html[data-theme='dark'] {
     $nexa-material-dark-overrides
   );
 
-  --nexa-ink: #e4f1ed;
-  --nexa-ink-strong: #f5fbf8;
-  --nexa-ink-soft: #9eb8b2;
-  --nexa-primary: #65c3b8;
-  --nexa-primary-strong: #84d8cf;
-  --nexa-primary-soft: #193f3c;
-  --nexa-primary-pale: #122e2d;
-  --nexa-accent-soft: #432f29;
-  --nexa-blue-soft: #1a3540;
-  --nexa-danger-soft: #49252b;
-  --nexa-success-soft: #1d3b2a;
-  --nexa-surface: #142625;
-  --nexa-surface-muted: #192e2c;
-  --nexa-surface-strong: #213936;
-  --nexa-canvas: #0e1d1d;
-  --nexa-border: #2e4743;
-  --nexa-border-strong: #45615b;
-  --nexa-shadow: 0 22px 60px rgba(0, 0, 0, 0.24);
+  --nexa-ink: #dcebe6;
+  --nexa-ink-strong: #f0faf6;
+  --nexa-ink-soft: #93aca5;
+  --nexa-primary: #54c8b8;
+  --nexa-primary-strong: #7bd9cc;
+  --nexa-primary-soft: #143c35;
+  --nexa-primary-pale: #0f2b27;
+  --nexa-accent: #f29d77;
+  --nexa-accent-soft: #3b2a22;
+  --nexa-blue: #6fb6da;
+  --nexa-blue-soft: #14303f;
+  --nexa-warn: #dcae55;
+  --nexa-danger: #ffb1b8;
+  --nexa-danger-soft: #452327;
+  --nexa-success: #63c98f;
+  --nexa-success-soft: #153627;
+  --nexa-on-primary: #05332c;
+  --nexa-on-danger: #3d1218;
+  --nexa-surface: #0f1d1b;
+  --nexa-surface-muted: #162723;
+  --nexa-surface-strong: #1e332e;
+  --nexa-canvas: #0a1513;
+  --nexa-border: #243a35;
+  --nexa-border-strong: #415c55;
+  --nexa-shadow: 0 22px 60px rgba(0, 0, 0, 0.26);
   --nexa-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.2);
   color-scheme: dark;
 }
@@ -159,9 +171,9 @@ body {
 body {
   color: var(--nexa-ink);
   background:
-    radial-gradient(circle at 94% -5%, rgba(103, 175, 158, 0.13), transparent 32rem),
+    radial-gradient(circle at 90% -6%, rgba(11, 107, 95, 0.07), transparent 30rem),
     var(--nexa-canvas);
-  font-family: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -188,14 +200,19 @@ a {
   scroll-margin-block: 92px;
 }
 
+::selection {
+  color: var(--nexa-ink-strong);
+  background: rgba(84, 200, 184, 0.28);
+}
+
 .nexa-skip-link {
   position: fixed;
   z-index: 100;
   top: 12px;
   left: 12px;
   padding: 10px 14px;
-  border-radius: 10px;
-  color: #fff;
+  border-radius: 9px;
+  color: var(--nexa-on-primary);
   background: var(--nexa-primary);
   box-shadow: var(--nexa-shadow);
   transform: translateY(-170%);
@@ -204,11 +221,6 @@ a {
 
 .nexa-skip-link:focus-visible {
   transform: none;
-}
-
-::selection {
-  color: var(--nexa-ink-strong);
-  background: rgba(111, 199, 185, 0.35);
 }
 
 .sr-only {
@@ -223,10 +235,37 @@ a {
   border: 0 !important;
 }
 
+/* ---------- Typography helpers ---------- */
+
+.nexa-mono,
+.nexa-num,
+.nexa-eyebrow,
+.nexa-table th {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.nexa-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.nexa-muted {
+  color: var(--nexa-ink-soft);
+}
+
+.nexa-divider {
+  height: 1px;
+  border: 0;
+  background: var(--nexa-border);
+}
+
+/* ---------- Page scaffolding ---------- */
+
 .nexa-page {
-  width: min(100%, 1600px);
-  margin: 0 auto;
-  padding: clamp(22px, 3vw, 44px);
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding: clamp(28px, 3vw, 36px) 0;
 }
 
 .nexa-page__heading {
@@ -234,25 +273,25 @@ a {
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 28px;
+  margin-bottom: 26px;
 }
 
 .nexa-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 9px;
+  margin: 0 0 9px;
   color: var(--nexa-primary);
-  font-size: 0.72rem;
-  font-weight: 760;
-  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 .nexa-eyebrow::before {
-  width: 19px;
-  height: 2px;
-  border-radius: 4px;
+  width: 20px;
+  height: 1.5px;
+  border-radius: 2px;
   background: currentColor;
   content: '';
 }
@@ -263,27 +302,27 @@ a {
 .login-card h1 {
   margin: 0;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', 'Newsreader', Georgia, serif;
-  font-weight: 540;
-  letter-spacing: -0.025em;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  font-weight: 640;
+  letter-spacing: -0.03em;
 }
 
 .nexa-page h1 {
-  font-size: clamp(2rem, 3.4vw, 3.25rem);
-  line-height: 1.02;
+  font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+  line-height: 1.04;
 }
 
 .nexa-page h2 {
-  font-size: clamp(1.28rem, 2vw, 1.7rem);
-  line-height: 1.18;
+  font-size: clamp(1.0625rem, 1.3vw, 1.25rem);
+  line-height: 1.2;
 }
 
 .nexa-page__subtitle {
   max-width: 680px;
   margin: 9px 0 0;
   color: var(--nexa-ink-soft);
-  font-size: 0.92rem;
-  line-height: 1.65;
+  font-size: 0.9375rem;
+  line-height: 1.62;
 }
 
 .nexa-page__actions,
@@ -294,12 +333,14 @@ a {
   gap: 10px;
 }
 
+/* ---------- Cards ---------- */
+
 .nexa-card {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--nexa-border);
   border-radius: var(--nexa-radius);
-  background: color-mix(in srgb, var(--nexa-surface) 96%, transparent);
+  background: var(--nexa-surface);
   box-shadow: var(--nexa-shadow-soft);
 }
 
@@ -312,7 +353,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 21px 23px 17px;
+  padding: 18px 20px 15px;
   border-bottom: 1px solid var(--nexa-border);
 }
 
@@ -324,16 +365,18 @@ a {
 .nexa-card__header p {
   margin: 4px 0 0;
   color: var(--nexa-ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .nexa-card__body {
-  padding: 22px;
+  padding: 20px;
 }
+
+/* ---------- Grids ---------- */
 
 .nexa-grid {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .nexa-grid--4 {
@@ -349,7 +392,7 @@ a {
 }
 
 .nexa-section {
-  margin-top: 24px;
+  margin-top: 22px;
 }
 
 .nexa-section__heading {
@@ -357,32 +400,34 @@ a {
   align-items: end;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 14px;
+  margin-bottom: 13px;
 }
 
 .nexa-section__heading p {
   margin: 5px 0 0;
   color: var(--nexa-ink-soft);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
+
+/* ---------- Buttons ---------- */
 
 .nexa-btn-primary {
   --mdc-filled-button-container-color: var(--nexa-primary);
-  --mdc-filled-button-label-text-color: #fff;
-  min-height: 43px;
-  padding-inline: 19px;
-  border-radius: 13px;
-  font-weight: 720;
+  --mdc-filled-button-label-text-color: var(--nexa-on-primary);
+  min-height: 41px;
+  padding-inline: 17px;
+  border-radius: 10px;
+  font-weight: 620;
   letter-spacing: -0.01em;
 }
 
 .nexa-btn-secondary {
   --mdc-outlined-button-label-text-color: var(--nexa-ink);
   --mdc-outlined-button-outline-color: var(--nexa-border-strong);
-  min-height: 43px;
-  border-radius: 13px;
+  min-height: 41px;
+  border-radius: 10px;
   background: var(--nexa-surface);
-  font-weight: 680;
+  font-weight: 580;
 }
 
 .nexa-icon-button {
@@ -391,18 +436,20 @@ a {
   border: 1px solid var(--nexa-border);
 }
 
+/* ---------- Chips & status ---------- */
+
 .nexa-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 26px;
+  min-height: 24px;
   padding: 4px 9px;
   border: 1px solid transparent;
   border-radius: 999px;
   color: var(--nexa-ink-soft);
   background: var(--nexa-surface-strong);
-  font-size: 0.68rem;
-  font-weight: 720;
+  font-size: 0.7rem;
+  font-weight: 640;
   line-height: 1;
   white-space: nowrap;
 }
@@ -427,22 +474,25 @@ a {
   background: var(--nexa-blue-soft);
 }
 
+/* ---------- Avatars ---------- */
+
 .nexa-avatar {
   display: inline-grid;
   flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border: 1px solid rgba(20, 117, 108, 0.12);
-  border-radius: 14px;
+  border: 1px solid rgba(11, 107, 95, 0.14);
+  border-radius: 11px;
   color: var(--nexa-primary-strong);
   background: var(--nexa-primary-soft);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .nexa-avatar--coral {
-  color: var(--nexa-warn);
+  color: var(--nexa-accent);
   background: var(--nexa-accent-soft);
 }
 
@@ -451,33 +501,7 @@ a {
   background: var(--nexa-blue-soft);
 }
 
-.nexa-divider {
-  height: 1px;
-  border: 0;
-  background: var(--nexa-border);
-}
-
-.nexa-muted {
-  color: var(--nexa-ink-soft);
-}
-
-.nexa-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.76rem;
-}
-
-.nexa-empty {
-  display: grid;
-  min-height: 220px;
-  place-items: center;
-  padding: 28px;
-  text-align: center;
-}
-
-.nexa-empty p {
-  max-width: 430px;
-  color: var(--nexa-ink-soft);
-}
+/* ---------- Tables ---------- */
 
 .nexa-table-wrap {
   overflow-x: auto;
@@ -490,7 +514,7 @@ a {
 
 .nexa-table th,
 .nexa-table td {
-  padding: 14px 18px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--nexa-border);
   text-align: left;
   vertical-align: middle;
@@ -499,9 +523,9 @@ a {
 .nexa-table th {
   color: var(--nexa-ink-soft);
   background: var(--nexa-surface-muted);
-  font-size: 0.68rem;
-  font-weight: 790;
-  letter-spacing: 0.07em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -533,15 +557,17 @@ a {
   font-size: 0.68rem;
 }
 
+/* ---------- Search ---------- */
+
 .nexa-search {
   display: flex;
   align-items: center;
   min-width: min(330px, 100%);
-  min-height: 44px;
+  min-height: 42px;
   gap: 10px;
-  padding: 0 14px;
+  padding: 0 13px;
   border: 1px solid var(--nexa-border);
-  border-radius: 13px;
+  border-radius: 11px;
   color: var(--nexa-ink-soft);
   background: var(--nexa-surface);
   transition:
@@ -568,22 +594,59 @@ a {
   color: color-mix(in srgb, var(--nexa-ink-soft) 75%, transparent);
 }
 
+/* ---------- Forms ---------- */
+
 .nexa-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px;
+  gap: 14px;
 }
 
 .nexa-field-grid mat-form-field {
   width: 100%;
 }
 
+/* ---------- Empty state ---------- */
+
+.nexa-empty {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  padding: 28px;
+  text-align: center;
+}
+
+.nexa-empty p {
+  max-width: 430px;
+  color: var(--nexa-ink-soft);
+}
+
+/* ---------- Dialogs ---------- */
+
+.nexa-dialog {
+  --mat-dialog-container-max-width: none;
+  border-radius: 20px;
+  background: var(--nexa-surface);
+  box-shadow: var(--nexa-shadow);
+}
+
+.nexa-btn-danger {
+  --mdc-filled-button-container-color: var(--nexa-danger);
+  --mdc-filled-button-label-text-color: var(--nexa-on-danger);
+  min-height: 41px;
+  padding-inline: 17px;
+  border-radius: 10px;
+  font-weight: 620;
+}
+
+/* ---------- Snackbar ---------- */
+
 .nexa-snackbar {
   --mdc-snackbar-container-color: var(--nexa-surface);
   --mdc-snackbar-supporting-text-color: var(--nexa-ink-strong);
   --mat-snack-bar-button-color: var(--nexa-primary);
   border: 1px solid var(--nexa-border-strong);
-  border-radius: 14px;
+  border-radius: 12px;
   color: var(--nexa-ink-strong);
   background: var(--nexa-surface);
   box-shadow: var(--nexa-shadow);
@@ -601,12 +664,45 @@ a {
   border-inline-start: 4px solid var(--nexa-blue);
 }
 
+/* ---------- Utilities ---------- */
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* ---------- Live pulse dot ---------- */
+
+.nexa-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--nexa-success);
+  box-shadow: 0 0 0 0 rgba(46, 122, 83, 0.4);
+  animation: nexa-pulse-dot 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes nexa-pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 122, 83, 0.38);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(46, 122, 83, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 122, 83, 0);
+  }
+}
+
+/* ---------- Scroll reveal ---------- */
+
 [appScrollReveal] {
   opacity: 0;
-  transform: translateY(18px) scale(0.992);
+  transform: translateY(16px) scale(0.995);
   transition:
-    opacity 680ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -614,6 +710,32 @@ a {
   opacity: 1;
   transform: none;
 }
+
+/* ---------- View transitions ---------- */
+
+::view-transition-old(root) {
+  animation: nexa-view-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: nexa-view-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes nexa-view-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes nexa-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ---------- Responsive ---------- */
 
 @media (max-width: 1180px) {
   .nexa-grid--4 {
@@ -627,7 +749,7 @@ a {
 
 @media (max-width: 720px) {
   .nexa-page {
-    padding: 20px 16px 90px;
+    padding: 20px 0 88px;
   }
 
   .nexa-page__heading,
@@ -661,6 +783,11 @@ a {
   [appScrollReveal] {
     opacity: 1;
     transform: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }
 

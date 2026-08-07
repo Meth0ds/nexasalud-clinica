@@ -15,7 +15,7 @@
 .queue-summary strong {
   margin: 3px 0;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-size: 1.55rem;
 }
 .queue-summary p {
@@ -242,7 +242,7 @@
     font: inherit;
     font-size: 0.7rem;
     &:focus-visible {
-      outline: 2px solid var(--nexa-focus);
+      outline: 2px solid var(--nexa-primary);
       outline-offset: 1px;
     }
   }

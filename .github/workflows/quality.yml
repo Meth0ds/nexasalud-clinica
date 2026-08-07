@@ -204,6 +204,7 @@ jobs:
               export CORS_ALLOWED_ORIGINS=https://portal.ci.invalid
               export OIDC_ISSUER=https://identity.ci.invalid/realms/nexasalud OIDC_CLIENT_ID=nexasalud-bff OIDC_CLIENT_SECRET=ci
               export OIDC_REDIRECT_URI=https://portal.ci.invalid/auth/callback OIDC_FRONTEND_URL=https://portal.ci.invalid OIDC_POST_LOGOUT_REDIRECT_URI=https://portal.ci.invalid/login
+              export OIDC_UPSTREAM_LOGOUT=true
               export OIDC_ALLOW_INSECURE_HTTP=false OIDC_ALLOWED_ALGORITHMS=RS256 OIDC_REQUIRED_ACR_VALUES=2 OIDC_REQUIRED_AMR_VALUES=webauthn
               export TRUSTED_HOSTS="^portal\\.ci\\.invalid$" TRUSTED_PROXIES=10.0.0.0/8
               export CLINICAL_FILESYSTEM_DRIVER=s3 AWS_DEFAULT_REGION=eu-west-1 AWS_BUCKET=nexasalud-clinical-ci AWS_USE_PATH_STYLE_ENDPOINT=false
@@ -235,6 +236,7 @@ jobs:
             -e OIDC_REDIRECT_URI=https://portal.example.test/auth/callback \
             -e OIDC_FRONTEND_URL=https://portal.example.test \
             -e OIDC_POST_LOGOUT_REDIRECT_URI=https://portal.example.test/login \
+            -e OIDC_UPSTREAM_LOGOUT=true \
             -e OIDC_ALLOW_INSECURE_HTTP=false \
             -e OIDC_REQUIRED_ACR_VALUES=2 \
             -e OIDC_REQUIRED_AMR_VALUES=webauthn \

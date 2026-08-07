@@ -129,6 +129,7 @@
                   tabindex="0"
                   (click)="select(appointment)"
                   (keydown.enter)="select(appointment)"
+                  (keydown.space)="$event.preventDefault(); select(appointment)"
                 >
                   <div class="calendar-event__top">
                     <time>{{ appointment.start }}</time

@@ -76,6 +76,8 @@ export class ContextSelection {
         this.busy.set(false);
         if (state.status === 'authenticated') {
           void this.router.navigate(['/inicio']);
+        } else if (state.status === 'no-access') {
+          void this.router.navigate(['/sin-acceso']);
         } else if (state.status === 'error') {
           this.reportError(state.error);
         } else {

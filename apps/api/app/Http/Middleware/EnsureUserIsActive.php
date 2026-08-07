@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Terminates sessions for inactive users or identities whose sessions were revoked.
+ *
+ * NOTE: this middleware only guards authenticated API/session routes. The /auth/*
+ * entry points intentionally remain usable so an affected identity can still
+ * terminate its browser flow; the authoritative account revocation (disable,
+ * revoke credentials, kill SSO) must be applied at the identity provider.
  */
 class EnsureUserIsActive
 {

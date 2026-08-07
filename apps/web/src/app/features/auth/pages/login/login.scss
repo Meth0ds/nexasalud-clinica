@@ -14,21 +14,6 @@
   background: var(--nexa-canvas);
 }
 
-.login-backdrop {
-  position: absolute;
-  z-index: 0;
-  right: -13rem;
-  bottom: -15rem;
-  width: 38rem;
-  height: 38rem;
-  border: 1px solid color-mix(in srgb, var(--nexa-primary) 14%, transparent);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 4rem color-mix(in srgb, var(--nexa-primary) 3%, transparent),
-    0 0 0 8rem color-mix(in srgb, var(--nexa-primary) 2%, transparent);
-  pointer-events: none;
-}
-
 .login-header,
 .login-frame,
 .login-footer {
@@ -57,24 +42,18 @@
 .nexa-brand__mark {
   position: relative;
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--nexa-primary) 20%, var(--nexa-border));
-  border-radius: 13px;
-  background: var(--nexa-primary-soft);
+  border-radius: 12px;
+  color: var(--nexa-on-primary);
+  background: linear-gradient(150deg, var(--nexa-primary) 0%, var(--nexa-primary-strong) 100%);
+  box-shadow: 0 8px 20px rgba(11, 107, 95, 0.22);
 }
 
-.nexa-brand__mark span {
-  position: absolute;
-  width: 19px;
-  height: 5px;
-  border-radius: 5px;
-  background: var(--nexa-primary);
-}
-
-.nexa-brand__mark span:last-child {
-  transform: rotate(90deg);
+.nexa-brand__mark svg {
+  width: 21px;
+  height: 21px;
 }
 
 .login-brand__copy strong,
@@ -84,18 +63,19 @@
 
 .login-brand__copy strong {
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
-  font-size: 1.32rem;
-  font-weight: 620;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  font-size: 1.18rem;
+  font-weight: 660;
   letter-spacing: -0.02em;
 }
 
 .login-brand__copy small {
   margin-top: 2px;
   color: var(--nexa-ink-soft);
-  font-size: 0.59rem;
-  font-weight: 760;
-  letter-spacing: 0.1em;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -104,18 +84,15 @@
   --mdc-chip-label-text-color: var(--nexa-ink-soft);
   border: 1px solid var(--nexa-border);
   font-size: 0.66rem;
-  font-weight: 710;
+  font-weight: 620;
 }
 
-.service-chip__dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 3px;
-  border-radius: 50%;
-  background: var(--nexa-success);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--nexa-success) 16%, transparent);
+.service-chip .nexa-live-dot {
+  width: 6px;
+  height: 6px;
 }
+
+/* ---------- Frame ---------- */
 
 .login-frame {
   display: grid;
@@ -125,36 +102,62 @@
   padding-block: clamp(44px, 8vh, 96px);
 }
 
+/* ---------- Hero ---------- */
+
 .login-hero {
+  position: relative;
   width: 100%;
   max-width: 660px;
   overflow: hidden;
-  border: 0 !important;
-  border-radius: 28px !important;
-  color: #e8f5f1;
-  background: linear-gradient(150deg, #164443 0%, #103532 54%, #0b2827 100%) !important;
-  box-shadow: 0 26px 70px rgba(13, 57, 53, 0.2) !important;
-}
-
-.login-hero::after {
-  position: absolute;
-  right: -11rem;
-  bottom: -14rem;
-  width: 31rem;
-  height: 31rem;
-  border: 1px solid rgba(199, 238, 224, 0.14);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 3rem rgba(199, 238, 224, 0.035),
-    0 0 0 6rem rgba(199, 238, 224, 0.02);
-  content: '';
-  pointer-events: none;
+  border-color: var(--nexa-border) !important;
+  border-radius: 24px !important;
+  color: var(--nexa-ink);
+  background:
+    radial-gradient(
+      circle at 92% -6%,
+      color-mix(in srgb, var(--nexa-primary) 10%, transparent),
+      transparent 22rem
+    ),
+    var(--nexa-surface) !important;
+  box-shadow: var(--nexa-shadow-soft) !important;
 }
 
 .login-hero mat-card-content {
   position: relative;
   z-index: 1;
-  padding: clamp(30px, 5vw, 58px) clamp(25px, 5vw, 58px) !important;
+  padding: clamp(30px, 5vw, 52px) clamp(26px, 5vw, 52px) 30px !important;
+}
+
+.login-hero__trace {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 26px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.login-hero__trace svg {
+  width: 100%;
+  height: 100%;
+}
+
+.login-hero__trace path {
+  fill: none;
+  stroke: var(--nexa-primary);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 360;
+  stroke-dashoffset: 360;
+  animation: login-ecg-sweep 7s linear infinite;
+}
+
+@keyframes login-ecg-sweep {
+  to {
+    stroke-dashoffset: -360;
+  }
 }
 
 .login-hero__topline {
@@ -162,56 +165,53 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #9ed3c5;
-  font-size: 0.62rem;
-  font-weight: 780;
-  letter-spacing: 0.11em;
+  color: var(--nexa-primary);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.login-hero__topline app-icon {
-  color: #79c5b4;
 }
 
 .login-hero h1 {
   max-width: 12ch;
-  margin: 28px 0 20px;
-  color: #f0faf6;
-  font-family: 'Newsreader Variable', Georgia, serif;
-  font-size: clamp(2.75rem, 5vw, 5.2rem);
-  font-weight: 460;
-  letter-spacing: -0.055em;
-  line-height: 0.91;
+  margin: 26px 0 18px;
+  color: var(--nexa-ink-strong);
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 640;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
 }
 
 .login-hero__lead {
-  max-width: 500px;
+  max-width: 480px;
   margin: 0;
-  color: #b4d4cc;
+  color: var(--nexa-ink-soft);
   font-size: 0.9rem;
   line-height: 1.7;
 }
 
 .login-hero__assurance {
   display: grid;
-  margin-top: clamp(34px, 6vh, 62px);
-  border-top: 1px solid rgba(224, 247, 240, 0.14);
+  margin-top: clamp(32px, 6vh, 56px);
+  border-top: 1px solid var(--nexa-border);
 }
 
 .login-hero__assurance > div {
   display: grid;
-  grid-template-columns: 35px 1fr auto;
+  grid-template-columns: 38px 1fr auto;
   align-items: center;
   gap: 10px;
-  min-height: 65px;
-  border-bottom: 1px solid rgba(224, 247, 240, 0.14);
+  min-height: 62px;
+  border-bottom: 1px solid var(--nexa-border);
 }
 
 .assurance-index {
-  color: #79c9b7;
-  font-size: 0.63rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
+  color: var(--nexa-primary);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 .login-hero__assurance strong,
@@ -220,33 +220,40 @@
 }
 
 .login-hero__assurance strong {
-  color: #edf9f5;
+  color: var(--nexa-ink-strong);
   font-size: 0.74rem;
+  font-weight: 620;
 }
 
 .login-hero__assurance small {
   margin-top: 3px;
-  color: #96bcb3;
+  color: var(--nexa-ink-soft);
   font-size: 0.63rem;
 }
 
 .login-hero__assurance mat-chip {
-  --mdc-chip-elevated-container-color: rgba(129, 207, 189, 0.12);
-  --mdc-chip-label-text-color: #9bd6c7;
+  --mdc-chip-elevated-container-color: var(--nexa-primary-pale);
+  --mdc-chip-label-text-color: var(--nexa-primary-strong);
   min-height: 24px;
   font-size: 0.57rem;
-  font-weight: 760;
+  font-weight: 620;
 }
 
 .login-hero__foot {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin: 20px 0 0;
-  color: #91b8af;
+  gap: 9px;
+  margin: 18px 0 0;
+  color: var(--nexa-ink-soft);
   font-size: 0.66rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
+
+.login-hero__foot .nexa-mono {
+  font-size: 0.6rem;
+}
+
+/* ---------- Access card ---------- */
 
 .login-access {
   width: 100%;
@@ -255,23 +262,23 @@
 .login-access__kicker {
   margin: 0 0 12px;
   color: var(--nexa-ink-soft);
-  font-size: 0.64rem;
-  font-weight: 790;
-  letter-spacing: 0.11em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
 .login-card {
   width: 100%;
   border-color: var(--nexa-border) !important;
-  border-radius: 22px !important;
+  border-radius: 20px !important;
   background: var(--nexa-surface) !important;
-  box-shadow: 0 26px 75px color-mix(in srgb, var(--nexa-ink-strong) 12%, transparent) !important;
+  box-shadow: var(--nexa-shadow) !important;
 }
 
 .login-card mat-card-header {
   align-items: center;
-  padding: 25px 27px 0;
+  padding: 24px 26px 0;
 }
 
 .login-card__avatar {
@@ -283,9 +290,10 @@
 
 .login-card mat-card-title {
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
-  font-size: 1.4rem;
-  font-weight: 620;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 640;
+  letter-spacing: -0.02em;
 }
 
 .login-card mat-card-subtitle {
@@ -295,11 +303,11 @@
 }
 
 .login-card mat-card-content {
-  padding: 24px 27px 27px !important;
+  padding: 22px 26px 26px !important;
 }
 
 .login-card__status {
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
 .login-card__status mat-chip {
@@ -307,13 +315,18 @@
   --mdc-chip-label-text-color: var(--nexa-primary-strong);
   min-height: 26px;
   font-size: 0.61rem;
-  font-weight: 760;
+  font-weight: 620;
+}
+
+.login-card__status .nexa-live-dot {
+  width: 6px;
+  height: 6px;
 }
 
 .login-card__lead {
   margin: 0 0 22px;
   color: var(--nexa-ink-soft);
-  font-size: 0.81rem;
+  font-size: 0.8rem;
   line-height: 1.7;
 }
 
@@ -324,7 +337,7 @@
   margin-bottom: 13px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--nexa-warn) 26%, var(--nexa-border));
-  border-radius: 13px;
+  border-radius: 12px;
   color: var(--nexa-warn);
   background: var(--nexa-accent-soft);
 }
@@ -336,6 +349,7 @@
 
 .session-notice strong {
   font-size: 0.7rem;
+  font-weight: 640;
 }
 
 .session-notice small {
@@ -357,7 +371,7 @@
 
 .login-action {
   width: 100%;
-  min-height: 52px !important;
+  min-height: 50px !important;
 }
 
 .login-action mat-progress-spinner {
@@ -377,7 +391,7 @@
 }
 
 .login-divider {
-  margin: 23px 0 16px;
+  margin: 22px 0 16px;
 }
 
 .login-card__privacy {
@@ -398,6 +412,8 @@
   gap: 4px;
 }
 
+/* ---------- Responsive ---------- */
+
 @media (max-width: 980px) {
   .login-frame {
     grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
@@ -405,7 +421,7 @@
   }
 
   .login-hero h1 {
-    font-size: clamp(2.65rem, 5.3vw, 4.3rem);
+    font-size: clamp(2.4rem, 5.3vw, 3.8rem);
   }
 }
 
@@ -432,7 +448,7 @@
 
   .login-hero h1 {
     max-width: 13ch;
-    font-size: clamp(2.65rem, 12vw, 4.3rem);
+    font-size: clamp(2.4rem, 12vw, 3.8rem);
   }
 
   .login-access {
@@ -457,11 +473,11 @@
   }
 
   .login-hero mat-card-content {
-    padding: 28px 20px !important;
+    padding: 30px 20px 24px !important;
   }
 
   .login-hero__assurance > div {
-    grid-template-columns: 29px 1fr;
+    grid-template-columns: 30px 1fr;
   }
 
   .login-hero__assurance mat-chip {
@@ -482,5 +498,10 @@
 @media (prefers-reduced-motion: reduce) {
   .login-action {
     transition: none !important;
+  }
+
+  .login-hero__trace path {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }

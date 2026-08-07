@@ -151,7 +151,7 @@
     border: 1px solid var(--nexa-border);
     border-radius: 17px;
     background: color-mix(in srgb, var(--nexa-surface) 93%, transparent);
-    box-shadow: 0 12px 35px rgba(16, 52, 48, 0.16);
+    box-shadow: var(--nexa-shadow);
     backdrop-filter: blur(18px);
   }
   .portal-mobile-nav button {

@@ -88,6 +88,7 @@
                   [class.is-selected]="selectedId() === patient.id"
                   (click)="selectedId.set(patient.id)"
                   (keydown.enter)="selectedId.set(patient.id)"
+                  (keydown.space)="$event.preventDefault(); selectedId.set(patient.id)"
                 >
                   <td>
                     <div class="nexa-person">

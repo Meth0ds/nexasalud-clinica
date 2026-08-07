@@ -15,6 +15,16 @@ export interface DashboardAppointment {
   readonly status: AppointmentStatus;
 }
 
+export interface DashboardUpcoming {
+  readonly id: string;
+  readonly startsAt: string | null;
+  readonly patientInitials: string;
+  readonly practitionerName: string | null;
+  readonly roomName: string | null;
+  readonly typeName: string | null;
+  readonly status: AppointmentStatus;
+}
+
 export interface DashboardData {
   readonly date: string;
   readonly generatedAt: string;
@@ -29,6 +39,7 @@ export interface DashboardData {
     readonly occupancyPercent: number;
   };
   readonly dayAppointments: readonly DashboardAppointment[];
+  readonly nextAppointments?: readonly DashboardUpcoming[];
 }
 
 @Injectable({ providedIn: 'root' })

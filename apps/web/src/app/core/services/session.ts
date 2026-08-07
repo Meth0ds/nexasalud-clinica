@@ -14,6 +14,8 @@ export type SessionState =
   | { readonly status: 'authenticated'; readonly data: SessionData }
   | { readonly status: 'context-required'; readonly options: TenantContextOptionsResponse }
   | { readonly status: 'anonymous' }
+  /** Verified identity without any active clinical workspace (HTTP 403). */
+  | { readonly status: 'no-access' }
   | { readonly status: 'error'; readonly error: AppError };
 
 @Injectable({ providedIn: 'root' })
@@ -72,10 +74,16 @@ export class SessionService {
           if (error.status === 409 && error.type === '/problems/tenant-selection-required') {
             return this.loadContextOptions(context);
           }
+          // A 403 with the tenant problem type means the identity is verified
+          // but has no active clinical workspace; routing that as 'anonymous'
+          // caused an infinite login → SSO → 403 → login loop. Any other 403
+          // (e.g. disabled or revoked account) is treated as an unusable session.
           const nextState: SessionState =
-            error.status === 401 || error.status === 403
-              ? { status: 'anonymous' }
-              : { status: 'error', error };
+            error.status === 403 && error.type === '/problems/tenant-access-denied'
+              ? { status: 'no-access' }
+              : error.status === 401 || error.status === 403
+                ? { status: 'anonymous' }
+                : { status: 'error', error };
           if (nextState.status === 'anonymous') {
             this.events.emit({ type: 'auth.session.expired', status: error.status });
           } else {
@@ -202,9 +210,11 @@ export class SessionService {
         tap((state) => this.stateSignal.set(state)),
         catchError((error: AppError) => {
           const state: SessionState =
-            error.status === 401 || error.status === 403
-              ? { status: 'anonymous' }
-              : { status: 'error', error };
+            error.status === 403 && error.type === '/problems/tenant-access-denied'
+              ? { status: 'no-access' }
+              : error.status === 401 || error.status === 403
+                ? { status: 'anonymous' }
+                : { status: 'error', error };
           this.events.emit({
             type: 'auth.context.options.failed',
             status: error.status,

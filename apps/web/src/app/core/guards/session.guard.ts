@@ -15,7 +15,9 @@ export const sessionGuard: CanActivateFn = () => {
           ? true
           : state.status === 'context-required'
             ? router.createUrlTree(['/seleccionar-centro'])
-            : router.createUrlTree(['/login'], { queryParams: { reason: 'session' } }),
+            : state.status === 'no-access'
+              ? router.createUrlTree(['/sin-acceso'])
+              : router.createUrlTree(['/login'], { queryParams: { reason: 'session' } }),
       ),
     );
 };
@@ -31,7 +33,9 @@ export const anonymousOnlyGuard: CanActivateFn = () => {
           ? router.createUrlTree(['/'])
           : state.status === 'context-required'
             ? router.createUrlTree(['/seleccionar-centro'])
-            : true,
+            : state.status === 'no-access'
+              ? router.createUrlTree(['/sin-acceso'])
+              : true,
       ),
     );
 };
@@ -47,7 +51,9 @@ export const contextSelectionGuard: CanActivateFn = () => {
           ? true
           : state.status === 'authenticated'
             ? router.createUrlTree(['/'])
-            : router.createUrlTree(['/login']),
+            : state.status === 'no-access'
+              ? router.createUrlTree(['/sin-acceso'])
+              : router.createUrlTree(['/login']),
       ),
     );
 };
@@ -62,7 +68,9 @@ export function permissionGuard(permission: string, fallback = '/inicio'): CanAc
         map((state) =>
           state.status === 'authenticated' && session.hasPermission(permission)
             ? true
-            : router.createUrlTree([fallback], { queryParams: { reason: 'forbidden' } }),
+            : state.status === 'no-access'
+              ? router.createUrlTree(['/sin-acceso'])
+              : router.createUrlTree([fallback], { queryParams: { reason: 'forbidden' } }),
         ),
       );
   };
@@ -73,6 +81,9 @@ export const staffWorkspaceGuard: CanActivateFn = () => {
   const router = inject(Router);
   return session.ensureLoaded().pipe(
     map((state) => {
+      if (state.status === 'no-access') {
+        return router.createUrlTree(['/sin-acceso']);
+      }
       if (state.status !== 'authenticated') {
         return router.createUrlTree(['/login']);
       }

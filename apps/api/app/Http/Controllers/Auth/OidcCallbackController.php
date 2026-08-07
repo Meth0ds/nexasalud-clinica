@@ -37,20 +37,22 @@ class OidcCallbackController extends Controller
         } catch (IdentityUnavailableException $exception) {
             Log::warning('OIDC callback failed: identity unavailable', [
                 'exception' => $exception::class,
-                'message' => $exception->getMessage(),
+                'previous' => $exception->getPrevious() !== null ? $exception->getPrevious()::class : null,
             ]);
-            report($exception);
+            // Report a sanitized instance: the original exception chain can carry
+            // full IdP URLs and response fragments that must not reach the tracker.
+            report(new IdentityUnavailableException);
 
             return $this->errorRedirect('identity_unavailable');
         } catch (IdentityProtocolException|InvalidOidcTransactionException $exception) {
             Log::warning('OIDC callback failed: identity invalid', [
                 'exception' => $exception::class,
-                'message' => $exception->getMessage(),
-                'previous' => $exception->getPrevious() !== null
-                    ? $exception->getPrevious()::class.': '.$exception->getPrevious()->getMessage()
-                    : null,
+                'previous' => $exception->getPrevious() !== null ? $exception->getPrevious()::class : null,
             ]);
-            report($exception);
+            // Report a sanitized instance: the exception chain can carry IdP URLs
+            // and response fragments that must not reach the error tracker even if
+            // ShouldntReport is ever removed from these exception types.
+            report(new IdentityProtocolException);
 
             return $this->errorRedirect('identity_invalid');
         }

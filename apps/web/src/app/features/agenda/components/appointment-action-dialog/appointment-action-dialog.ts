@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { AppIcon } from '../../../../shared/components/app-icon/app-icon';
+
 export interface AppointmentActionDialogData {
   readonly action: 'cancel' | 'no-show';
   readonly patientName: string;
@@ -22,6 +24,7 @@ export interface AppointmentActionDialogResult {
     MatFormFieldModule,
     MatInputModule,
     ReactiveFormsModule,
+    AppIcon,
   ],
   templateUrl: './appointment-action-dialog.html',
   styleUrl: './appointment-action-dialog.scss',

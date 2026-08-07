@@ -34,16 +34,17 @@
 }
 .topbar-context small {
   color: var(--nexa-ink-soft);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.56rem;
-  font-weight: 720;
-  letter-spacing: 0.07em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .topbar-context strong {
   overflow: hidden;
   margin-top: 2px;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-size: 1.02rem;
   font-weight: 570;
   text-overflow: ellipsis;
@@ -65,8 +66,9 @@
   border-radius: 999px;
   color: var(--nexa-ink-soft);
   background: var(--nexa-surface);
-  font-size: 0.57rem;
-  font-weight: 700;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.56rem;
+  font-weight: 600;
 }
 .portal-security-pill i {
   width: 6px;
@@ -126,7 +128,7 @@
 .portal-view h3 {
   margin: 0;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-weight: 540;
   letter-spacing: -0.025em;
 }

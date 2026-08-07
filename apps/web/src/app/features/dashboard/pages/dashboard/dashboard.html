@@ -8,34 +8,35 @@
           Resumen operativo
         }
       </p>
-      <h1>Jornada asistencial</h1>
-      <p class="nexa-page__subtitle">
-        Agenda, capacidad y prioridades reales del centro activo. La consulta queda registrada para
-        trazabilidad.
-      </p>
+      <h1>Centro de mando</h1>
+      <p class="nexa-page__subtitle">Jornada asistencial del centro activo, con acceso auditado.</p>
     </div>
     <div class="nexa-page__actions">
       <button
         mat-stroked-button
         class="nexa-btn-secondary"
         type="button"
-        (click)="notifyDataRefresh()"
+        [disabled]="loading()"
+        (click)="load(true)"
       >
-        <app-icon name="arrow" [size]="17" /> Actualizar</button
-      ><button mat-stroked-button class="nexa-btn-secondary" routerLink="/lista-espera">
-        <app-icon name="waitlist" [size]="17" /> Lista de espera</button
-      ><button
+        <app-icon name="refresh" [size]="16" />
+        {{ loading() ? 'Actualizando…' : 'Actualizar' }}
+      </button>
+      <button mat-stroked-button class="nexa-btn-secondary" routerLink="/lista-espera">
+        <app-icon name="waitlist" [size]="16" /> Lista de espera
+      </button>
+      <button
         mat-flat-button
         class="nexa-btn-primary"
         routerLink="/agenda"
         [queryParams]="{ nueva: 1 }"
       >
-        <app-icon name="plus" [size]="17" /> Nueva cita
+        <app-icon name="plus" [size]="16" /> Nueva cita
       </button>
     </div>
   </header>
 
-  @if (loading()) {
+  @if (loading() && !dashboard()) {
     <app-state-panel
       kind="loading"
       title="Cargando jornada asistencial"
@@ -52,94 +53,198 @@
       (action)="load()"
     />
   } @else if (dashboard(); as data) {
+    <section class="journey-hero" appScrollReveal>
+      <div class="journey-hero__ecg" aria-hidden="true">
+        <svg viewBox="0 0 320 24" fill="none" preserveAspectRatio="none">
+          <path
+            d="M0 12h26l6-9 8 18 6-12 5 9 4-6h22l6-9 8 18 6-12 5 9 4-6h22l6-9 8 18 6-12 5 9 4-6h24"
+          />
+        </svg>
+      </div>
+
+      <div class="journey-hero__zone journey-hero__clock">
+        <span class="journey-hero__zone-label">Hora del centro</span>
+        <strong class="nexa-num">{{ liveTime() }}</strong>
+        <span class="nexa-mono">{{ data.timezone }}</span>
+      </div>
+
+      <div class="journey-hero__zone journey-hero__progress">
+        <div class="journey-hero__progress-head">
+          <span class="journey-hero__status"
+            ><i class="nexa-live-dot" aria-hidden="true"></i> Atención completada</span
+          >
+          <strong class="nexa-num">{{ dayProgress() }}%</strong>
+        </div>
+        <div
+          class="journey-hero__bar"
+          role="img"
+          [attr.aria-label]="
+            'Atención completada: ' +
+            data.metrics.completed +
+            ' de ' +
+            data.metrics.appointments +
+            ' citas'
+          "
+        >
+          <i [style.width.%]="dayProgress()"></i>
+        </div>
+        <div class="journey-hero__progress-meta">
+          <span>{{ data.metrics.completed }} de {{ data.metrics.appointments }} citas</span>
+          <span>{{ remainingCount() }} por atender</span>
+          <span class="journey-hero__updated"
+            >Actualizado a las {{ updateTime(data.generatedAt, data.timezone) }}</span
+          >
+        </div>
+      </div>
+
+      <div class="journey-hero__zone journey-hero__stats">
+        <div>
+          <span class="journey-hero__zone-label">{{ liveLabel() }}</span>
+          <strong class="nexa-num">{{ liveValue() }}</strong>
+          <span class="nexa-mono">{{
+            inProgressCount() > 0 ? waitingCount() + ' en espera' : 'en sala de espera'
+          }}</span>
+        </div>
+        <div>
+          <span class="journey-hero__zone-label">Lista de espera</span>
+          <strong class="nexa-num">{{ data.metrics.waitingList }}</strong>
+          <span class="nexa-mono">solicitudes</span>
+        </div>
+      </div>
+    </section>
+
     <section class="nexa-grid nexa-grid--4 metrics" aria-label="Resumen diario">
-      @for (metric of metrics(); track metric.label; let index = $index) {
+      @for (metric of metrics(); track metric.id; let index = $index) {
         <mat-card
           appearance="outlined"
-          class="nexa-card metric-card metric-card--{{ metric.tone }}"
+          class="nexa-card kpi-card"
           role="article"
+          [routerLink]="metric.route"
           appScrollReveal
-          [revealDelay]="index * 70"
+          [revealDelay]="index * 60"
         >
-          <div class="metric-card__icon"><app-icon [name]="metric.icon" [size]="20" /></div>
-          <div>
-            <p>{{ metric.label }}</p>
-            <strong>{{ metric.value }}</strong
-            ><small>{{ metric.note }}</small>
+          <div class="kpi-card__top">
+            <span class="kpi-card__icon kpi-card__icon--{{ metric.tone }}">
+              <app-icon [name]="metric.icon" [size]="18" />
+            </span>
+            <span class="kpi-card__label">{{ metric.label }}</span>
+            <app-icon name="chevron" [size]="14" class="kpi-card__go" />
+          </div>
+          <strong class="kpi-card__value nexa-num">{{ metric.value }}</strong>
+          <div class="kpi-card__foot">
+            <span class="kpi-card__note">{{ metric.note }}</span>
+            @if (metric.id === 'espera' && data.metrics.waitingList === 0) {
+              <span class="kpi-card__clear" aria-hidden="true"
+                ><app-icon name="check" [size]="13" /></span
+              >
+            }
           </div>
         </mat-card>
       }
     </section>
 
     <section class="dashboard-layout nexa-section">
-      <mat-card appearance="outlined" class="nexa-card day-card" role="article" appScrollReveal>
-        <div class="nexa-card__header">
+      <mat-card
+        appearance="outlined"
+        class="nexa-card day-card"
+        role="article"
+        appScrollReveal
+        [class.day-card--sparse]="appointments().length > 0 && appointments().length <= 3"
+      >
+        <div class="nexa-card__header day-card__header">
           <div>
             <h2>Agenda del día</h2>
             <p>{{ data.clinic.name }} · {{ data.timezone }}</p>
           </div>
           <div class="nexa-inline-actions">
-            <span class="live-indicator" role="status" aria-live="polite"
-              ><i></i> Actualizado a las {{ updateTime(data.generatedAt, data.timezone) }}</span
-            ><button mat-button routerLink="/agenda">
+            <span class="live-indicator"
+              ><i class="nexa-live-dot" aria-hidden="true"></i> En vivo · {{ data.timezone }}</span
+            >
+            <button mat-button routerLink="/agenda">
               Abrir agenda <app-icon name="arrow" [size]="15" />
             </button>
           </div>
         </div>
+
         <div class="timeline">
-          <div class="timeline__rail" aria-hidden="true"><span></span></div>
           @for (appointment of appointments(); track appointment.id) {
-            <button
-              mat-button
-              class="appointment-row"
-              [class.is-selected]="selectedAppointment() === appointment.id"
-              type="button"
-              (click)="selectAppointment(appointment.id)"
+            <article
+              class="appointment"
+              [class.is-expanded]="selectedAppointment() === appointment.id"
             >
-              <span class="appointment-row__time"
-                ><strong>{{ time(appointment.startsAt) }}</strong
+              <span class="appointment__time nexa-num"
+                ><strong>{{ time(appointment.startsAt, data.timezone) }}</strong
                 ><small>{{ duration(appointment) }}</small></span
               ><span
-                class="appointment-row__dot"
+                class="appointment__dot"
                 [class.is-current]="appointment.status === 'in-progress'"
+                aria-hidden="true"
               ></span
               ><span
-                class="nexa-avatar"
+                class="appointment__avatar nexa-avatar"
                 [class.nexa-avatar--coral]="appointment.status === 'pending'"
+                [class.nexa-avatar--blue]="appointment.status === 'in-progress'"
                 >{{ appointment.patientInitials || 'PA' }}</span
-              ><span class="appointment-row__person"
-                ><strong>{{ appointment.patientDisplayName }}</strong
-                ><small>{{ appointment.typeName ?? 'Atención programada' }}</small></span
-              ><span class="appointment-row__place"
+              >
+              <div class="appointment__person">
+                <strong>{{ appointment.patientDisplayName }}</strong
+                ><small>{{ appointment.typeName ?? 'Atención programada' }}</small>
+                <span class="appointment__bar" aria-hidden="true"
+                  ><i [style.width.%]="durationWidth(appointment)"></i
+                ></span>
+              </div>
+              <span class="appointment__place"
                 ><app-icon [name]="appointment.roomName ? 'location' : 'video'" [size]="14" />
                 {{ appointment.roomName ?? 'Canal remoto' }}</span
-              ><mat-chip-set class="appointment-status" role="list"
-                ><mat-chip
-                  role="listitem"
-                  class="nexa-chip nexa-chip--{{ statusTone(appointment.status) }}"
-                  >{{ statusLabel(appointment.status) }}</mat-chip
-                ></mat-chip-set
-              ><app-icon name="chevron" [size]="16" />
-            </button>
-            @if (selectedAppointment() === appointment.id) {
-              <div class="appointment-peek">
-                <div>
-                  <small>Tipo de atención</small
-                  ><strong>{{ appointment.typeName ?? 'No disponible' }}</strong>
-                </div>
-                <div>
-                  <small>Fin previsto</small><strong>{{ time(appointment.endsAt) }}</strong>
-                </div>
-                <div class="appointment-peek__actions">
-                  <button mat-button routerLink="/historia-clinica">Abrir ficha</button
-                  ><button
+              ><span class="appointment__status">
+                <app-status-chip [tone]="statusTone(appointment.status)">{{
+                  statusLabel(appointment.status)
+                }}</app-status-chip>
+              </span>
+              <button
+                class="appointment__toggle"
+                type="button"
+                [attr.aria-expanded]="selectedAppointment() === appointment.id"
+                [attr.aria-controls]="'appointment-detail-' + appointment.id"
+                [attr.aria-label]="
+                  (selectedAppointment() === appointment.id ? 'Ocultar' : 'Ver') +
+                  ' detalles de ' +
+                  appointment.patientDisplayName
+                "
+                (click)="selectAppointment(appointment.id)"
+              >
+                <app-icon name="chevron" [size]="16" />
+              </button>
+              <div
+                class="appointment__detail"
+                id="appointment-detail-{{ appointment.id }}"
+                [hidden]="selectedAppointment() !== appointment.id"
+              >
+                <dl>
+                  <div>
+                    <dt>Tipo de atención</dt>
+                    <dd>{{ appointment.typeName ?? 'No disponible' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Fin previsto</dt>
+                    <dd>{{ time(appointment.endsAt, data.timezone) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Ubicación</dt>
+                    <dd>{{ appointment.roomName ?? 'Canal remoto' }}</dd>
+                  </div>
+                </dl>
+                <div class="appointment__actions">
+                  <button mat-button routerLink="/historia-clinica">Abrir ficha</button>
+                  <button
                     mat-stroked-button
                     class="nexa-btn-secondary"
                     routerLink="/agenda"
                     [queryParams]="{ cita: appointment.id, accion: 'reprogramar' }"
                   >
-                    Cambiar cita</button
-                  ><button
+                    Cambiar cita
+                  </button>
+                  <button
                     mat-flat-button
                     class="nexa-btn-primary"
                     routerLink="/historia-clinica"
@@ -149,11 +254,11 @@
                   </button>
                 </div>
               </div>
-            }
+            </article>
           } @empty {
             <div class="nexa-empty">
               <div>
-                <span class="treatment-row__icon"><app-icon name="calendar" /></span>
+                <span class="nexa-empty__icon"><app-icon name="calendar" [size]="22" /></span>
                 <h2>Sin citas hoy</h2>
                 <p>La agenda del centro activo no tiene citas dentro de la jornada actual.</p>
                 <button
@@ -168,72 +273,222 @@
             </div>
           }
         </div>
+
+        @if (appointments().length > 0 && appointments().length <= 3) {
+          <div class="day-card__extras">
+            <div class="day-card__extra" role="article">
+              <h3>Resumen de la jornada</h3>
+              <ul class="day-summary">
+                <li>
+                  <span>Completadas</span>
+                  <strong class="nexa-num">{{ daySummary().completed }}</strong>
+                </li>
+                <li>
+                  <span>Pendientes</span>
+                  <strong class="nexa-num">{{ daySummary().pending }}</strong>
+                </li>
+                <li>
+                  <span>Por la tarde</span>
+                  <strong class="nexa-num">{{ daySummary().afternoon }}</strong>
+                </li>
+              </ul>
+            </div>
+            <div class="day-card__extra" role="article">
+              <h3>Acciones frecuentes</h3>
+              <div class="day-card__quick">
+                <a routerLink="/agenda" [queryParams]="{ nueva: 1 }">
+                  <app-icon name="plus" [size]="15" /> Nueva cita
+                </a>
+                <a routerLink="/lista-espera">
+                  <app-icon name="waitlist" [size]="15" /> Lista de espera
+                </a>
+                <a routerLink="/agenda">
+                  <app-icon name="calendar" [size]="15" /> Abrir agenda
+                </a>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (appointments().length > 8) {
+          <div class="day-card__footer">
+            <a routerLink="/agenda"
+              >Ver agenda completa <app-icon name="arrow" [size]="14" /></a
+            >
+          </div>
+        }
       </mat-card>
 
       <aside class="dashboard-side">
+        @if (data.metrics.waitingList + data.metrics.cancelledOrNoShow > 0) {
+          <mat-card
+            appearance="outlined"
+            class="nexa-card attention-card"
+            role="article"
+            appScrollReveal
+          >
+            <div class="nexa-card__header">
+              <div>
+                <h2>Requiere seguimiento</h2>
+                <p>Datos operativos actuales</p>
+              </div>
+              <mat-chip-set role="list" aria-label="Asuntos que requieren seguimiento"
+                ><mat-chip role="listitem" class="nexa-chip nexa-chip--warning">
+                  {{ data.metrics.waitingList + data.metrics.cancelledOrNoShow }} asuntos
+                </mat-chip></mat-chip-set
+              >
+            </div>
+            <div class="attention-list">
+              <a routerLink="/lista-espera"
+                ><span class="attention-list__icon"><app-icon name="waitlist" [size]="18" /></span
+                ><span class="attention-list__copy"
+                  ><strong>{{ data.metrics.waitingList }} solicitudes en espera</strong
+                  ><small>Priorizadas en el módulo de capacidad</small></span
+                ><span class="attention-list__value nexa-num">{{ data.metrics.waitingList }}</span
+                ><app-icon name="chevron" [size]="15" /></a
+              ><a routerLink="/agenda"
+                ><span class="attention-list__icon attention-list__icon--coral"
+                  ><app-icon name="calendar" [size]="18" /></span
+                ><span class="attention-list__copy"
+                  ><strong>{{ data.metrics.cancelledOrNoShow }} cancelaciones o ausencias</strong
+                  ><small>Revisar disponibilidad para reasignar huecos</small></span
+                ><span class="attention-list__value nexa-num">{{
+                  data.metrics.cancelledOrNoShow
+                }}</span
+                ><app-icon name="chevron" [size]="15"
+              /></a>
+            </div>
+          </mat-card>
+        } @else {
+          <a class="attention-clear" routerLink="/lista-espera" appScrollReveal>
+            <span class="attention-clear__icon"><app-icon name="check" [size]="16" /></span>
+            <span class="attention-clear__copy">
+              <strong>Sin asuntos pendientes</strong>
+              <small>Lista de espera y cancelaciones al día</small>
+            </span>
+            <app-icon name="chevron" [size]="15" />
+          </a>
+        }
+
         <mat-card
           appearance="outlined"
-          class="nexa-card pulse-card"
+          class="nexa-card next-card"
+          role="article"
+          appScrollReveal
+          [revealDelay]="60"
+        >
+          <div class="nexa-card__header">
+            <div>
+              <h2>{{ upcoming()?.status === 'in-progress' ? 'En consulta ahora' : 'Próxima cita' }}</h2>
+              <p>Lo siguiente en la jornada</p>
+            </div>
+          </div>
+          @if (upcoming(); as next) {
+            <div class="next-card__body">
+              <span class="next-card__avatar nexa-avatar">{{ next.patientInitials || 'PA' }}</span>
+              <div class="next-card__copy">
+                <strong>{{ nextPatientName() ?? 'Próximo paciente' }}</strong>
+                <small>{{ next.typeName ?? 'Atención programada' }}</small>
+                <span
+                  ><app-icon [name]="next.roomName ? 'location' : 'video'" [size]="13" />
+                  {{ next.roomName ?? 'Canal remoto' }}</span
+                >
+                @if (next.practitionerName) {
+                  <span class="next-card__practitioner"
+                    ><app-icon name="team" [size]="13" /> {{ next.practitionerName }}</span
+                  >
+                }
+              </div>
+              <div class="next-card__time">
+                @if (nextCountdown(); as countdown) {
+                  <small>{{ countdown }}</small>
+                }
+                <strong class="nexa-num">{{ time(next.startsAt, data.timezone) }}</strong>
+                <small class="next-card__time-sep">Comienza</small>
+              </div>
+              <div class="next-card__actions">
+                <button
+                  mat-flat-button
+                  class="nexa-btn-primary"
+                  routerLink="/historia-clinica"
+                  [queryParams]="{ cita: next.id }"
+                >
+                  Iniciar consulta
+                </button>
+                <button
+                  mat-stroked-button
+                  class="nexa-btn-secondary"
+                  routerLink="/agenda"
+                  [queryParams]="{ cita: next.id }"
+                >
+                  Ver en agenda
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="next-card__empty">
+              <app-icon name="check" [size]="18" />
+              <span>No quedan citas pendientes para hoy.</span>
+            </div>
+          }
+        </mat-card>
+
+        <mat-card
+          appearance="outlined"
+          class="nexa-card vitals-card"
           role="article"
           appScrollReveal
           [revealDelay]="100"
         >
-          <div class="pulse-card__top">
+          <div class="vitals-card__head">
             <div>
               <p class="nexa-eyebrow">Capacidad del día</p>
-              <h2>Ocupación de agenda</h2>
+              <h2>Capacidad reservada</h2>
             </div>
-            <span class="pulse-score">{{ data.metrics.occupancyPercent }}</span>
           </div>
-          <mat-progress-bar
-            class="occupancy-track"
-            mode="determinate"
-            [value]="data.metrics.occupancyPercent"
-            aria-label="Ocupación de agenda"
-          />
-          <div class="pulse-axis">
-            <span>0%</span><span>Capacidad ocupada</span><span>100%</span>
+          <div class="vitals-card__gauge" role="img" aria-label="Medidor de capacidad reservada de la agenda">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="vitals-card__gauge-track" cx="60" cy="60" r="45" />
+              <circle
+                class="vitals-card__gauge-value"
+                cx="60"
+                cy="60"
+                r="45"
+                [style.stroke-dashoffset]="gaugeOffset()"
+              />
+            </svg>
+            <div class="vitals-card__gauge-read">
+              <strong class="nexa-num">{{ data.metrics.occupancyPercent }}<small>%</small></strong>
+              <span>reservada</span>
+            </div>
           </div>
-          <p class="pulse-note">
-            <app-icon name="spark" [size]="15" /> {{ data.metrics.active }} citas están activas;
-            {{ data.metrics.completed }} ya se han completado.
+          <p class="vitals-card__note">
+            <app-icon name="activity" [size]="14" />
+            @if (data.metrics.appointments === 0) {
+              Agenda disponible: no hay citas programadas.
+            } @else {
+              {{ data.metrics.appointments - data.metrics.cancelledOrNoShow }} de
+              {{ data.metrics.appointments }} huecos reservados ·
+              {{ data.metrics.occupancyPercent }} %.
+            }
           </p>
+          <ul class="split-legend vitals-card__split">
+            @for (segment of statusSegments(); track segment.key) {
+              <li>
+                <i
+                  [class.split-legend__active]="segment.key === 'active'"
+                  [class.split-legend__completed]="segment.key === 'completed'"
+                  [class.split-legend__cancelled]="segment.key === 'cancelled'"
+                  aria-hidden="true"
+                ></i>
+                <span>{{ segment.label }}</span>
+                <strong class="nexa-num">{{ segment.count }}</strong>
+                <small>{{ segment.percent }}%</small>
+              </li>
+            }
+          </ul>
         </mat-card>
-        <mat-card
-          appearance="outlined"
-          class="nexa-card attention-card"
-          role="article"
-          appScrollReveal
-          [revealDelay]="160"
-        >
-          <div class="nexa-card__header">
-            <div>
-              <h2>Requiere seguimiento</h2>
-              <p>Datos operativos actuales</p>
-            </div>
-            <mat-chip-set role="list" aria-label="Asuntos que requieren seguimiento"
-              ><mat-chip role="listitem" class="nexa-chip nexa-chip--warning">
-                {{ data.metrics.waitingList + data.metrics.cancelledOrNoShow }} asuntos
-              </mat-chip></mat-chip-set
-            >
-          </div>
-          <div class="attention-list">
-            <a routerLink="/lista-espera"
-              ><span class="attention-list__icon"><app-icon name="waitlist" [size]="18" /></span
-              ><span
-                ><strong>{{ data.metrics.waitingList }} solicitudes en espera</strong
-                ><small>Priorizadas en el módulo de capacidad</small></span
-              ><app-icon name="chevron" [size]="15" /></a
-            ><a routerLink="/agenda"
-              ><span class="attention-list__icon attention-list__icon--coral"
-                ><app-icon name="calendar" [size]="18" /></span
-              ><span
-                ><strong>{{ data.metrics.cancelledOrNoShow }} cancelaciones o ausencias</strong
-                ><small>Revisar disponibilidad para reasignar huecos</small></span
-              ><app-icon name="chevron" [size]="15"
-            /></a>
-          </div>
-        </mat-card>
+
         <app-security-banner
           class="privacy-card"
           title="Acceso asistencial auditado"

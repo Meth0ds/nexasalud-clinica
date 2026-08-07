@@ -1,11 +1,20 @@
-<h2 mat-dialog-title>{{ title }}</h2>
+<header class="action-header">
+  <span class="action-header__icon"><app-icon name="shield" [size]="21" /></span>
+  <div>
+    <p class="nexa-eyebrow">Acción crítica</p>
+    <h2 mat-dialog-title>{{ title }}</h2>
+  </div>
+  <button mat-icon-button mat-dialog-close type="button" aria-label="Cerrar">
+    <app-icon name="close" />
+  </button>
+</header>
 
 <mat-dialog-content>
-  <p>
+  <p class="action-lead">
     Vas a aplicar esta acción a la cita autorizada de <strong>{{ data.patientName }}</strong
     >.
   </p>
-  <p class="appointment-action-dialog__description">{{ description }}</p>
+  <p class="action-description">{{ description }}</p>
 
   <form [formGroup]="form" (ngSubmit)="confirm()" id="appointment-action-form">
     <mat-form-field appearance="outline">
@@ -33,7 +42,8 @@
 
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close type="button">Volver</button>
-  <button mat-flat-button class="nexa-btn-primary" type="submit" form="appointment-action-form">
+  <button mat-flat-button class="nexa-btn-danger" type="submit" form="appointment-action-form">
+    <app-icon name="check" [size]="17" />
     {{ confirmLabel }}
   </button>
 </mat-dialog-actions>

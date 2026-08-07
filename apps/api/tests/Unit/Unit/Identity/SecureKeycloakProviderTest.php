@@ -160,6 +160,78 @@ class SecureKeycloakProviderTest extends TestCase
         }
     }
 
+    public function test_parallel_callbacks_consume_only_their_own_legacy_transaction_copy(): void
+    {
+        $session = $this->newSessionStore();
+
+        // Two tabs start independent flows; the legacy key only holds the latest one.
+        $this->provider($this->request('/auth/login', $session))->redirectFor('/agenda');
+        $first = $session->get(SecureKeycloakProvider::TRANSACTION_SESSION_KEY);
+        $this->assertIsArray($first);
+
+        $this->provider($this->request('/auth/login', $session))->redirectFor('/portal');
+        $second = $session->get(SecureKeycloakProvider::TRANSACTION_SESSION_KEY);
+        $this->assertIsArray($second);
+        $this->assertNotSame($first['state'], $second['state']);
+
+        // 1) The OLDER tab completes first: its modern entry is consumed and the
+        //    legacy copy (now the newer tab) must survive.
+        $history = [];
+        $provider = $this->provider($this->request('/auth/callback?'.http_build_query([
+            'state' => $first['state'],
+            'code' => 'first-tab-code',
+        ]), $session));
+        $provider->setHttpClient($this->guzzleClient([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'access_token' => self::ACCESS_TOKEN,
+                'id_token' => $this->idToken($first['nonce']),
+                'token_type' => 'Bearer',
+                'expires_in' => 300,
+                'scope' => 'openid profile email',
+            ], JSON_THROW_ON_ERROR)),
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'sub' => 'staff-subject',
+                'name' => 'Dra. Elena Torres',
+                'email' => 'elena@example.test',
+                'email_verified' => true,
+            ], JSON_THROW_ON_ERROR)),
+        ], $history));
+        $provider->user();
+
+        $pending = $session->get(SecureKeycloakProvider::TRANSACTIONS_SESSION_KEY);
+        $this->assertIsArray($pending);
+        $this->assertArrayNotHasKey($first['state'], $pending);
+        $this->assertArrayHasKey($second['state'], $pending);
+        $this->assertSame($second['state'], $session->get(SecureKeycloakProvider::TRANSACTION_SESSION_KEY)['state']);
+
+        // 2) The NEWER tab completes afterwards: the legacy copy matches its state
+        //    and must be removed so a replayed callback cannot fall back to it.
+        $history = [];
+        $provider = $this->provider($this->request('/auth/callback?'.http_build_query([
+            'state' => $second['state'],
+            'code' => 'second-tab-code',
+        ]), $session));
+        $provider->setHttpClient($this->guzzleClient([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'access_token' => self::ACCESS_TOKEN,
+                'id_token' => $this->idToken($second['nonce']),
+                'token_type' => 'Bearer',
+                'expires_in' => 300,
+                'scope' => 'openid profile email',
+            ], JSON_THROW_ON_ERROR)),
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'sub' => 'staff-subject',
+                'name' => 'Dra. Elena Torres',
+                'email' => 'elena@example.test',
+                'email_verified' => true,
+            ], JSON_THROW_ON_ERROR)),
+        ], $history));
+        $provider->user();
+
+        $this->assertFalse($session->has(SecureKeycloakProvider::TRANSACTION_SESSION_KEY));
+        $this->assertFalse($session->has(SecureKeycloakProvider::TRANSACTIONS_SESSION_KEY));
+    }
+
     public function test_invalid_state_is_consumed_before_any_upstream_request(): void
     {
         $session = $this->newSessionStore();

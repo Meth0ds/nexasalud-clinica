@@ -269,6 +269,58 @@ class OidcAuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_csrf_is_enforced_and_accepts_the_real_double_submit_round_trip(): void
+    {
+        // PHPUnit normally bypasses CSRF validation via runningUnitTests(). Point
+        // the application environment away from 'testing' so the middleware
+        // actually enforces the double-submit flow during this test.
+        $this->app->instance('env', 'production');
+
+        try {
+            $user = User::factory()->create();
+            $this->createTenantContext($user, ['patients.read']);
+            $session = [
+                'auth.session.absolute_expires_at' => time() + 3600,
+                'auth.assurance.authenticated_at' => time() - 60,
+                'auth.assurance.amr' => ['pwd', 'otp'],
+                '_token' => 'round-trip-token',
+            ];
+
+            // 1) A stateful GET issues the XSRF-TOKEN cookie the SPA depends on.
+            $get = $this->actingAs($user)->withSession($session)->getJson('/api/session');
+            $get->assertOk()->assertCookie('XSRF-TOKEN');
+
+            // 2) A state-changing request without the token is rejected (419).
+            $this->actingAs($user)->withSession($session)
+                ->postJson('/auth/logout', ['upstream' => false])
+                ->assertStatus(419)
+                ->assertJsonPath('type', '/problems/csrf-token-invalid');
+
+            // 3) Angular echoes the URL-decoded cookie value in X-XSRF-TOKEN; the
+            //    server decrypts it and matches it against the session token.
+            $xsrfToken = rawurldecode($get->getCookie('XSRF-TOKEN', false)->getValue());
+            $this->actingAs($user)->withSession($session)
+                ->withHeader('X-XSRF-TOKEN', $xsrfToken)
+                ->postJson('/auth/logout', ['upstream' => false])
+                ->assertOk()
+                ->assertJsonPath('signedOut', true);
+        } finally {
+            $this->app->instance('env', 'testing');
+        }
+    }
+
+    public function test_logout_works_without_a_local_authenticated_session(): void
+    {
+        // After the local session was terminated (e.g. disabled or revoked
+        // account) the browser must still be able to end the IdP SSO session.
+        $this->withSession(['_token' => 'guest-logout-token'])
+            ->withHeader('X-CSRF-TOKEN', 'guest-logout-token')
+            ->postJson('/auth/logout', ['upstream' => false])
+            ->assertOk()
+            ->assertJsonPath('signedOut', true)
+            ->assertJsonPath('upstreamRedirect', null);
+    }
+
     public function test_logout_invalidates_local_session_and_rotates_csrf_token(): void
     {
         $user = User::factory()->create();

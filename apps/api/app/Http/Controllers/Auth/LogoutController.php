@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LogoutRequest;
 use App\Services\Identity\OidcAuthenticationService;
 use App\Services\Identity\OidcLogoutUrlBuilder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -37,6 +38,12 @@ class LogoutController extends Controller
             } catch (Throwable $exception) {
                 report($exception);
             }
+        }
+
+        if ($upstreamRequested && $upstreamRedirect === null) {
+            Log::warning('Upstream logout was requested but no validated redirect could be built.', [
+                'upstream_logout_enabled' => config('services.keycloak.upstream_logout') === true,
+            ]);
         }
 
         return response()->json([

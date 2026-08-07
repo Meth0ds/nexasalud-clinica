@@ -5,11 +5,11 @@
   margin-left: calc((var(--column, 0)) * 33.333% + 5px);
   padding: 7px 8px;
   overflow: hidden;
-  border: 1px solid #b8ddd4;
+  border: 1px solid color-mix(in srgb, var(--nexa-primary) 30%, var(--nexa-border));
   border-left: 3px solid var(--nexa-primary);
   border-radius: 9px;
   color: var(--nexa-ink);
-  background: #e7f4f0;
+  background: var(--nexa-primary-pale);
   cursor: pointer;
   text-align: left;
   transition:
@@ -25,7 +25,7 @@
 .calendar-event:hover,
 .calendar-event.is-selected {
   z-index: 4;
-  box-shadow: 0 8px 20px rgba(26, 74, 67, 0.14);
+  box-shadow: var(--nexa-shadow-soft);
   transform: translateY(-1px);
 }
 .calendar-event.is-selected {
@@ -33,26 +33,30 @@
   outline-offset: 1px;
 }
 .calendar-event--blue {
-  border-color: #bdd9e4;
+  border-color: color-mix(in srgb, var(--nexa-blue) 30%, var(--nexa-border));
   border-left-color: var(--nexa-blue);
-  background: #e9f4f8;
+  background: var(--nexa-blue-soft);
 }
+
 .calendar-event--coral {
-  border-color: #edcabb;
+  border-color: color-mix(in srgb, var(--nexa-accent) 30%, var(--nexa-border));
   border-left-color: var(--nexa-accent);
-  background: #fdf0e9;
+  background: var(--nexa-accent-soft);
 }
+
 .calendar-event--sand {
-  border-color: #e1d5b9;
+  border-color: color-mix(in srgb, #9f8755 30%, var(--nexa-border));
   border-left-color: #9f8755;
-  background: #f7f2e7;
+  background: color-mix(in srgb, #9f8755 13%, var(--nexa-surface));
 }
 .calendar-event__top {
   display: flex;
   align-items: center;
   gap: 5px;
   color: var(--nexa-ink-soft);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.5rem;
+  font-variant-numeric: tabular-nums;
 }
 .calendar-event__top span {
   flex: 1;

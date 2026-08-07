@@ -1,7 +1,19 @@
 :host {
+  position: relative;
   display: block;
   width: min(720px, 92vw);
+  overflow: hidden;
   color: var(--nexa-ink);
+}
+
+:host::before {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  height: 3px;
+  background: linear-gradient(90deg, var(--nexa-primary), #54c8b8);
+  content: '';
+  pointer-events: none;
 }
 .dialog-header {
   display: flex;
@@ -29,9 +41,10 @@
   margin: 0;
   padding: 0;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-size: 1.65rem;
-  font-weight: 560;
+  font-weight: 640;
+  letter-spacing: -0.02em;
 }
 mat-dialog-content {
   padding-top: 10px !important;
@@ -63,6 +76,13 @@ mat-dialog-content {
 mat-checkbox {
   color: var(--nexa-ink-soft);
   font-size: 0.72rem;
+}
+
+input[type='date'],
+input[type='time'] {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 mat-dialog-actions {
   padding: 12px 24px 22px;

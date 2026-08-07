@@ -4,16 +4,38 @@
   <mat-sidenav
     #drawer
     class="nexa-sidebar nexa-no-print"
+    [class.nexa-sidebar--collapsed]="collapsed() && !compact()"
     [mode]="compact() ? 'over' : 'side'"
-    [opened]="!compact()"
+    [opened]="!compact() || drawer.opened"
     [fixedInViewport]="compact()"
   >
     <div class="nexa-brand">
-      <span class="nexa-brand__mark" aria-hidden="true"> <i></i><i></i> </span>
-      <span>
+      <span class="nexa-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M3 12h4l2-5 3 10 2-6 1.5 3H21"
+            stroke="currentColor"
+            stroke-width="2.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span class="nexa-brand__copy">
         <strong>NexaSalud</strong>
         <small>Espacio clínico</small>
       </span>
+      <button
+        mat-icon-button
+        class="nexa-brand__toggle"
+        type="button"
+        [matTooltip]="collapsed() ? 'Expandir navegación' : 'Colapsar navegación'"
+        [matTooltipDisabled]="compact()"
+        aria-label="Alternar colapso de la navegación"
+        (click)="toggleCollapsed()"
+      >
+        <app-icon name="chevron" [size]="16" />
+      </button>
       @if (compact()) {
         <button mat-icon-button aria-label="Cerrar navegación" (click)="drawer.close()">
           <app-icon name="close" />
@@ -21,15 +43,19 @@
       }
     </div>
 
-    <div class="clinic-switch" aria-label="Centro activo">
-      <span class="clinic-switch__symbol">{{
-        session.tenant()?.clinicName?.slice(0, 2) ?? '—'
-      }}</span>
-      <span>
+    <button
+      class="clinic-switch"
+      type="button"
+      routerLink="/configuracion"
+      aria-label="Centro activo"
+    >
+      <span class="clinic-switch__icon"><app-icon name="building" [size]="16" /></span>
+      <span class="clinic-switch__copy">
         <small>Centro activo</small>
         <strong>{{ session.tenant()?.clinicName ?? 'Contexto no disponible' }}</strong>
       </span>
-    </div>
+      <app-icon name="chevron" [size]="14" class="clinic-switch__chevron" />
+    </button>
 
     <mat-nav-list class="nexa-nav" aria-label="Navegación principal">
       <div mat-subheader class="nexa-nav__label">Asistencia</div>
@@ -39,9 +65,11 @@
           [routerLink]="item.route"
           routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: item.route === '/inicio' }"
+          [matTooltip]="item.label"
+          [matTooltipDisabled]="!collapsed() || compact()"
           (click)="closeOnMobile(drawer)"
         >
-          <app-icon [name]="item.icon" [size]="19" />
+          <app-icon [name]="item.icon" [size]="18" />
           <span matListItemTitle>{{ item.label }}</span>
         </a>
       }
@@ -52,9 +80,11 @@
           mat-list-item
           [routerLink]="item.route"
           routerLinkActive="is-active"
+          [matTooltip]="item.label"
+          [matTooltipDisabled]="!collapsed() || compact()"
           (click)="closeOnMobile(drawer)"
         >
-          <app-icon [name]="item.icon" [size]="19" />
+          <app-icon [name]="item.icon" [size]="18" />
           <span matListItemTitle>{{ item.label }}</span>
         </a>
       }
@@ -66,21 +96,27 @@
             mat-list-item
             [routerLink]="item.route"
             routerLinkActive="is-active"
+            [matTooltip]="item.label"
+            [matTooltipDisabled]="!collapsed() || compact()"
             (click)="closeOnMobile(drawer)"
           >
-            <app-icon [name]="item.icon" [size]="19" />
+            <app-icon [name]="item.icon" [size]="18" />
             <span matListItemTitle>{{ item.label }}</span>
           </a>
         }
       }
     </mat-nav-list>
 
-    <div class="security-status">
-      <span class="security-status__icon"><app-icon name="shield" [size]="18" /></span>
-      <span>
-        <strong>Sesión protegida</strong>
-        <small>{{ assuranceLabel() }} · cifrado activo</small>
-      </span>
+    <div class="nexa-sidebar__footer">
+      <div class="security-status">
+        <span class="security-status__dot" aria-hidden="true"></span>
+        <span class="security-status__copy">
+          <strong>Sesión protegida</strong>
+          <small>{{ assuranceLabel() }}</small>
+        </span>
+        <app-icon name="shield" [size]="16" class="security-status__shield" />
+      </div>
+      <p class="nexa-sidebar__version">NexaSalud · v0.1.0 · acceso auditado</p>
     </div>
   </mat-sidenav>
 
@@ -92,12 +128,17 @@
             <app-icon name="menu" />
           </button>
         }
+        <nav class="nexa-breadcrumb" aria-label="Ubicación actual">
+          <span class="nexa-breadcrumb__root">NexaSalud</span>
+          <app-icon name="chevron" [size]="13" class="nexa-breadcrumb__sep" />
+          <strong>{{ currentSectionLabel() }}</strong>
+        </nav>
       </div>
 
       <div class="nexa-topbar__actions">
-        <span class="nexa-today">{{
-          today | date: "EEEE, d 'de' MMMM" : undefined : 'es-ES'
-        }}</span>
+        <span class="nexa-today"
+          ><i class="nexa-live-dot" aria-hidden="true"></i> {{ todayLabel() }}</span
+        >
         <button
           mat-icon-button
           class="nexa-icon-button"

@@ -88,6 +88,7 @@ class AppServiceProvider extends ServiceProvider
             && is_string(config('services.keycloak.client_id')) && config('services.keycloak.client_id') !== ''
             && is_string(config('services.keycloak.client_secret')) && config('services.keycloak.client_secret') !== ''
             && config('services.keycloak.allow_insecure_http') === false
+            && config('services.keycloak.upstream_logout') === true
             && is_array($requiredAcrValues) && $requiredAcrValues !== []
             && count(array_filter($requiredAcrValues, $this->isStrongAcrValue(...))) === count($requiredAcrValues)
             && is_array($requiredAmrValues) && $requiredAmrValues !== []

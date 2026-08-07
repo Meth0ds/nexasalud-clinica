@@ -37,6 +37,11 @@ de MFA que emita `acr >= 2` y `amr` con `webauthn`, `fido`, `passkey` o `hwk`. E
 issuer, firma, audiencia, nonce, estado, TTL, ACR y AMR; la aplicación no
 almacena contraseñas ni tokens en el navegador.
 
+Configura `OIDC_UPSTREAM_LOGOUT=true` (obligatorio en producción): el logout
+local también debe terminar la sesión SSO del IdP, y el valor de
+`OIDC_REQUIRED_AMR_VALUES` debe coincidir con el `amr` realmente emitido por el
+realm/IdP (verifícalo contra un ID token real antes de desplegar).
+
 El proveedor puede ser Keycloak `start --optimized`, Entra ID, Okta u otro IdP
 OIDC que permita las mismas garantías. La selección, contrato, residencia de
 datos, cuentas de emergencia y rotación de claves deben quedar aprobados por

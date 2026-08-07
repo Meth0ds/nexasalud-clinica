@@ -44,7 +44,6 @@ final class IdTokenValidator
         } catch (IdentityProtocolException $exception) {
             Log::warning('ID token validation failed', [
                 'claims' => $this->redactClaims($claims ?? []),
-                'expected_nonce' => $expectedNonce,
                 'issuer' => $this->discovery->issuer(),
                 'client_id' => config('services.keycloak.client_id'),
             ]);
@@ -62,7 +61,7 @@ final class IdTokenValidator
 
     /**
      * Extract the validation-relevant claims for a local diagnostic log without
-     * persisting signature material or bearer tokens.
+     * persisting subject identifiers, nonces, signature material, or bearer tokens.
      *
      * @param  array<string, mixed>  $claims
      * @return array<string, mixed>
@@ -71,7 +70,7 @@ final class IdTokenValidator
     {
         $selected = [];
 
-        foreach (['iss', 'sub', 'aud', 'azp', 'nonce', 'acr', 'amr', 'exp', 'iat', 'auth_time', 'nbf'] as $claim) {
+        foreach (['iss', 'aud', 'azp', 'acr', 'amr', 'exp', 'iat', 'auth_time', 'nbf'] as $claim) {
             if (array_key_exists($claim, $claims)) {
                 $selected[$claim] = $claims[$claim];
             }

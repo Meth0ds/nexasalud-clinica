@@ -27,7 +27,7 @@
 .note-editor h2 {
   margin: 0;
   color: var(--nexa-ink-strong);
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-size: 1.7rem;
 }
 .note-patient {
@@ -66,6 +66,11 @@
   font-size: 0.68rem;
   line-height: 1.6;
   resize: vertical;
+}
+
+.note-editor textarea:focus-visible {
+  outline: 2px solid var(--nexa-primary);
+  outline-offset: 1px;
 }
 .note-editor textarea:focus {
   border-color: var(--nexa-primary);

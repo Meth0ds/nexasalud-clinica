@@ -1,12 +1,22 @@
 <main class="context-page">
   <header class="context-header">
     <a class="nexa-brand" href="/login" aria-label="NexaSalud">
-      <span class="nexa-brand__mark" aria-hidden="true"><i></i><i></i></span>
+      <span class="nexa-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M3 12h4l2-5 3 10 2-6 1.5 3H21"
+            stroke="currentColor"
+            stroke-width="2.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
       <span><strong>NexaSalud</strong><small>Contexto asistencial seguro</small></span>
     </a>
     <mat-chip-set aria-label="Estado de la identidad">
       <mat-chip class="assurance"
-        ><app-icon name="shield" [size]="16" /> Identidad verificada</mat-chip
+        ><span class="nexa-live-dot" aria-hidden="true"></span> Identidad verificada</mat-chip
       >
     </mat-chip-set>
   </header>
@@ -31,7 +41,7 @@
     <mat-card appearance="outlined" class="context-card">
       <mat-card-content>
         <div class="context-step">
-          <span>01</span>
+          <span class="nexa-mono">01</span>
           <div><strong>Organización</strong><small>Selecciona tu pertenencia activa.</small></div>
         </div>
 
@@ -57,7 +67,7 @@
         <mat-divider />
 
         <div class="context-step context-step--clinic">
-          <span>02</span>
+          <span class="nexa-mono">02</span>
           <div>
             <strong>Centro activo</strong
             ><small>El contexto se valida de nuevo en el servidor.</small>

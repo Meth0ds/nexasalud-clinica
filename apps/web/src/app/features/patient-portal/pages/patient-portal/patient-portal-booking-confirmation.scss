@@ -86,7 +86,7 @@
   min-height: 185px;
   padding: 22px;
   color: #fff;
-  background: linear-gradient(150deg, #14756c, #0b514d);
+  background: linear-gradient(150deg, var(--nexa-primary), var(--nexa-primary-strong));
   flex-direction: column;
   text-align: center;
 }
@@ -97,7 +97,7 @@
 }
 .ticket-date strong {
   margin: 4px 0;
-  font-family: 'Newsreader Variable', Georgia, serif;
+  font-family: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
   font-size: 2.85rem;
   font-weight: 520;
 }

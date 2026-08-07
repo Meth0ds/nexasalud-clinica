@@ -138,10 +138,16 @@ final class SecureKeycloakProvider extends Provider
             }
         }
 
-        $legacyTransaction = $this->request->session()->pull(self::TRANSACTION_SESSION_KEY);
-        $transaction = OidcTransaction::fromSession(
-            $transactionValue ?? $legacyTransaction,
-        );
+        if ($transactionValue !== null) {
+            $transaction = OidcTransaction::fromSession($transactionValue);
+            $this->forgetMatchingLegacyTransaction((string) $state);
+        } else {
+            // Consume the legacy compatibility transaction only when no state
+            // matched, so unrelated callback requests cannot destroy it while a
+            // parallel login flow is still pending.
+            $legacyTransaction = $this->request->session()->pull(self::TRANSACTION_SESSION_KEY);
+            $transaction = OidcTransaction::fromSession($legacyTransaction);
+        }
 
         $lifetime = config('services.keycloak.transaction_ttl_seconds');
 
@@ -393,6 +399,20 @@ final class SecureKeycloakProvider extends Provider
         }
 
         return array_values(array_filter(explode(' ', $scopes)));
+    }
+
+    /**
+     * Remove the legacy compatibility copy when it belongs to the just-consumed
+     * transaction, so a replayed callback cannot fall back to a stale copy.
+     * A legacy copy from a different parallel flow is preserved.
+     */
+    private function forgetMatchingLegacyTransaction(string $state): void
+    {
+        $legacy = $this->request->session()->get(self::TRANSACTION_SESSION_KEY);
+
+        if (is_array($legacy) && ($legacy['state'] ?? null) === $state) {
+            $this->request->session()->forget(self::TRANSACTION_SESSION_KEY);
+        }
     }
 
     /**

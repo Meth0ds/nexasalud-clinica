@@ -42,6 +42,16 @@ export class StatusPage {
         ? 'Tu sesión está verificada, pero tu rol actual no incluye un espacio asistencial. Contacta con el administrador del centro o cierra sesión para usar otra cuenta.'
         : 'El servicio ha devuelto un estado inesperado. Tus datos no se han modificado.',
   );
+  protected readonly code = computed(() =>
+    this.kind() === 'not-found' ? '404' : this.kind() === 'forbidden' ? '403' : '503',
+  );
+  protected readonly codeLabel = computed(() =>
+    this.kind() === 'not-found'
+      ? 'Ruta no localizada'
+      : this.kind() === 'forbidden'
+        ? 'Acceso denegado'
+        : 'Servicio no disponible',
+  );
   private readonly session = inject(SessionService);
 
   /**

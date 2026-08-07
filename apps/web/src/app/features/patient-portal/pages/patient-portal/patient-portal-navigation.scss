@@ -5,27 +5,29 @@
 }
 .portal-nav > p {
   margin: 16px 10px 7px;
-  color: #739d95;
-  font-size: 0.55rem;
-  font-weight: 780;
-  letter-spacing: 0.12em;
+  color: var(--nexa-ink-soft);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .portal-nav > button {
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 43px;
+  min-height: 42px;
   gap: 10px;
   margin: 2px 0;
   padding: 7px 10px;
   border: 0;
-  border-radius: 11px;
-  color: #b8d2cc;
+  border-radius: 9px;
+  color: var(--nexa-ink-soft);
   background: transparent;
   cursor: pointer;
-  font-size: 0.68rem;
-  font-weight: 590;
+  font-size: 0.76rem;
+  font-weight: 540;
   text-align: left;
   transition:
     color 160ms ease,
@@ -33,13 +35,22 @@
     transform 160ms ease;
 }
 .portal-nav > button:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.065);
+  color: var(--nexa-ink-strong);
+  background: var(--nexa-surface-strong);
   transform: translateX(2px);
 }
 .portal-nav > button.is-active {
-  color: #fff;
-  background: linear-gradient(110deg, rgba(117, 197, 180, 0.28), rgba(117, 197, 180, 0.11));
+  color: var(--nexa-primary-strong);
+  background: var(--nexa-primary-soft);
+  font-weight: 620;
+}
+.portal-nav > button.is-active::before {
+  position: absolute;
+  inset: 9px auto 9px -11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--nexa-primary);
+  content: '';
 }
 .portal-nav__icon {
   display: grid;
@@ -48,12 +59,12 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 9px;
-  color: #8ecbc0;
-  background: rgba(113, 194, 177, 0.08);
+  color: var(--nexa-primary-strong);
+  background: var(--nexa-primary-soft);
 }
 .portal-nav > button.is-active .portal-nav__icon {
-  color: #d9f4ed;
-  background: rgba(149, 220, 204, 0.14);
+  color: var(--nexa-primary-strong);
+  background: color-mix(in srgb, var(--nexa-primary) 16%, transparent);
 }
 .portal-nav > button > span:nth-child(2) {
   flex: 1;
@@ -65,23 +76,31 @@
   place-items: center;
   padding: 0 5px;
   border-radius: 999px;
-  color: #123936;
-  background: #8ed0c2;
+  color: var(--nexa-on-primary);
+  background: var(--nexa-primary);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.53rem;
-  font-weight: 820;
+  font-weight: 700;
 }
 
 .portal-help {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: auto 13px 0;
+  margin: auto 14px 0;
   padding: 12px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: #b9d4cd;
+  border-top: 1px solid var(--nexa-border);
+  color: var(--nexa-ink-soft);
 }
 .portal-help > span {
-  color: #86c9bb;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--nexa-primary-strong);
+  background: var(--nexa-primary-soft);
 }
 .portal-help > div {
   min-width: 0;
@@ -92,12 +111,14 @@
   display: block;
 }
 .portal-help strong {
+  color: var(--nexa-ink-strong);
   font-size: 0.62rem;
 }
 .portal-help small {
   margin-top: 3px;
-  color: #729c94;
+  color: var(--nexa-ink-soft);
   font-size: 0.51rem;
+  line-height: 1.45;
 }
 .portal-help button {
   display: grid;
@@ -107,32 +128,41 @@
   border: 0;
   border-radius: 9px;
   color: inherit;
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   cursor: pointer;
 }
+
 .portal-security {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin: 0 13px 13px;
+  gap: 10px;
+  margin: 0 14px 14px;
   padding: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nexa-border);
   border-radius: 12px;
-  color: #8fd1c3;
-  background: rgba(2, 19, 19, 0.2);
+  color: var(--nexa-success);
+  background: var(--nexa-surface-muted);
 }
-.portal-security span {
-  color: #bdd6d0;
+.portal-security > app-icon {
+  flex: 0 0 auto;
+}
+.portal-security > span {
+  min-width: 0;
+  flex: 1;
+  color: var(--nexa-ink);
 }
 .portal-security strong,
 .portal-security small {
   display: block;
 }
 .portal-security strong {
-  font-size: 0.59rem;
+  color: var(--nexa-ink-strong);
+  font-size: 0.66rem;
+  font-weight: 640;
 }
 .portal-security small {
   margin-top: 2px;
-  color: #729b94;
-  font-size: 0.5rem;
+  color: var(--nexa-ink-soft);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.52rem;
 }

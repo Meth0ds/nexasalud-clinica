@@ -23,11 +23,15 @@
 .date-navigation strong {
   color: var(--nexa-ink-strong);
   font-size: 0.78rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
 }
+
 .date-navigation small {
   margin-top: 2px;
   color: var(--nexa-ink-soft);
-  font-size: 0.59rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.56rem;
 }
 .today-button {
   min-width: 58px;
@@ -63,9 +67,10 @@ mat-button-toggle-group {
   justify-content: space-between;
   margin: 0 0 10px;
   color: var(--nexa-ink-soft);
-  font-size: 0.61rem;
-  font-weight: 770;
-  letter-spacing: 0.06em;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .filter-section > p span {
